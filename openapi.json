@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Capisum Public API",
-    "description": "Payment orchestration API for integrators. Authenticate with an organization API key (`Authorization: Bearer cps_...`). The key's environment (staging or production) scopes provider credentials.\n\n**Shipped today:** Fincra payouts in NGN, GHS, and KES.",
+    "title": "Capisum Customer API",
+    "description": "Customer API for creating payouts and querying transactions. Authenticate with an organization API key (`Authorization: Bearer cps_...`). The key's environment (staging or production) scopes provider credentials.\n\n**Shipped today:** Fincra payouts in NGN, GHS, and KES.",
     "version": "1.0.0",
     "contact": {
       "name": "Capisum Support",
@@ -25,9 +25,6 @@
     }
   ],
   "tags": [
-    {
-      "name": "Incoming webhooks"
-    },
     {
       "name": "Providers"
     },
@@ -496,107 +493,6 @@
           }
         ]
       }
-    },
-    "/v1/webhooks/fincra/{organizationSlug}/{environment}": {
-      "post": {
-        "tags": [
-          "Incoming webhooks"
-        ],
-        "summary": "Fincra webhook",
-        "operationId": "post_v1_webhooks_fincra_organizationSlug_environment",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IncomingWebhookResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/ValidationError"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        },
-        "description": "Organization-scoped Fincra webhook URL. Capisum validates the signature using the webhook secret stored when you connected Fincra.",
-        "parameters": [
-          {
-            "name": "organizationSlug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "environment",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "staging",
-                "production"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/webhooks/fincra": {
-      "post": {
-        "tags": [
-          "Incoming webhooks"
-        ],
-        "summary": "Fincra webhook (legacy)",
-        "operationId": "post_v1_webhooks_fincra",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/IncomingWebhookResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          }
-        },
-        "description": "Legacy unscoped path. Prefer the organization-scoped URL for new integrations.",
-        "x-hidden": true,
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -916,32 +812,6 @@
           "prevCursor": {
             "type": "string",
             "nullable": true
-          }
-        }
-      },
-      "IncomingWebhookResult": {
-        "type": "object",
-        "properties": {
-          "processed": {
-            "type": "boolean"
-          },
-          "duplicate": {
-            "type": "boolean"
-          },
-          "eventId": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "IncomingWebhookResponse": {
-        "type": "object",
-        "required": [
-          "data"
-        ],
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/IncomingWebhookResult"
           }
         }
       },

@@ -32,7 +32,7 @@ This writes `openapi.json` and `../capisum-api/docs/api/public-openapi.json`. Mi
 
 ## What this site covers
 
-- Public API authentication, payouts, transactions, and incoming webhooks
+- Customer API authentication, payouts, and transactions
 - OpenAPI reference with interactive playground
 
 Dashboard, admin, and provider credential APIs are documented only in product UI — not in this site.

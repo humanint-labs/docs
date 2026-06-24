@@ -41,7 +41,7 @@ icon: "list"
 | `starting_after` | — | Transaction ID cursor for the next page |
 | `ending_before` | — | Transaction ID cursor for the previous page |
 
-You can combine pagination with filters such as `type`, `status`, `provider`, and `search`. See [List transactions](/api-reference/introduction#transactions) in the API reference.
+You can combine pagination with filters such as `type`, `status`, `provider`, and `search`. See `GET /v1/transactions` in the API reference.
 
 ## Forward pagination
 
@@ -82,5 +82,5 @@ curl -s "$CAPISUM_BASE_URL/v1/transactions?type=payout&limit=20&ending_before=66
 
 ## Related
 
-- [List transactions API](/api-reference/introduction#transactions)
+- `GET /v1/transactions` in the API reference
 - [Payouts guide](/guides/payouts) for filtering by `type=payout`

@@ -1,16 +1,12 @@
 ---
 title: "Authentication"
 sidebarTitle: "Authentication"
-description: "Authenticate public API requests with organization API keys (Bearer cps_...)."
-keywords: ["authentication", "API key", "Bearer token", "cps_"]
+description: "Authenticate customer API requests with organization API keys (Bearer cps_...)."
+keywords: ["authentication", "API key", "Bearer token", "cps_", "staging", "production"]
 icon: "key"
 ---
 
-The **public integrator API** (`/v1/*`) uses organization API keys. Create and revoke keys in the [dashboard](https://app.capisum.com).
-
-<Info>
-  Dashboard session APIs (`/api/v1/*`) use short-lived JWTs from token exchange. Those are for the Capisum web app — not for server-to-server integration.
-</Info>
+The customer API (`/v1/*`) uses organization API keys. Create keys in the [dashboard](https://app.capisum.com).
 
 ## API key format
 
@@ -33,11 +29,20 @@ curl "$CAPISUM_BASE_URL/v1/transactions" \
 | `Content-Type` | For JSON bodies | `application/json` |
 | `X-Idempotency-Key` | For payout creation | See [Idempotency](/guides/idempotency) |
 
-## Environment scoping
+## Staging vs production
 
-Each key is bound to **staging** or **production** at creation. The key determines which provider credentials and transaction records are used. You cannot override environment per request.
+Each key is bound to **staging** or **production** at creation:
 
-See [Environments](/guides/environments).
+| Environment | Use case |
+| --- | --- |
+| Staging | Sandbox provider credentials, test payouts |
+| Production | Live provider credentials, real funds |
+
+A staging key never reads or writes production transactions. Create separate keys for each environment.
+
+<Warning>
+  Never use production API keys in client-side code, public repositories, or shared logs.
+</Warning>
 
 ## Errors
 
