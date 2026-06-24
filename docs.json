@@ -1,6 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "Capisum",
+  "description": "Payment orchestration API documentation for integrators.",
   "theme": "luma",
   "logo": {
     "light": "https://media.brand.dev/fa2cb93b-803e-4e1e-95ad-49f03dc45e02.svg",
@@ -8,95 +9,170 @@
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#040404",
-    "light": "#6B7280",
-    "dark": "#040404"
+    "primary": "#14532D",
+    "light": "#22C55E",
+    "dark": "#15803D"
   },
-  "navbar": {
-    "primary": {
-      "type": "button",
-      "label": "Get Started",
-      "href": "https://capisum.com/waitlist"
+  "seo": {
+    "indexing": "navigable",
+    "metatags": {
+      "og:site_name": "Capisum Docs",
+      "twitter:card": "summary_large_image",
+      "og:type": "website"
+    }
+  },
+  "api": {
+    "openapi": "openapi.json",
+    "mdx": {
+      "server": "https://api.capisum.com",
+      "auth": {
+        "method": "bearer"
+      }
+    },
+    "params": {
+      "expanded": "all"
+    },
+    "examples": {
+      "languages": ["bash", "javascript", "python"],
+      "defaults": "required",
+      "autogenerate": true
+    },
+    "playground": {
+      "display": "interactive"
     }
   },
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
+        "tab": "Guides",
+        "icon": "book-open",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Getting started",
+            "icon": "rocket",
             "pages": [
-              "introduction",
-              "quickstart",
+              {
+                "page": "index",
+                "boost": 2
+              },
+              {
+                "page": "quickstart",
+                "boost": 2
+              },
               "authentication"
             ]
           },
           {
-            "group": "Core Concepts",
+            "group": "Build your integration",
+            "icon": "wrench",
             "pages": [
-              "concepts/unified-api",
-              "concepts/provider-routing",
-              "concepts/standard-objects",
-              "concepts/error-handling"
+              "guides/environments",
+              "guides/payouts",
+              "guides/idempotency",
+              "guides/pagination"
             ]
           },
           {
-            "group": "Guides",
+            "group": "Operate in production",
+            "icon": "shield-check",
             "pages": [
-              "guides/make-a-payment",
-              "guides/process-payout",
-              "guides/sandbox-testing",
-              "guides/dashboard"
-            ]
-          },
-          {
-            "group": "Providers",
-            "pages": [
-              "providers/overview",
-              "providers/payment-gateways",
-              "providers/digital-banks-wallets",
-              "providers/crypto-platforms",
-              "providers/account-infrastructure"
-            ]
-          },
-          {
-            "group": "Resources",
-            "pages": [
-              "sdks",
-              "faq"
+              "guides/webhooks",
+              "guides/go-to-production",
+              "guides/errors",
+              "guides/faq"
             ]
           }
         ]
       },
       {
-        "tab": "API Reference",
+        "tab": "API reference",
+        "icon": "square-terminal",
         "groups": [
           {
             "group": "Overview",
             "pages": [
-              "api-reference/overview",
-              "api-reference/authentication",
-              "api-reference/errors"
-            ]
-          },
-          {
-            "group": "Transactions",
-            "pages": [
-              "api-reference/transactions/create",
-              "api-reference/transactions/get",
-              "api-reference/transactions/list"
+              {
+                "page": "api-reference/introduction",
+                "boost": 1.5
+              }
             ]
           },
           {
             "group": "Providers",
+            "openapi": "openapi.json",
             "pages": [
-              "api-reference/providers/list",
-              "api-reference/providers/get"
+              "GET /v1/providers",
+              "GET /v1/providers/{slug}/status"
+            ]
+          },
+          {
+            "group": "Transactions",
+            "openapi": "openapi.json",
+            "pages": [
+              "POST /v1/transactions/payout",
+              "GET /v1/transactions",
+              "GET /v1/transactions/ref/{reference}",
+              "GET /v1/transactions/{id}",
+              "POST /v1/transactions/{id}/verify"
+            ]
+          },
+          {
+            "group": "Incoming webhooks",
+            "openapi": "openapi.json",
+            "pages": [
+              "POST /v1/webhooks/fincra/{organizationSlug}/{environment}"
             ]
           }
         ]
       }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Quickstart",
+          "href": "/quickstart",
+          "icon": "bolt"
+        },
+        {
+          "anchor": "Dashboard",
+          "href": "https://app.capisum.com",
+          "icon": "grid-2"
+        },
+        {
+          "anchor": "Support",
+          "href": "mailto:support@capisum.com",
+          "icon": "life-ring"
+        }
+      ]
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Website",
+        "href": "https://capisum.com"
+      },
+      {
+        "label": "Support",
+        "href": "mailto:support@capisum.com"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://app.capisum.com"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
     ]
   },
   "footer": {

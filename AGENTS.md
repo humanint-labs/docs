@@ -1,33 +1,31 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
-
-# Documentation project instructions
+# Capisum documentation
 
 ## About this project
 
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Use the Mintlify MCP server, `https://mcp.mintlify.com`, to edit content and settings via MCP
-- Use the Mintlify docs MCP server, `https://www.mintlify.com/docs/mcp`, to query information about using Mintlify via MCP
+- Mintlify docs for the **Capisum public integrator API** (`/v1/*`)
+- Pages are MDX with YAML frontmatter; navigation in `docs.json`
+- OpenAPI spec: `openapi.json` (public endpoints only)
 
 ## Terminology
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+- **Public API** — `/v1/*`, API key auth (`cps_...`)
+- **Dashboard API** — `/api/v1/*`, JWT auth — do not document here
+- **Minor units** — smallest currency unit (kobo, pesewa, cent)
+- **Catalog vs connected** — `GET /v1/providers` lists available slugs, not connection status
 
-## Style preferences
+## Style
 
-{/* Add any project-specific style rules below */}
-
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
+- Second person, active voice, sentence case headings
+- Root-relative internal links without file extensions (`/quickstart`)
+- Document only what API consumers can call on `/v1/*`
 
 ## Content boundaries
 
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+**Document:** authentication, payouts, transactions, pagination, idempotency, errors, incoming webhooks, FAQ.
+
+**Do not document:** dashboard session APIs, API key CRUD, provider credential management, routing CRUD, billing, audit, team, stats, Capisum admin `/api/v1/internal/*`.
+
+## Source of truth
+
+Implementation: `../capisum-api/src/app.ts` (public routes under `/v1`).
+Postman customer folder: `../capisum-api/docs/api/postman-collection.json`.

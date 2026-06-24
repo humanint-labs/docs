@@ -1,0 +1,126 @@
+---
+title: "Payouts"
+sidebarTitle: "Payouts"
+description: "Create Fincra payouts in NGN, GHS, and KES with bank account and mobile money rails."
+keywords: ["payout", "Fincra", "NGN", "GHS", "KES", "mobile money", "bank transfer", "minor units"]
+icon: "money-bill-transfer"
+---
+
+[`POST /v1/transactions/payout`](/api-reference/introduction#transactions) creates a payout routed through your connected providers. Today, **Fincra payouts** are the supported production path.
+
+## Amounts
+
+All amounts are in **minor units** (the smallest currency unit):
+
+| Currency | Minor unit | Example |
+| --- | --- | --- |
+| NGN | Kobo | `500000` = ₦5,000.00 |
+| GHS | Pesewa | `10000` = GH₵100.00 |
+| KES | Cent | `50000` = KSh500.00 |
+
+Pass `amount` as a string or integer. Capisum stores and returns amounts as integers.
+
+## Supported currencies and rails
+
+| Currency | `bank_account` | `mobile_money` |
+| --- | --- | --- |
+| NGN | Yes (`bank_code` required) | No |
+| GHS | Yes | Yes (`mobile_money_code` required) |
+| KES | Yes | Yes (`mobile_money_code` required) |
+
+### Recipient object
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `account_number` | Yes | Bank account or mobile wallet number |
+| `destination` | No | `bank_account` or `mobile_money`. Inferred from `bank_code` or `mobile_money_code` when omitted |
+| `bank_code` | For bank payouts | NGN CBN bank code (Opay = `305`) |
+| `mobile_money_code` | For mobile money | GHS: `MTN`, `AIRTEL`. KES: `SAFARICOM`, `AIRTEL` |
+| `account_name` | Recommended | Display name for the recipient |
+| `country` | No | ISO 3166-1 alpha-2 code. Defaults from currency |
+| `phone` | No | Wallet phone. Defaults to `account_number` |
+
+## Provider routing
+
+Set `provider` to route explicitly:
+
+```json
+{
+  "provider": "fincra"
+}
+```
+
+When omitted, Capisum selects a provider using your organization's routing rules configured in the dashboard.
+
+<Info>
+  Routing rule management is a dashboard operation. The public API only accepts an optional `provider` override on each request.
+</Info>
+
+## Examples
+
+<Tabs>
+  <Tab title="NGN bank">
+    ```json
+    {
+      "amount": "500000",
+      "currency": "NGN",
+      "provider": "fincra",
+      "recipient": {
+        "destination": "bank_account",
+        "bank_code": "305",
+        "account_number": "7068270185",
+        "account_name": "Test Recipient"
+      },
+      "metadata": {
+        "description": "Vendor payout"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="GHS mobile money">
+    ```json
+    {
+      "amount": "10000",
+      "currency": "GHS",
+      "provider": "fincra",
+      "recipient": {
+        "destination": "mobile_money",
+        "mobile_money_code": "MTN",
+        "account_number": "2330803443433",
+        "account_name": "Ama Mensah"
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="KES mobile money">
+    ```json
+    {
+      "amount": "50000",
+      "currency": "KES",
+      "provider": "fincra",
+      "recipient": {
+        "destination": "mobile_money",
+        "mobile_money_code": "SAFARICOM",
+        "account_number": "254803456789",
+        "account_name": "John Kamau"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Transaction lifecycle
+
+| Status | Meaning |
+| --- | --- |
+| `pending` | Record created, not yet sent to provider |
+| `processing` | Submitted to provider |
+| `settled` | Payout completed successfully |
+| `failed` | Provider rejected or errored |
+| `cancelled` | Cancelled before settlement |
+
+Poll status with [`GET /v1/transactions/{id}`](/api-reference/introduction#transactions), [`GET /v1/transactions/ref/{reference}`](/api-reference/introduction#transactions), or [`POST /v1/transactions/{id}/verify`](/api-reference/introduction#transactions). Configure [incoming webhooks](/guides/webhooks) so Capisum receives provider updates automatically.
+
+## Idempotency
+
+Payout creation requires `X-Idempotency-Key`. See [Idempotency](/guides/idempotency).

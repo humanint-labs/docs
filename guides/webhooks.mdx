@@ -1,0 +1,76 @@
+---
+title: "Webhooks"
+sidebarTitle: "Webhooks"
+description: "Register Fincra webhook URLs so Capisum receives payout status updates."
+keywords: ["webhooks", "Fincra webhook", "incoming webhook", "payout status", "organization slug"]
+icon: "webhook"
+---
+
+Capisum receives **incoming webhooks** from payment providers (for example, Fincra) to update transaction status. These endpoints are called by the provider — not by your application.
+
+Outgoing webhooks (Capisum notifying your servers) are configured in the dashboard and are not part of the public API.
+
+## Fincra incoming webhook URL
+
+Register this URL in your Fincra dashboard for payout event notifications:
+
+```
+https://api.capisum.com/v1/webhooks/fincra/{organizationSlug}/{environment}
+```
+
+| Path segment | Value |
+| --- | --- |
+| `organizationSlug` | Your organization slug from the Capisum dashboard |
+| `environment` | `staging` or `production` — must match the Fincra API environment |
+
+### Example
+
+```
+https://api.capisum.com/v1/webhooks/fincra/acme-payments/staging
+```
+
+The dashboard shows the exact URL when you connect Fincra, including your organization slug.
+
+## Setup steps
+
+<Steps>
+  <Step title="Connect Fincra in Capisum">
+    Store API credentials and the webhook secret in the dashboard for the target environment.
+  </Step>
+  <Step title="Copy the webhook URL">
+    Use the organization-scoped URL from the provider connection screen.
+  </Step>
+  <Step title="Register in Fincra">
+    Add the URL in Fincra's webhook settings for the matching sandbox or live environment.
+  </Step>
+  <Step title="Enable payout events">
+    Enable payout notifications so Capisum receives status changes.
+  </Step>
+</Steps>
+
+## Signature verification
+
+Capisum validates incoming Fincra webhooks using the **webhook secret** you stored when connecting the provider. Requests with invalid signatures are rejected.
+
+You do not need to verify provider signatures in your own application — Capisum handles that on the incoming webhook endpoints.
+
+## Legacy URL
+
+An unscoped legacy path exists:
+
+```
+POST /v1/webhooks/fincra
+```
+
+Prefer the organization-scoped URL for new integrations.
+
+## Your application
+
+To react to transaction status changes in your own systems:
+
+1. Poll `POST /v1/transactions/{id}/verify` or `GET /v1/transactions/ref/{reference}`
+2. Or configure outgoing webhook endpoints in the Capisum dashboard (dashboard feature, not public API)
+
+<Note>
+  Incoming webhook endpoints do not require a Capisum API key. They are called by Fincra directly.
+</Note>

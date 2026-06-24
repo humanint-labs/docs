@@ -1,0 +1,61 @@
+---
+title: "FAQ"
+sidebarTitle: "FAQ"
+description: "Answers to common questions about the Capisum public API, payouts, and webhooks."
+keywords: ["FAQ", "troubleshooting", "help", "Fincra payout", "API key", "webhook"]
+icon: "circle-question"
+---
+
+<AccordionGroup>
+  <Accordion title="Why doesn't GET /v1/providers show my connected providers?">
+    `GET /v1/providers` returns the **provider catalog** — slugs Capisum can route to (today, `fincra`). It does not reflect your organization's connection status.
+
+    To check whether Fincra is connected and healthy, call `GET /v1/providers/fincra/status` or open the dashboard **Providers** page.
+  </Accordion>
+
+  <Accordion title="What are minor units?">
+    Amounts are integers in the smallest currency unit:
+
+    - NGN: kobo (`500000` = ₦5,000.00)
+    - GHS: pesewa (`10000` = GH₵100.00)
+    - KES: cent (`50000` = KSh500.00)
+
+    See the [Payouts guide](/guides/payouts#amounts) for examples.
+  </Accordion>
+
+  <Accordion title="Why did my payout fail with PROVIDER_NOT_CONNECTED?">
+    The provider is not connected for your API key's environment. Connect Fincra in the dashboard for **staging** or **production** to match the key you are using.
+
+    Also confirm you passed `provider: fincra` if your routing rules do not yet include a payout rule for that currency.
+  </Accordion>
+
+  <Accordion title="Should I poll verify or wait for webhooks?">
+  Both work. **Webhooks** give faster status updates when Fincra is configured to send events to Capisum. **Verify** (`POST /v1/transactions/{id}/verify`) is useful when webhooks are delayed or during initial integration testing.
+
+  See [Webhooks](/guides/webhooks) for setup.
+  </Accordion>
+
+  <Accordion title="Can I reuse an idempotency key for a different payout?">
+    No. Each logical payout needs a unique `X-Idempotency-Key`. Reusing a key returns the **original** transaction — it does not create a new payout.
+
+    See [Idempotency](/guides/idempotency).
+  </Accordion>
+
+  <Accordion title="Where do I find my organization slug for webhooks?">
+    Your organization slug appears in the Capisum dashboard when you connect a provider. The webhook URL format is:
+
+    ```
+    https://api.capisum.com/v1/webhooks/fincra/{organizationSlug}/{environment}
+    ```
+  </Accordion>
+
+  <Accordion title="What is not covered in this documentation?">
+    Dashboard session APIs, API key management, provider credential storage, routing rule CRUD, billing, and internal admin APIs are managed in the [dashboard](https://app.capisum.com), not through `/v1/*`.
+
+    See [API overview](/api-reference/introduction#not-in-this-api).
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  Still stuck? Email [support@capisum.com](mailto:support@capisum.com) with your `request_id` from the error response.
+</Note>
