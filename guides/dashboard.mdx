@@ -1,0 +1,133 @@
+---
+title: "Using the Capisum Dashboard for Operations"
+sidebarTitle: "Dashboard"
+description: "Manage provider connections, monitor transactions, rotate API keys, and control team access from the Capisum dashboard. Full feature walkthrough."
+---
+
+The Capisum dashboard is your operational control center for everything that happens outside of a direct API call. From here you connect and manage provider credentials, inspect every transaction your application has processed, rotate API keys, and control who on your team can access staging versus production environments. Rather than logging into five different provider dashboards to debug a single failed payout, you do it all from one surface with a unified view across every adapter.
+
+## Dashboard overview
+
+When you log in, the dashboard home shows a live summary of your account's operational health:
+
+| Metric | What it shows |
+|--------|---------------|
+| **Transactions** | Total transaction count across all providers and environments |
+| **Providers** | Number of currently active provider connections |
+| **Success rate** | Percentage of non-failed transactions over the selected time window |
+| **Open issues** | Provider errors, credential failures, or flagged transactions needing attention |
+
+These stats update in real time and reflect whichever environment (sandbox or production) you have selected in the top navigation bar.
+
+## Providers
+
+The **Providers** section is where you connect, configure, and maintain your integrations with payment gateways, digital banks, and other fintech platforms. Each provider tile shows:
+
+- **Connection status** — Active (green) or Inactive (grey). An inactive provider will cause transactions routed to it to fail immediately.
+- **Supported operations** — Whether the provider supports Pay-in, Payout, Accounts, or a combination.
+- **Sandbox toggle** — Enable sandbox mode for a provider without supplying real credentials.
+- **Credential management** — Add, update, or rotate the API keys and secrets your Capisum account uses to authenticate with the provider's API.
+
+<Steps>
+  ### Connect a new provider
+
+  Click **Add Provider**, select the provider from the list, and enter your provider API credentials (typically a public key and secret key, or a client ID and secret). Capisum validates the credentials against the provider's API before saving.
+
+  ### Rotate credentials
+
+  When you cycle provider API keys (for example, after a security review), click **Edit Credentials** on the active provider tile. Paste the new credentials, and Capisum will switch over atomically — no downtime or request failures during the update.
+
+  ### Deactivate a provider
+
+  Toggle the **Active** switch to pause all routing to a provider. Existing in-flight transactions continue to be tracked, but new transactions routed to that provider will be rejected with a clear error until you reactivate it.
+</Steps>
+
+<Note>
+  You must have at least one active provider to process transactions. If a provider's credentials expire or are revoked, Capisum will surface it as an open issue on the dashboard home.
+</Note>
+
+## Transactions
+
+The **Transactions** section gives you a searchable, filterable log of every API request and provider call Capisum has handled for your account. This is the primary tool for monitoring live traffic, debugging failures, and auditing payout activity.
+
+<Tip>
+  When a provider reports an unexpected failure or a customer disputes a charge, the Transactions log is the fastest path to root cause. You get the full request payload, the raw provider response, and the normalized Capisum error — all without leaving the dashboard or opening a separate provider portal.
+</Tip>
+
+### Filtering transaction logs
+
+Narrow down the log to exactly what you're investigating using the filter bar at the top of the Transactions page:
+
+- **By status** — Filter to `pending`, `processing`, `successful`, `settled`, or `failed` transactions
+- **By provider** — Select any connected provider to see only its traffic
+- **By operation type** — Filter to `pay_in` or `payout` transactions exclusively
+- **By time range** — Choose from preset windows (last 24h, last 7 days, last 30 days) or set a custom date range
+
+### Example transaction log
+
+| Time | Provider | Status | Latency | Type |
+|------|----------|--------|---------|------|
+| 14:02:11 | Paystack | settled | 142ms | pay_in |
+| 14:01:58 | Flutterwave | pending | 89ms | pay_in |
+| 14:01:42 | Kuda | failed | 210ms | payout |
+
+### Transaction detail view
+
+Click any row in the transaction log to open the full transaction detail panel. This view shows:
+
+- **Request payload** — The exact JSON body your application sent to Capisum
+- **Provider response** — The raw response Capisum received from the provider, before normalization
+- **Normalized response** — The standardized Capisum response returned to your application
+- **Latency breakdown** — Time from Capisum receipt to provider response
+- **Retry attempts** — If the transaction was retried (automatically or manually), each attempt is listed with its own status and provider response
+- **Timeline** — A chronological sequence of state transitions from creation through the terminal status
+
+## API Keys
+
+The **API Keys** section is where you generate, view, and manage the credentials your application uses to authenticate with Capisum.
+
+<CardGroup cols={2}>
+  <Card title="Live keys" icon="key">
+    `cap_sk_live_...` keys authenticate requests to the production environment. Treat these as secrets — store them in environment variables or a secrets manager and never expose them in client-side code or version control.
+  </Card>
+  <Card title="Test keys" icon="flask">
+    `cap_sk_test_...` keys authenticate requests to the sandbox environment. Safe to use in development and CI pipelines. No real money moves with a test key.
+  </Card>
+</CardGroup>
+
+### Key operations
+
+- **Generate a new key** — Click **New API Key**, select Live or Test, and copy the key immediately. Capisum only shows the full key value once.
+- **Rotate a key** — Generate a new key of the same type, update your application configuration to use the new key, then revoke the old key. Do these steps in order to avoid downtime.
+- **Revoke a key** — Click **Revoke** on any key to permanently invalidate it. All requests using the revoked key will immediately return a `401 Unauthorized` error.
+
+<Warning>
+  There is no way to recover a revoked key. Make sure your application is fully updated to use the new key before revoking the old one.
+</Warning>
+
+## Team
+
+The **Team** section lets you invite colleagues and control what each person can access. This is especially important for separating operational access (viewing transaction logs, managing providers) from administrative access (rotating keys, inviting new members).
+
+### Inviting team members
+
+Click **Invite Member**, enter their email address, and assign a role. Invited members receive an email with a link to set up their account.
+
+### Environment access controls
+
+You can scope a team member's access to the sandbox environment only — useful for developers who need to test integrations but should not have visibility into production transaction data or live credentials. Separate sandbox and production access permissions in **Team → [Member] → Edit Access**.
+
+<CardGroup cols={2}>
+  <Card title="Admin" icon="shield">
+    Full access to all dashboard features across both environments, including key management and team configuration.
+  </Card>
+  <Card title="Developer" icon="code">
+    Access to transaction logs, provider status, and sandbox credentials. Cannot rotate live keys or manage team membership.
+  </Card>
+  <Card title="Ops / Viewer" icon="eye">
+    Read-only access to transaction logs and provider status. Cannot modify credentials, keys, or team settings.
+  </Card>
+  <Card title="Sandbox only" icon="flask">
+    Restricted to the sandbox environment entirely. Useful for contractors or new team members who need to build and test without production visibility.
+  </Card>
+</CardGroup>

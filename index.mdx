@@ -1,20 +1,57 @@
 ---
-title: "Introduction"
-description: "Welcome to your project"
+title: "Capisum: One API for Every Payment Provider"
+sidebarTitle: "Home"
+description: "Connect payment gateways, digital banks, wallets, and crypto platforms through one unified API. Stop maintaining fragmented provider integrations."
 ---
 
-Write a short description of your product here. What it does, who it's for, and what they can accomplish with it.
+Capisum gives your engineering team a single API to send transactions, process payouts, and manage accounts across payment gateways, digital banks, wallets, and crypto platforms. Instead of building and maintaining a separate integration for each provider, you connect once to Capisum and route requests to any supported provider with the same request shape, response format, and error codes.
 
-<Tip>
-  Ready to make this your own? Start by editing this page. Update your `docs.json` file to customize your site. Then fill out the [Quickstart](/quickstart) page.
-</Tip>
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Make your first API call in minutes with step-by-step setup instructions.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Explore every endpoint, parameter, and response object in the Capisum API.
+  </Card>
+  <Card title="Providers" icon="plug" href="/providers/overview">
+    Browse the full network of supported payment gateways, wallets, and more.
+  </Card>
+  <Card title="Core Concepts" icon="book" href="/concepts/unified-api">
+    Understand how Capisum normalizes providers, objects, and error handling.
+  </Card>
+</CardGroup>
 
-<Card title="Quickstart" icon="rocket" href="/quickstart">
-  This card links to the quickstart page in your project.
-</Card>
-<Card title="Components" icon="puzzle-piece" href="https://mintlify.com/docs/components">
-  Add cards, callouts, steps, tabs, and more to design and structure your pages.
-</Card>
-<Card title="Settings" icon="gear" href="https://mintlify.com/docs/organize/settings">
-  Set your site name, branding, and navigation in the `docs.json` file.
-</Card>
+## How Capisum Works
+
+<Steps>
+  <Step title="Connect a provider">
+    Add your provider credentials (Paystack, Flutterwave, Kuda, Quidax, etc.) through the Capisum dashboard. Your credentials are stored securely and never exposed to your application code.
+  </Step>
+  <Step title="Send a request">
+    Call `POST /v1/transactions` with the provider, amount, currency, and operation type. Capisum validates and normalizes the request before forwarding it.
+  </Step>
+  <Step title="Capisum routes to the provider">
+    Capisum's adapter layer translates your request into the provider's native API format, handles authentication, and forwards the call.
+  </Step>
+  <Step title="Receive a standard response">
+    Capisum returns a consistent response object regardless of which provider executed the transaction — same fields, same status vocabulary, every time.
+  </Step>
+</Steps>
+
+## What You Can Build
+
+<CardGroup cols={3}>
+  <Card title="Pay-ins" icon="arrow-down-to-arc" href="/guides/make-a-payment">
+    Accept cards, bank transfers, and local payment methods from any supported gateway.
+  </Card>
+  <Card title="Payouts" icon="arrow-up-from-arc" href="/guides/process-payout">
+    Disburse funds to bank accounts, wallets, and crypto addresses through a single endpoint.
+  </Card>
+  <Card title="Sandbox Testing" icon="flask" href="/guides/sandbox-testing">
+    Test every integration and flow without touching production credentials or live funds.
+  </Card>
+</CardGroup>
+
+<Note>
+  Capisum is currently in early access. [Join the waitlist](https://capisum.com/waitlist) to get your API keys and dashboard access.
+</Note>

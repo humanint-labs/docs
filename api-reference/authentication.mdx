@@ -1,0 +1,118 @@
+---
+title: "API Authentication Reference for Capisum"
+sidebarTitle: "Authentication"
+description: "Authenticate Capisum API requests with Bearer API keys. Learn key formats, header syntax, environment scoping, error responses, and security best practices."
+---
+
+Every request to the Capisum API must be authenticated with an API key. You pass your key in the `Authorization` header using the Bearer scheme — there are no cookies, no session tokens, and no OAuth flows at the API level. Capisum issues separate keys for your production (live) and sandbox (test) environments, and each key is strictly scoped to the environment it was created for. Using the wrong key for the wrong environment is a common source of `403` errors and is covered in detail below.
+
+## Obtaining Your API Keys
+
+You can generate and manage your API keys from the Capisum dashboard:
+
+**Dashboard → Settings → API Keys**
+
+From there you can create new keys, view existing key prefixes, and revoke compromised or unused keys. You will only be shown the full key value once at creation time — copy it to your secrets manager before closing the dialog.
+
+## Key Format
+
+Capisum API keys follow a predictable naming convention that makes it easy to distinguish environments at a glance:
+
+| Environment | Key Format | Example |
+|-------------|------------|---------|
+| Production (live) | `cap_sk_live_<random>` | `cap_sk_live_xxxxxxxxxxxxxxxxxxxx` |
+| Sandbox (test) | `cap_sk_test_<random>` | `cap_sk_test_xxxxxxxxxxxxxxxxxxxx` |
+
+The `live` and `test` segments are load-bearing — Capisum uses them to route your request to the correct environment and rejects keys presented to the wrong one.
+
+## Authorization Header
+
+Include your API key on every request in the `Authorization` header:
+
+```
+Authorization: Bearer cap_sk_live_xxxxxxxxxxxxxxxxxxxx
+```
+
+<Warning>
+  Never include your API key as a query parameter or in the request body. Those channels appear in server logs, browser history, and proxy traces. The `Authorization` header is the only supported and safe way to transmit your key.
+</Warning>
+
+## Code Examples
+
+The following examples show how to attach the authorization header in common environments. In all cases, read the key from an environment variable rather than hardcoding it.
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.capisum.com/v1/transactions \
+  -H "Authorization: Bearer cap_sk_live_xxxxxxxxxxxxxxxxxxxx"
+```
+
+```typescript TypeScript
+const capisum = new Capisum({ apiKey: process.env.CAPISUM_API_KEY });
+```
+
+```python Python
+client = capisum.Client(api_key=os.environ["CAPISUM_API_KEY"])
+```
+
+</CodeGroup>
+
+## Authentication Error Responses
+
+When authentication fails, the API returns a structured error envelope in the response body alongside the appropriate HTTP status code. The `retryable` field is always `false` for authentication errors — re-sending the same request with the same bad credentials will never succeed.
+
+### Missing API Key — `401 Unauthorized`
+
+Returned when the `Authorization` header is absent entirely.
+
+```json
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Missing Authorization header.",
+    "retryable": false
+  }
+}
+```
+
+### Invalid API Key — `401 Unauthorized`
+
+Returned when the header is present but the key value does not match any issued key (e.g., it has been revoked, was typed incorrectly, or was never valid).
+
+```json
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid API key.",
+    "retryable": false
+  }
+}
+```
+
+### Wrong Environment Key — `403 Forbidden`
+
+Returned when a valid key is presented to the wrong environment — most commonly a test key used against a production endpoint, or vice versa.
+
+```json
+{
+  "error": {
+    "code": "FORBIDDEN",
+    "message": "Test key used in production environment.",
+    "retryable": false
+  }
+}
+```
+
+<Note>
+  If you receive a `403` with `FORBIDDEN` and you believe you are using the correct environment, verify that your key prefix (`live` vs `test`) matches the environment you are targeting. Keys cannot be promoted between environments — you must use the key issued for that environment.
+</Note>
+
+## Security Best Practices
+
+Following these practices will protect your keys and your users' data:
+
+- **Use environment variables** — Store API keys in environment variables or a secrets manager (e.g., AWS Secrets Manager, HashiCorp Vault, Doppler). Never hardcode a key into source code or commit it to version control.
+- **Use test keys in development and CI/CD** — Your `cap_sk_test_` key lets you exercise the full API against the sandbox without any risk of touching live funds or live provider accounts.
+- **Rotate compromised keys immediately** — If a live key is ever exposed, revoke it from the dashboard before doing anything else: **Dashboard → Settings → API Keys → Revoke**. Generate a replacement and deploy it to your infrastructure.
+- **Never expose live keys client-side** — Live API keys must never appear in client-side JavaScript bundles, mobile app binaries, or any other artifact that a user could inspect. All calls using your live key must originate from a server you control.

@@ -1,0 +1,232 @@
+---
+title: "POST /v1/transactions — Create a Transaction"
+sidebarTitle: "Create Transaction"
+description: "POST /v1/transactions — Create a pay-in or payout transaction through any supported Capisum provider. Accepts provider, amount, currency, and customer or recipient."
+---
+
+Use this endpoint to initiate a transaction through any provider connected to your Capisum account. You specify the provider, operation type (`pay_in` or `payout`), amount, currency, and a unique reference — Capisum normalizes your request, routes it to the selected provider's adapter, and returns a standard transaction object regardless of which backend executed the call. For pay-ins, include a `customer` object; for payouts, include a `recipient` object with the destination account details.
+
+## Endpoint
+
+```
+POST https://api.capisum.com/v1/transactions
+```
+
+## Request Parameters
+
+<ParamField body="provider" type="string" required>
+  The slug of the provider that should execute this transaction (e.g., `paystack`, `flutterwave`, `kuda`). The provider must be connected and active in your Capisum dashboard before you can route transactions to it.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  The operation type for this transaction. Accepted values: `pay_in` (collect funds from a customer) or `payout` (disburse funds to a recipient).
+</ParamField>
+
+<ParamField body="amount" type="integer" required>
+  Transaction amount expressed in the smallest unit of the given currency — for example, kobo for NGN or cents for USD. Do not pass decimal values.
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  ISO 4217 currency code that matches the provider's supported currencies (e.g., `NGN`, `USD`, `GHS`).
+</ParamField>
+
+<ParamField body="reference" type="string" required>
+  A unique reference string you assign to this transaction. Capisum enforces uniqueness per transaction — if a reference has already been used, the request will be rejected. Use this field to correlate Capisum transactions with your internal records.
+</ParamField>
+
+<ParamField body="customer" type="object" required>
+  Customer details required when `type` is `pay_in`. Capisum passes this object to the provider's checkout or collection flow.
+
+  <Expandable title="customer fields">
+    <ParamField body="email" type="string" required>
+      Customer's email address. Used by the provider to identify and notify the payer.
+    </ParamField>
+
+    <ParamField body="name" type="string">
+      Customer's full name.
+    </ParamField>
+
+    <ParamField body="phone" type="string">
+      Customer's phone number, including country code (e.g., `+2348012345678`).
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="recipient" type="object" required>
+  Recipient details required when `type` is `payout`. Capisum uses this object to resolve the destination account with the provider.
+
+  <Expandable title="recipient fields">
+    <ParamField body="account_number" type="string" required>
+      The destination account number or wallet ID. Format depends on the provider and the payment rail (bank account, mobile wallet, etc.).
+    </ParamField>
+
+    <ParamField body="bank_code" type="string" required>
+      The bank or institution code for the recipient's account. Required for bank-based payouts. Refer to your provider's documentation for valid codes.
+    </ParamField>
+
+    <ParamField body="name" type="string" required>
+      Full name of the recipient as it appears on the destination account.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="narration" type="string">
+  A short description of the transaction that may appear on the customer's or recipient's bank statement. Subject to character limits and support by the selected provider.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Arbitrary key-value pairs you want to attach to this transaction. Values are stored as-is and returned in all subsequent responses for this transaction. Useful for tagging transactions with internal order IDs, user segments, or campaign identifiers.
+</ParamField>
+
+## Code Examples
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.capisum.com/v1/transactions \
+  -H "Authorization: Bearer cap_sk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "paystack",
+    "type": "pay_in",
+    "amount": 500000,
+    "currency": "NGN",
+    "reference": "order-78901",
+    "customer": {
+      "email": "customer@example.com",
+      "name": "Jane Doe"
+    }
+  }'
+```
+
+```typescript TypeScript
+const transaction = await capisum.payments.create({
+  provider: "paystack",
+  type: "pay_in",
+  amount: 500000,
+  currency: "NGN",
+  reference: "order-78901",
+  customer: {
+    email: "customer@example.com",
+    name: "Jane Doe",
+  },
+});
+```
+
+</CodeGroup>
+
+## Response
+
+A successful request returns a `200 OK` with the full transaction object. The `status` field reflects the initial state returned by the provider — most transactions start as `pending` or `processing` before advancing to `successful` or `settled`.
+
+<ResponseField name="id" type="string">
+  Capisum's unique identifier for this transaction, prefixed with `txn_` (e.g., `txn_8f2k9m`). Use this ID to retrieve or reference the transaction in future API calls.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current lifecycle status of the transaction. Possible values:
+  - `pending` — Transaction has been created but not yet processed.
+  - `processing` — The provider has received the request and is working on it.
+  - `successful` — The provider confirmed the transaction completed.
+  - `settled` — Funds have been fully settled.
+  - `failed` — The transaction did not complete. Check `provider_ref` and provider logs for details.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  The operation type: `pay_in` or `payout`.
+</ResponseField>
+
+<ResponseField name="amount" type="integer">
+  Transaction amount in the smallest unit of the currency.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  ISO 4217 currency code.
+</ResponseField>
+
+<ResponseField name="provider" type="string">
+  The provider slug that executed this transaction.
+</ResponseField>
+
+<ResponseField name="provider_ref" type="string">
+  The provider's own transaction reference (e.g., `PSK-9281` for Paystack). Use this when escalating an issue directly to the provider.
+</ResponseField>
+
+<ResponseField name="customer" type="object">
+  The customer object submitted with the request. Returned for `pay_in` transactions.
+
+  <Expandable title="customer fields">
+    <ResponseField name="email" type="string">
+      Customer email address.
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      Customer full name.
+    </ResponseField>
+
+    <ResponseField name="phone" type="string">
+      Customer phone number.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="recipient" type="object">
+  The recipient object submitted with the request. Returned for `payout` transactions.
+
+  <Expandable title="recipient fields">
+    <ResponseField name="account_number" type="string">
+      Recipient account number or wallet ID.
+    </ResponseField>
+
+    <ResponseField name="bank_code" type="string">
+      Bank or institution code.
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      Recipient full name.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="reference" type="string">
+  Your unique reference string as submitted.
+</ResponseField>
+
+<ResponseField name="narration" type="string | null">
+  The narration string, if provided. `null` otherwise.
+</ResponseField>
+
+<ResponseField name="metadata" type="object | null">
+  The metadata key-value pairs attached to this transaction, if provided. `null` otherwise.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 datetime string indicating when the transaction was created in Capisum.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string">
+  ISO 8601 datetime string indicating when the transaction was last updated.
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "id": "txn_8f2k9m",
+  "status": "successful",
+  "type": "pay_in",
+  "amount": 500000,
+  "currency": "NGN",
+  "provider": "paystack",
+  "provider_ref": "PSK-9281",
+  "reference": "order-78901",
+  "customer": {
+    "email": "customer@example.com",
+    "name": "Jane Doe"
+  },
+  "narration": null,
+  "metadata": null,
+  "created_at": "2024-01-15T14:02:11Z",
+  "updated_at": "2024-01-15T14:02:15Z"
+}
+```

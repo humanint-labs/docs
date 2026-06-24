@@ -1,0 +1,98 @@
+---
+title: "How the Capisum Unified API Works"
+sidebarTitle: "Unified API"
+description: "Capisum provides one API surface across all provider categories. Your app uses the same request shape and receives the same response regardless of provider."
+---
+
+Capisum sits between your application and the fragmented world of payment gateways, digital banks, wallets, crypto platforms, and account infrastructure providers. Instead of maintaining a separate integration for every provider — each with its own request format, authentication scheme, status vocabulary, and error shape — you integrate with Capisum once and get a single, stable API surface that covers all of them. When you swap providers, add new ones, or handle provider failures, your core application logic does not change.
+
+## The integration model
+
+Your app always speaks Capisum. Capisum translates. Every provider — whether it's a payment gateway like Paystack, a digital bank like Kuda, a crypto platform like Quidax, or account infrastructure like Anchor — sits behind an adapter that maps your standard Capisum request into that provider's native API format. The translation is completely transparent: you never write provider-specific request bodies, parse provider-specific response payloads, or handle provider-specific error codes directly.
+
+## How a transaction flows
+
+Every call you make follows the same path through the Capisum layer:
+
+<Steps>
+  <Step title="Your app sends POST /v1/transactions">
+    You send a single, consistent request body to Capisum. The shape is the same regardless of which provider you're targeting — you specify the `provider`, `amount`, `currency`, `type`, and any customer details.
+  </Step>
+  <Step title="Capisum validates the request">
+    Capisum checks the request for correctness before touching any provider: amount format, currency code, customer fields, and whether the specified provider is connected and available on your account. Validation errors are returned immediately with a stable error code before any provider call is made.
+  </Step>
+  <Step title="Capisum routes to the selected provider via the adapter layer">
+    Once validated, Capisum forwards the request to the appropriate provider adapter. The adapter translates your standard Capisum request into the provider's native format — handling authentication headers, field naming conventions, and endpoint differences specific to that provider.
+  </Step>
+  <Step title="The provider processes the transaction">
+    The underlying provider — Paystack, Flutterwave, OPay, Quidax, or whichever you specified — processes the operation using its own systems and returns a response to Capisum.
+  </Step>
+  <Step title="Capisum normalizes the response and returns it to your app">
+    Capisum maps the provider's native response back into the Capisum standard response shape. Your app receives the same fields, the same status vocabulary, and the same structure every time — regardless of which provider ran the transaction.
+  </Step>
+</Steps>
+
+## The standard response
+
+No matter which provider executed the transaction, you always get back the same response envelope. Here is what a settled pay-in looks like:
+
+```json
+{
+  "id": "txn_8f2k9m",
+  "status": "settled",
+  "amount": 500000,
+  "currency": "NGN",
+  "provider": "paystack",
+  "provider_ref": "PSK-9281"
+}
+```
+
+The `id` is Capisum's own reference, always prefixed with `txn_`. The `provider_ref` is the underlying provider's transaction ID, which you can use for reconciliation or support queries directly with the provider. The `status` field uses a normalized vocabulary — `pending`, `processing`, `successful`, `settled`, or `failed` — that means the same thing regardless of which backend produced it.
+
+## Making your first call
+
+The TypeScript SDK abstracts the HTTP layer and gives you typed request and response objects. A basic pay-in looks like this:
+
+```typescript
+const transaction = await capisum.payments.create({
+  provider: "flutterwave",
+  amount: 250000,
+  currency: "NGN",
+  type: "pay_in",
+  reference: "your-unique-ref-001",
+  customer: {
+    email: "customer@example.com",
+    name: "Jane Doe",
+  },
+});
+
+console.log(transaction.status); // "pending" | "successful" | "settled" | ...
+console.log(transaction.provider_ref); // Flutterwave's own transaction ID
+```
+
+The same call shape works whether you target Flutterwave, Paystack, Monnify, or any other supported provider. Swapping providers is a one-field change.
+
+## Supported provider categories
+
+Capisum currently supports four provider categories under the unified API surface:
+
+<CardGroup cols={2}>
+  <Card title="Payment Gateways" icon="credit-card">
+    Accept cards, bank transfers, virtual accounts, and local payment methods. Supported providers include Paystack, Flutterwave, Monnify, Korapay, SeerBit, and more.
+  </Card>
+  <Card title="Digital Banks & Wallets" icon="wallet">
+    Route wallet top-ups, mobile money transfers, and neobank payouts. Supported providers include OPay, PalmPay, Kuda, Moniepoint, and Paga.
+  </Card>
+  <Card title="Crypto Platforms" icon="bitcoin">
+    Connect crypto on-ramps, off-ramps, and settlement workflows. Supported providers include Quidax, Binance, Luno, and Yellow Card.
+  </Card>
+  <Card title="Account Infrastructure" icon="building-columns">
+    Provision accounts, link bank data, and initiate pay-by-bank flows. Supported providers include Bridge, Mono, Okra, Anchor, and Maplerad.
+  </Card>
+</CardGroup>
+
+## What Capisum is not
+
+<Note>
+  Capisum is an integration and standardization layer — it does not hold funds, process payments directly, or replace your provider accounts. You still need active accounts and credentials with each provider you want to use. Capisum connects to those accounts on your behalf and normalizes how your application communicates with them.
+</Note>

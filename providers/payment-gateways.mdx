@@ -1,0 +1,159 @@
+---
+title: "Payment Gateway Integrations on Capisum"
+sidebarTitle: "Payment Gateways"
+description: "Connect Paystack, Flutterwave, Monnify, and 6 more payment gateways through the Capisum unified API. Supports pay-in, payout, and virtual accounts."
+---
+
+Payment gateways are the most widely used provider category in Capisum. You can route card payments, bank transfers, mobile money, and virtual account collections through a single API call — switching between Paystack, Flutterwave, Monnify, or any other supported gateway by changing the `provider` field in your request. Capisum handles the translation between your standardized request and each gateway's native API so your integration surface stays stable regardless of which provider you use or add later.
+
+<Note>
+  Capisum does not replace your payment gateway accounts. You need active credentials with each gateway you want to use. Connect them under **Settings → Providers** in the Capisum dashboard before sending live transactions.
+</Note>
+
+## Unified request shape
+
+The same `capisum.payments.create()` call works across all payment gateways. The only field you change is `provider`. This means you can test against one gateway, add a second as a fallback, or run A/B experiments — all without changing your application logic.
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    // Pay via Paystack
+    const transaction = await capisum.payments.create({
+      provider: "paystack",
+      type: "pay_in",
+      amount: 500000,
+      currency: "NGN",
+      customer: { email: "customer@example.com" },
+      reference: "order-001",
+    });
+
+    // Switch to Flutterwave — same call shape
+    const transaction = await capisum.payments.create({
+      provider: "flutterwave",
+      type: "pay_in",
+      amount: 500000,
+      currency: "NGN",
+      customer: { email: "customer@example.com" },
+      reference: "order-002",
+    });
+    ```
+  </Tab>
+  <Tab title="cURL">
+    ```bash
+    # Pay via Paystack
+    curl -X POST https://api.capisum.com/v1/transactions \
+      -H "Authorization: Bearer <YOUR_API_KEY>" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "provider": "paystack",
+        "type": "pay_in",
+        "amount": 500000,
+        "currency": "NGN",
+        "customer": { "email": "customer@example.com" },
+        "reference": "order-001"
+      }'
+    ```
+  </Tab>
+</Tabs>
+
+## Live providers
+
+These providers are fully production-ready. Their adapters are complete and available for live traffic.
+
+---
+
+### Paystack **Live**
+
+Accept cards, bank transfers, and local payment methods through Paystack's widely adopted payment infrastructure across Nigeria and Africa.
+
+**Supported operations:** Pay-in, Payout
+
+---
+
+### Flutterwave **Live**
+
+Process payments across cards, bank transfers, and mobile money. Flutterwave supports a broad range of currencies and markets across the continent.
+
+**Supported operations:** Pay-in, Payout
+
+---
+
+### Monnify **Live**
+
+Collect payments through virtual accounts and bank transfers. Monnify is commonly used for collections flows where customers pay into a dedicated virtual account number.
+
+**Supported operations:** Pay-in, Accounts
+
+---
+
+## Beta providers
+
+These providers are available now and can be integrated into your application, but their adapters are still receiving improvements. Use them in staging environments and validate thoroughly before sending high-volume production traffic.
+
+---
+
+### Interswitch **Beta**
+
+Route card and switch-based payment transactions through Interswitch's established Nigerian payment switch infrastructure.
+
+**Supported operations:** Pay-in, Routing
+
+---
+
+### Remita **Beta**
+
+Handle government and enterprise payment collections. Remita is widely used in public-sector billing and large institutional collection workflows.
+
+**Supported operations:** Pay-in, Payout
+
+---
+
+### Korapay **Beta**
+
+Accept cards, bank transfers, and checkout payments. Korapay provides a developer-friendly checkout experience for Nigerian merchants.
+
+**Supported operations:** Pay-in, Payout
+
+---
+
+### SeerBit **Beta**
+
+Process multi-channel payment collections and disbursements. SeerBit supports a range of payment methods and is used across West African markets.
+
+**Supported operations:** Pay-in, Payout
+
+---
+
+### Squad **Beta**
+
+Run card, transfer, and virtual account payment flows. Squad is a product of GTBank and supports a range of collections and disbursement workflows.
+
+**Supported operations:** Pay-in, Accounts
+
+---
+
+### Fincra **Beta**
+
+Connect cross-border payment and collections infrastructure. Fincra supports NGN, USD, GBP, and EUR corridors — useful if you need to route international payments alongside local flows.
+
+**Supported operations:** Pay-in, Payout, Routing
+
+---
+
+## Provider comparison
+
+| Provider | Status | Pay-in | Payout | Accounts | Routing |
+|---|---|:---:|:---:|:---:|:---:|
+| Paystack | **Live** | ✓ | ✓ | | |
+| Flutterwave | **Live** | ✓ | ✓ | | |
+| Monnify | **Live** | ✓ | | ✓ | |
+| Interswitch | **Beta** | ✓ | | | ✓ |
+| Remita | **Beta** | ✓ | ✓ | | |
+| Korapay | **Beta** | ✓ | ✓ | | |
+| SeerBit | **Beta** | ✓ | ✓ | | |
+| Squad | **Beta** | ✓ | | ✓ | |
+| Fincra | **Beta** | ✓ | ✓ | | ✓ |
+
+<Tip>
+  If your primary use case is virtual account collection, start with **Monnify** or **Squad** — both have dedicated Accounts support. For broad card and transfer coverage, **Paystack** and **Flutterwave** are the most mature Live options.
+</Tip>

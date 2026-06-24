@@ -1,24 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "Capisum",
+  "projectType": "saas",
+  "projectName": "Capisum",
+  "projectDescription": "A unified API layer that connects your application to payment gateways, digital banks, wallets, crypto platforms, and account infrastructure providers through one standard integration.",
   "theme": "luma",
-  "logo": {
-    "light": "https://media.brand.dev/fa2cb93b-803e-4e1e-95ad-49f03dc45e02.svg",
-    "dark": "https://media.brand.dev/fa2cb93b-803e-4e1e-95ad-49f03dc45e02.svg"
-  },
-  "favicon": "https://icons.duckduckgo.com/ip3/capisum.com.ico",
-  "colors": {
-    "primary": "#040404",
-    "light": "#6B7280",
-    "dark": "#040404"
-  },
-  "navbar": {
-    "primary": {
-      "type": "button",
-      "label": "Get Started",
-      "href": "https://capisum.com/waitlist"
-    }
-  },
+  "primaryColor": "#040404",
+  "lightColor": null,
+  "darkColor": "#040404",
   "navigation": {
     "tabs": [
       {
@@ -99,7 +86,24 @@
       }
     ]
   },
-  "footer": {
-    "socials": {}
-  }
+  "keyFeatures": [
+    "Unified API for payment gateways, digital banks, wallets, crypto platforms, and account infrastructure",
+    "Provider adapters that normalize requests and responses across 30+ providers",
+    "Manual provider selection per transaction with a path to smart routing",
+    "Standardized response objects — same fields regardless of provider",
+    "Consistent error codes across all provider categories (retryable vs terminal)",
+    "Transaction logs with filtering, retry context, and failure details",
+    "Dashboard for provider connections, transaction monitoring, and team access",
+    "Sandbox environment for testing integrations without production credentials"
+  ],
+  "publicApiSurface": [
+    "POST /v1/transactions — create a pay-in or payout transaction",
+    "GET /v1/transactions/:id — retrieve a transaction by ID",
+    "GET /v1/transactions — list transactions with filters",
+    "GET /v1/providers — list available providers",
+    "GET /v1/providers/:id — get a specific provider",
+    "capisum.payments.create({ provider, amount, currency })",
+    "Normalized transaction object: { id, status, amount, provider, provider_ref }",
+    "Normalized error codes: INSUFFICIENT_FUNDS, PROVIDER_TIMEOUT, INVALID_ACCOUNT"
+  ]
 }
