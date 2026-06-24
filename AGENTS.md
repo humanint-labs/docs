@@ -2,13 +2,13 @@
 
 ## About this project
 
-- Mintlify docs for the **Capisum public integrator API** (`/v1/*`)
+- Mintlify docs for the **Capisum customer API** (`/v1/*`)
 - Pages are MDX with YAML frontmatter; navigation in `docs.json`
-- OpenAPI spec: `openapi.json` (public endpoints only)
+- OpenAPI spec: `openapi.json` (customer endpoints only)
 
 ## Terminology
 
-- **Public API** — `/v1/*`, API key auth (`cps_...`)
+- **Customer API** — `/v1/*`, API key auth (`cps_...`)
 - **Dashboard API** — `/api/v1/*`, JWT auth — do not document here
 - **Minor units** — smallest currency unit (kobo, pesewa, cent)
 - **Catalog vs connected** — `GET /v1/providers` lists available slugs, not connection status
@@ -21,9 +21,9 @@
 
 ## Content boundaries
 
-**Document:** authentication, payouts, transactions, pagination, idempotency, errors, incoming webhooks, FAQ.
+**Document:** authentication, payouts, transactions, pagination, idempotency, errors.
 
-**Do not document:** dashboard session APIs, API key CRUD, provider credential management, routing CRUD, billing, audit, team, stats, Capisum admin `/api/v1/internal/*`.
+**Do not document:** dashboard session APIs, API key CRUD, provider credential management, routing CRUD, billing, audit, team, stats, incoming webhooks, Capisum admin `/api/v1/internal/*`.
 
 ## Source of truth
 

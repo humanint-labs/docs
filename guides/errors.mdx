@@ -90,4 +90,4 @@ Zod validation failures return `VALIDATION_ERROR` with a `details` object:
 3. For status checks, call `POST /v1/transactions/{id}/verify` instead of creating a new payout
 4. Include `request_id` when contacting [support](mailto:support@capisum.com)
 
-See the [FAQ](/guides/faq) for troubleshooting common error scenarios.
+For provider timeouts, retry with the same idempotency key or poll `POST /v1/transactions/{id}/verify`.

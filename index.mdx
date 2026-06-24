@@ -1,73 +1,38 @@
 ---
-title: "Introduction"
-sidebarTitle: "Introduction"
-description: "Capisum routes payments through your connected providers with a single integrator API."
-keywords: ["Capisum", "payment orchestration", "payouts", "Fincra", "Africa payments", "API"]
+title: "Customer API"
+sidebarTitle: "Overview"
+description: "Capisum customer API for creating payouts and querying transactions."
+keywords: ["Capisum", "customer API", "payouts", "Fincra"]
 icon: "house"
 ---
 
-Capisum is a payment orchestration platform. You connect providers in the dashboard, define routing rules, and call the **public integrator API** at `/v1/*` to create and track payments.
+The Capisum **customer API** (`/v1/*`) is what your backend calls to create payouts and query transactions. Authenticate every request with an API key:
 
-<Warning>
-  This documentation covers the **public API** (`/v1/*`, API key auth). Dashboard backend routes (`/api/v1/*`, JWT auth) are not documented here.
-</Warning>
-
-## What you can do today
-
-| Capability | Public endpoint |
-| --- | --- |
-| Fincra payouts (NGN, GHS, KES) | `POST /v1/transactions/payout` |
-| List and look up transactions | `GET /v1/transactions`, `GET /v1/transactions/ref/{reference}` |
-| Poll payout status | `POST /v1/transactions/{id}/verify` |
-| List supported provider slugs | `GET /v1/providers` |
-| Check provider health | `GET /v1/providers/{slug}/status` |
-
-## Base URL
-
-| Environment | Base URL |
-| --- | --- |
-| Production | `https://api.capisum.com` |
-| Local development | `http://localhost:3000` |
-
-All public endpoints are prefixed with `/v1`. Authenticate with `Authorization: Bearer cps_...`.
-
-## How it works
-
-```mermaid
-sequenceDiagram
-  participant App as Your application
-  participant Capisum as Capisum API (/v1)
-  participant Provider as Payment provider
-
-  App->>Capisum: POST /v1/transactions/payout
-  Capisum->>Provider: Route payout via connected credentials
-  Provider-->>Capisum: Webhook status update
-  Capisum-->>App: Transaction status (poll or webhook)
+```
+Authorization: Bearer cps_your_key_here
 ```
 
-<Steps>
-  <Step title="Connect Fincra in the dashboard">
-    Add provider credentials at [app.capisum.com](https://app.capisum.com). This is not a public API operation.
-  </Step>
-  <Step title="Create an API key">
-    Generate a staging or production key in the dashboard. Keys use the `cps_` prefix.
-  </Step>
-  <Step title="Call the public API">
-    Use the key as a Bearer token against `/v1/*` endpoints.
-  </Step>
-</Steps>
+Base URL: `https://api.capisum.com`
+
+## Endpoints
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/v1/transactions/payout` | Create a payout |
+| `GET` | `/v1/transactions` | List transactions |
+| `GET` | `/v1/transactions/ref/{reference}` | Get by reference |
+| `GET` | `/v1/transactions/{id}` | Get by ID |
+| `POST` | `/v1/transactions/{id}/verify` | Poll provider for status |
+| `GET` | `/v1/providers` | List available provider slugs |
+| `GET` | `/v1/providers/{slug}/status` | Provider health |
+
+## Get started
 
 <Columns cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Create your first staging payout.
+  <Card title="Quickstart" icon="bolt" href="/quickstart">
+    First staging payout.
   </Card>
   <Card title="Authentication" icon="key" href="/authentication">
-    API keys and environment scoping.
-  </Card>
-  <Card title="API reference" icon="code" href="/api-reference/introduction">
-    Shipped `/v1` endpoints and schemas.
-  </Card>
-  <Card title="FAQ" icon="circle-question" href="/guides/faq">
-    Public API vs dashboard routes.
+    API keys and environments.
   </Card>
 </Columns>

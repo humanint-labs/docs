@@ -6,7 +6,7 @@ keywords: ["payout", "Fincra", "NGN", "GHS", "KES", "mobile money", "bank transf
 icon: "money-bill-transfer"
 ---
 
-[`POST /v1/transactions/payout`](/api-reference/introduction#transactions) creates a payout routed through your connected providers. Today, **Fincra payouts** are the supported production path.
+[`POST /v1/transactions/payout`](/api-reference) creates a payout routed through your connected providers. Today, **Fincra payouts** are the supported production path.
 
 ## Amounts
 
@@ -119,7 +119,7 @@ When omitted, Capisum selects a provider using your organization's routing rules
 | `failed` | Provider rejected or errored |
 | `cancelled` | Cancelled before settlement |
 
-Poll status with [`GET /v1/transactions/{id}`](/api-reference/introduction#transactions), [`GET /v1/transactions/ref/{reference}`](/api-reference/introduction#transactions), or [`POST /v1/transactions/{id}/verify`](/api-reference/introduction#transactions). Configure [incoming webhooks](/guides/webhooks) so Capisum receives provider updates automatically.
+Poll status with `GET /v1/transactions/{id}`, `GET /v1/transactions/ref/{reference}`, or `POST /v1/transactions/{id}/verify`.
 
 ## Idempotency
 
