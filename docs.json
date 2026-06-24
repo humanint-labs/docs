@@ -4,8 +4,8 @@
   "description": "Customer API documentation for Capisum integrators.",
   "theme": "luma",
   "logo": {
-    "light": "/logo/icon.svg",
-    "dark": "/logo/icon.svg",
+    "light": "/logo/icon-light.svg",
+    "dark": "/logo/icon-dark.svg",
     "href": "/"
   },
   "favicon": "/favicon.svg",
