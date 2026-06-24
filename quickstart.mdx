@@ -1,47 +1,242 @@
 ---
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+title: "Get Started with Capisum in Minutes"
+sidebarTitle: "Quickstart"
+description: "Make your first Capisum API call in under 5 minutes. Connect a provider, authenticate, and process your first transaction with working code examples."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
-
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+This guide walks you through making your first successful transaction with Capisum. By the end, you will have an API key, a connected provider, and a working code example you can build on. The whole process takes less than five minutes.
 
 ## Prerequisites
 
-Before you begin, you must have:
+Before you begin, make sure you have the following:
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
+- **A Capisum account.** Capisum is currently in early access. [Join the waitlist](https://capisum.com/waitlist) to get access to the dashboard and API.
+- **A provider account with credentials.** You need an active account with at least one provider you want to use (for example, a Paystack account with a live secret key). Capisum connects to your providers — it does not create provider accounts on your behalf.
 
-## Get started
+<Note>
+  If you do not have a production provider account yet, you can still follow this guide using the Capisum sandbox. Use your `cap_sk_test_...` key and set `"provider": "paystack"` in the sandbox — no real credentials or money movement required.
+</Note>
+
+---
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
 
-    ```bash
-    npm install your-package
-    ```
-  </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+  <Step title="Get your API key">
+    Log in to the [Capisum dashboard](https://capisum.com/waitlist) and navigate to **Settings → API Keys**. You will see two keys:
 
-    ```bash
-    your-cli init
-    ```
-  </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+    | Key type | Prefix | Environment |
+    |---|---|---|
+    | Live key | `cap_sk_live_...` | Production |
+    | Test key | `cap_sk_test_...` | Sandbox |
 
-    ```bash
-    your-cli start
-    ```
+    Copy your test key to follow along with this guide. Keep your live key secure — never expose it in client-side code or commit it to version control.
+
+    <Tip>
+      Store your key in an environment variable (e.g. `CAPISUM_API_KEY`) rather than hard-coding it. All examples in this guide use `process.env.CAPISUM_API_KEY` or `os.environ.get("CAPISUM_API_KEY")`.
+    </Tip>
   </Step>
+
+  <Step title="Connect a provider">
+    Before you can route transactions through a provider, you need to add its credentials to Capisum.
+
+    1. In the dashboard, go to **Providers → Connect provider**.
+    2. Select the provider you want to use (for example, **Paystack**).
+    3. Enter the required credentials — typically a secret key or API key from your provider dashboard.
+    4. Save the connection. Capisum will validate the credentials and mark the provider as **Active**.
+
+    Once a provider is active, you can reference it by its identifier (e.g. `"paystack"`, `"flutterwave"`, `"kuda"`) in your API requests.
+  </Step>
+
+  <Step title="Make your first transaction">
+    With your API key ready and a provider connected, you can send your first transaction. The endpoint for all transaction operations is `POST /v1/transactions`.
+
+    The request body requires a `provider`, a transaction `type` (`pay_in` or `payout`), an `amount` in the smallest currency unit (kobo for NGN), a `currency`, and a `customer` object.
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.capisum.com/v1/transactions \
+      -H "Authorization: Bearer cap_sk_live_your_key_here" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "provider": "paystack",
+        "type": "pay_in",
+        "amount": 500000,
+        "currency": "NGN",
+        "customer": {
+          "email": "customer@example.com"
+        },
+        "reference": "your-unique-ref-001"
+      }'
+    ```
+
+    ```typescript TypeScript
+    import Capisum from '@capisum/sdk';
+
+    const capisum = new Capisum({
+      apiKey: process.env.CAPISUM_API_KEY,
+    });
+
+    const transaction = await capisum.payments.create({
+      provider: "paystack",
+      type: "pay_in",
+      amount: 500000,
+      currency: "NGN",
+      customer: { email: "customer@example.com" },
+      reference: "your-unique-ref-001",
+    });
+
+    console.log(transaction.id);     // txn_8f2k9m
+    console.log(transaction.status); // successful
+    ```
+
+    </CodeGroup>
+
+    **Request field reference**
+
+    <ParamField body="provider" type="string" required>
+      The identifier of the connected provider to route this transaction through. For example: `"paystack"`, `"flutterwave"`, `"monnify"`.
+    </ParamField>
+
+    <ParamField body="type" type="string" required>
+      The transaction type. Use `"pay_in"` to collect a payment and `"payout"` to disburse funds.
+    </ParamField>
+
+    <ParamField body="amount" type="integer" required>
+      The transaction amount in the **smallest currency unit**. For NGN, this is kobo — so `500000` represents ₦5,000.
+    </ParamField>
+
+    <ParamField body="currency" type="string" required>
+      ISO 4217 currency code. For example: `"NGN"`, `"USD"`, `"KES"`.
+    </ParamField>
+
+    <ParamField body="customer" type="object" required>
+      A customer object identifying who is making the payment. At minimum, include an `email` field.
+    </ParamField>
+
+    <ParamField body="customer.email" type="string" required>
+      The customer's email address. Used by most providers to identify or create the customer record.
+    </ParamField>
+
+    <ParamField body="reference" type="string">
+      Your own unique reference for this transaction. If provided, Capisum passes it to the provider and includes it in the response. Must be unique per request.
+    </ParamField>
+  </Step>
+
+  <Step title="Read the response">
+    A successful request returns `HTTP 200` with a normalized transaction object. The fields are the same regardless of which provider executed the transaction.
+
+    ```json Response
+    {
+      "id": "txn_8f2k9m",
+      "status": "successful",
+      "provider": "paystack",
+      "provider_ref": "PSK-9281",
+      "amount": 500000,
+      "currency": "NGN",
+      "type": "pay_in",
+      "created_at": "2024-01-15T14:02:11Z"
+    }
+    ```
+
+    **Response field reference**
+
+    <ResponseField name="id" type="string">
+      Capisum's unique identifier for this transaction. Use this to look up the transaction later.
+    </ResponseField>
+
+    <ResponseField name="status" type="string">
+      The normalized transaction status. Common values are `successful`, `pending`, and `failed`. This status is always from Capisum's vocabulary — never the provider's raw status string.
+    </ResponseField>
+
+    <ResponseField name="provider" type="string">
+      The provider identifier that executed this transaction, matching what you sent in the request.
+    </ResponseField>
+
+    <ResponseField name="provider_ref" type="string">
+      The provider's own transaction reference. Keep this for reconciliation with your provider dashboard.
+    </ResponseField>
+
+    <ResponseField name="amount" type="integer">
+      The transaction amount in the smallest currency unit, matching what you sent in the request.
+    </ResponseField>
+
+    <ResponseField name="currency" type="string">
+      ISO 4217 currency code for this transaction.
+    </ResponseField>
+
+    <ResponseField name="type" type="string">
+      The transaction type (`pay_in` or `payout`), matching what you sent in the request.
+    </ResponseField>
+
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp of when the transaction was created in Capisum.
+    </ResponseField>
+  </Step>
+
+  <Step title="Handle errors">
+    When something goes wrong, Capisum returns a structured error envelope with a stable code, a message, and a `retryable` flag. The `retryable` flag tells you definitively whether it is safe to try the same request again.
+
+    ```json Error response
+    {
+      "error": {
+        "code": "INSUFFICIENT_FUNDS",
+        "message": "The customer does not have sufficient funds to complete this transaction.",
+        "retryable": false
+      }
+    }
+    ```
+
+    <Tabs>
+      <Tab title="Terminal errors">
+        Terminal errors will not succeed on retry with the same inputs. Stop and surface the appropriate message to your user or system.
+
+        | Code | Meaning |
+        |---|---|
+        | `INSUFFICIENT_FUNDS` | The customer's account cannot cover the transaction amount. |
+        | `INVALID_ACCOUNT` | The destination account number or details are incorrect. |
+        | `UNAUTHORIZED` | Your API key is missing or invalid. |
+        | `VALIDATION_ERROR` | One or more required fields are missing or malformed. |
+      </Tab>
+      <Tab title="Retryable errors">
+        Retryable errors are transient — the same request may succeed if you try again, ideally with exponential back-off.
+
+        | Code | Meaning |
+        |---|---|
+        | `PROVIDER_TIMEOUT` | The provider did not respond in time. |
+        | `PROVIDER_UNAVAILABLE` | The provider is temporarily unreachable. |
+        | `RATE_LIMITED` | You have exceeded the request rate for this provider or endpoint. |
+      </Tab>
+    </Tabs>
+
+    <Warning>
+      Always check the `retryable` field programmatically rather than matching error codes manually. New codes may be added over time, and some codes can be retryable or terminal depending on context.
+    </Warning>
+  </Step>
+
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+---
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+## What's next
+
+You have made your first Capisum transaction. Here are a few things to explore next:
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Learn how API keys work, how to rotate them, and how to keep your keys secure in staging and production.
+  </Card>
+  <Card title="Providers overview" icon="list" href="/providers/overview">
+    Browse all 30+ supported providers, their categories, operations, and current release status.
+  </Card>
+  <Card title="Unified API concepts" icon="book" href="/concepts/unified-api">
+    Understand how Capisum normalizes requests and responses across different provider categories.
+  </Card>
+  <Card title="API reference" icon="code" href="/api-reference/overview">
+    Explore the full endpoint reference, including all supported parameters and response fields.
+  </Card>
+</CardGroup>
+
+<Note>
+  Use your `cap_sk_test_...` key and the Capisum sandbox to test all of your integration scenarios — including error conditions — before switching to your live key. The sandbox uses the same request shapes and returns the same response fields as production.
+</Note>

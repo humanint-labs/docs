@@ -1,0 +1,131 @@
+---
+title: "Capisum Standard Objects and Response Fields"
+sidebarTitle: "Standard Objects"
+description: "Every Capisum transaction returns the same fields regardless of provider. Learn the transaction object, status vocabulary, and response structure."
+---
+
+One of the core guarantees Capisum makes is that your application always receives the same response structure, regardless of which provider executed the operation. Whether Paystack settled a card payment, Kuda processed a wallet payout, or Quidax handled a crypto settlement, the object your code receives has the same fields, the same types, and the same status vocabulary. This means you write your parsing and display logic once — not once per provider.
+
+## The Transaction object
+
+The transaction object is the central data model in Capisum. Every payment, payout, and account operation you initiate returns or can be fetched as a transaction. Here are all the fields:
+
+<ResponseField name="id" type="string" required>
+  Capisum's unique identifier for the transaction. Always prefixed with `txn_` (e.g., `txn_8f2k9m`). Use this ID to retrieve, reference, or track the transaction within Capisum.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  The normalized transaction status. One of `pending`, `processing`, `successful`, `settled`, or `failed`. This vocabulary is consistent across all providers — see the status reference below for exact meanings.
+</ResponseField>
+
+<ResponseField name="type" type="string" required>
+  The operation type. Either `pay_in` (funds collected from a customer) or `payout` (funds disbursed to a recipient).
+</ResponseField>
+
+<ResponseField name="amount" type="integer" required>
+  The transaction amount expressed in the smallest unit of the currency. For NGN, this is kobo (so ₦5,000 = `500000`). For USD, this is cents ($5.00 = `500`). Always use the smallest unit to avoid floating-point ambiguity.
+</ResponseField>
+
+<ResponseField name="currency" type="string" required>
+  The ISO 4217 currency code for the transaction (e.g., `NGN`, `USD`, `GHS`, `KES`). Capisum preserves the currency you specified in the request.
+</ResponseField>
+
+<ResponseField name="provider" type="string" required>
+  The slug identifying the provider that executed this transaction (e.g., `paystack`, `flutterwave`, `kuda`, `quidax`). This always matches the `provider` field you set in your request.
+</ResponseField>
+
+<ResponseField name="provider_ref" type="string">
+  The provider's own transaction reference or ID. Use this for reconciliation, when contacting provider support, or when cross-referencing transactions in the provider's own dashboard (e.g., `PSK-9281` for Paystack, or a Flutterwave transaction ID).
+</ResponseField>
+
+<ResponseField name="customer" type="object">
+  An object containing the customer details associated with the transaction.
+
+  <Expandable title="customer fields">
+    <ResponseField name="email" type="string">
+      The customer's email address.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      The customer's full name.
+    </ResponseField>
+    <ResponseField name="phone" type="string">
+      The customer's phone number, if provided.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="reference" type="string" required>
+  Your application's unique reference for this transaction. You supply this in the request; Capisum stores and returns it so you can correlate Capisum transaction IDs with your own internal records.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  The ISO 8601 timestamp for when the transaction was created in Capisum (e.g., `2024-01-15T14:02:11Z`).
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" required>
+  The ISO 8601 timestamp for when the transaction was last updated (e.g., `2024-01-15T14:02:15Z`). This changes when the status transitions — for example, from `processing` to `settled`.
+</ResponseField>
+
+## Full transaction example
+
+Here is a complete, settled transaction object as returned from the API:
+
+```json
+{
+  "id": "txn_8f2k9m",
+  "status": "settled",
+  "type": "pay_in",
+  "amount": 500000,
+  "currency": "NGN",
+  "provider": "paystack",
+  "provider_ref": "PSK-9281",
+  "customer": {
+    "email": "customer@example.com",
+    "name": "Jane Doe"
+  },
+  "reference": "your-unique-ref-001",
+  "created_at": "2024-01-15T14:02:11Z",
+  "updated_at": "2024-01-15T14:02:15Z"
+}
+```
+
+This is exactly the same shape you would receive if Flutterwave, Kuda, or Quidax had executed the call instead of Paystack. The only fields that differ between providers are `provider` (the slug) and `provider_ref` (the provider's own ID format). Every other field is normalized by Capisum.
+
+## Status vocabulary
+
+Capisum maps every provider's native status values onto a single, consistent set of statuses. You never need to handle provider-specific status strings like Paystack's `"success"` vs Flutterwave's `"SUCCESSFUL"` — Capisum resolves these to one vocabulary for you.
+
+| Status | Meaning |
+|--------|---------|
+| `pending` | The transaction has been accepted by Capisum and sent to the provider, but the provider has not yet returned a processing confirmation. |
+| `processing` | The provider is actively processing the transaction. This is a transitional state — the outcome is not yet known. |
+| `successful` | The provider has confirmed the transaction was successful. Funds have been accepted or disbursed at the provider level. |
+| `settled` | Funds have fully settled. This is the terminal success state and indicates the transaction is complete. |
+| `failed` | The transaction failed. Check the `error` field on the transaction for a normalized error code and description explaining why. |
+
+<Note>
+  Not all providers use every status in this sequence. Some providers move directly from `pending` to `settled` without an intermediate `successful` state. Capisum maps whatever lifecycle the provider exposes onto this vocabulary, so you should design your status handling to tolerate any valid transition between these states — not assume a fixed sequence.
+</Note>
+
+## Consistency across providers
+
+The same field contract holds across all four provider categories:
+
+<CardGroup cols={2}>
+  <Card title="Payment Gateways" icon="credit-card">
+    Paystack, Flutterwave, Monnify, and others all return `txn_`-prefixed IDs, normalized statuses, and amount-in-kobo — even though their native APIs differ significantly in structure.
+  </Card>
+  <Card title="Digital Banks & Wallets" icon="wallet">
+    OPay, PalmPay, and Kuda wallet operations return the same transaction fields as gateway pay-ins. Your downstream logic treats them identically.
+  </Card>
+  <Card title="Crypto Platforms" icon="bitcoin">
+    Quidax, Binance, and Luno responses are normalized to the same object shape. The `provider_ref` carries the exchange's native transaction ID for reconciliation.
+  </Card>
+  <Card title="Account Infrastructure" icon="building-columns">
+    Account provisioning and pay-by-bank flows via Anchor, Mono, or Bridge are surfaced through the same transaction model where applicable.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Store both `id` (Capisum's reference) and `provider_ref` (the provider's reference) in your database. The Capisum `id` is what you use for all Capisum API operations. The `provider_ref` is what you use when contacting the provider directly — for example, when raising a support ticket with Paystack or cross-checking a payout in Flutterwave's dashboard.
+</Tip>

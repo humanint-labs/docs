@@ -1,0 +1,71 @@
+---
+title: "Capisum Provider Network: 30+ Fintech Integrations"
+sidebarTitle: "Overview"
+description: "Browse the full Capisum provider network across payment gateways, digital banks, wallets, crypto platforms, and account infrastructure. Connect any supported provider."
+---
+
+Capisum gives you a single API surface to connect your application to 30+ fintech providers across payment gateways, digital banks and wallets, crypto platforms, and account infrastructure. Instead of maintaining separate integrations for each provider — each with its own request shapes, auth flows, and error formats — you write once against the Capisum API and switch or combine providers through configuration.
+
+<Note>
+  **Capisum is an integration layer, not a payment processor.** You need your own account and API credentials with each provider you intend to use. Capisum does not hold funds, process transactions on your behalf, or replace your provider agreements. It standardizes how your application talks to those providers.
+</Note>
+
+## Provider categories
+
+Browse by category to see the full list of supported providers, their current status, and which operations each one supports.
+
+<CardGroup cols={2}>
+  <Card title="Payment Gateways" icon="credit-card" href="/providers/payment-gateways">
+    Route pay-in, payout, and virtual account flows across Paystack, Flutterwave, Monnify, and 6 more gateway providers.
+  </Card>
+  <Card title="Digital Banks & Wallets" icon="wallet" href="/providers/digital-banks-wallets">
+    Connect wallet top-ups, pay-ins, and payouts across OPay, PalmPay, Kuda, and more neobank and wallet rails.
+  </Card>
+  <Card title="Crypto Platforms" icon="bitcoin" href="/providers/crypto-platforms">
+    Standardize crypto buy, sell, settlement, and wallet operations across Quidax, Binance, Luno, and more.
+  </Card>
+  <Card title="Account Infrastructure" icon="building-columns" href="/providers/account-infrastructure">
+    Provision accounts, retrieve open banking data, and initiate pay-by-bank via Mono, Anchor, Bridge, and more.
+  </Card>
+</CardGroup>
+
+## Supported operations by category
+
+Each provider category maps to a set of operations that Capisum normalizes across all providers in that group. You use the same request shape regardless of which provider you select.
+
+| Category | Supported operations |
+|---|---|
+| Payment Gateways | Pay-in, Payout, Accounts (virtual accounts) |
+| Digital Banks & Wallets | Wallet top-up, Pay-in, Payout |
+| Crypto Platforms | Crypto buy/sell, Settlement, Wallet |
+| Account Infrastructure | Account data, Account provisioning, Pay-by-bank |
+
+## Provider status labels
+
+Every provider in the Capisum network carries one of three status labels. You'll see these on each provider's detail page and in the dashboard.
+
+| Status | Meaning |
+|---|---|
+| **Live** | Production-ready. The adapter is fully implemented and available for live traffic. |
+| **Beta** | Available now with limited testing. You can connect and build against this provider, but the adapter may still be receiving improvements. |
+| **Coming Soon** | On the roadmap. The provider is planned but not yet available for connection. |
+
+## How to connect a provider
+
+Before you can route transactions through a provider, you need to link your credentials inside the Capisum dashboard. The steps below apply to every provider regardless of category.
+
+<Steps>
+  <Step title="Add credentials in the dashboard">
+    Go to **Settings → Providers** in the Capisum dashboard and select the provider you want to connect. Enter the API keys or credentials from your provider account. Capisum stores these securely and uses them when routing requests on your behalf.
+  </Step>
+  <Step title="Test in sandbox mode">
+    Switch your Capisum environment to sandbox and run a test transaction. The sandbox forwards requests to the provider's own test environment (where available), so you can verify the full request-response cycle before going live.
+  </Step>
+  <Step title="Activate for production">
+    Once your sandbox tests pass, flip the environment to production in the dashboard. Your live provider credentials will be used for all subsequent requests. You can connect multiple providers and choose the active one per transaction using the `provider` field in your API calls.
+  </Step>
+</Steps>
+
+<Tip>
+  You can connect multiple providers at the same time and select the provider per transaction using the `provider` field in your request payload. This gives you full control over routing without any automatic switching in the MVP — smart routing is a planned future feature.
+</Tip>

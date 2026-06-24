@@ -1,0 +1,154 @@
+---
+title: "GET /v1/transactions/:id — Retrieve a Transaction"
+sidebarTitle: "Get Transaction"
+description: "GET /v1/transactions/:id — Retrieve a single Capisum transaction by ID. Returns the full transaction object including status, provider reference, and customer details."
+---
+
+Use this endpoint to fetch the current state of any transaction by its Capisum transaction ID. The response includes the full normalized transaction object — including the latest `status`, the provider's own reference, and the customer or recipient details submitted at creation time. Because some providers process transactions asynchronously, you can call this endpoint repeatedly to track status progression from `pending` through to `settled` or `failed`.
+
+## Endpoint
+
+```
+GET https://api.capisum.com/v1/transactions/{id}
+```
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The Capisum transaction ID returned when the transaction was created (e.g., `txn_8f2k9m`). Transaction IDs are always prefixed with `txn_`.
+</ParamField>
+
+## Code Examples
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.capisum.com/v1/transactions/txn_8f2k9m \
+  -H "Authorization: Bearer cap_sk_live_..."
+```
+
+```typescript TypeScript
+const transaction = await capisum.transactions.get("txn_8f2k9m");
+```
+
+</CodeGroup>
+
+## Response
+
+A successful request returns a `200 OK` with the full, current transaction object. All fields are normalized by Capisum regardless of which provider executed the transaction.
+
+<ResponseField name="id" type="string">
+  Capisum's unique identifier for the transaction, prefixed with `txn_`.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current lifecycle status of the transaction. Possible values:
+  - `pending` — Transaction has been created but not yet processed.
+  - `processing` — The provider has received the request and is working on it.
+  - `successful` — The provider confirmed the transaction completed.
+  - `settled` — Funds have been fully settled.
+  - `failed` — The transaction did not complete. Check `provider_ref` and provider logs for details.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  The operation type: `pay_in` or `payout`.
+</ResponseField>
+
+<ResponseField name="amount" type="integer">
+  Transaction amount in the smallest unit of the currency.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  ISO 4217 currency code.
+</ResponseField>
+
+<ResponseField name="provider" type="string">
+  The provider slug that executed this transaction (e.g., `paystack`, `flutterwave`, `kuda`).
+</ResponseField>
+
+<ResponseField name="provider_ref" type="string">
+  The provider's own transaction reference. Use this when escalating an issue directly to the provider's support team.
+</ResponseField>
+
+<ResponseField name="customer" type="object">
+  The customer object associated with this transaction. Present on `pay_in` transactions.
+
+  <Expandable title="customer fields">
+    <ResponseField name="email" type="string">
+      Customer email address.
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      Customer full name.
+    </ResponseField>
+
+    <ResponseField name="phone" type="string">
+      Customer phone number.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="recipient" type="object">
+  The recipient object associated with this transaction. Present on `payout` transactions.
+
+  <Expandable title="recipient fields">
+    <ResponseField name="account_number" type="string">
+      Recipient account number or wallet ID.
+    </ResponseField>
+
+    <ResponseField name="bank_code" type="string">
+      Bank or institution code.
+    </ResponseField>
+
+    <ResponseField name="name" type="string">
+      Recipient full name.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="reference" type="string">
+  The unique reference string you supplied when creating the transaction.
+</ResponseField>
+
+<ResponseField name="narration" type="string | null">
+  The narration string attached to this transaction, if provided. `null` otherwise.
+</ResponseField>
+
+<ResponseField name="metadata" type="object | null">
+  The metadata key-value pairs attached to this transaction, if provided. `null` otherwise.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 datetime string indicating when the transaction was created in Capisum.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string">
+  ISO 8601 datetime string indicating when the transaction was last updated. Advances each time the status changes.
+</ResponseField>
+
+### Example Response
+
+```json
+{
+  "id": "txn_8f2k9m",
+  "status": "settled",
+  "type": "pay_in",
+  "amount": 500000,
+  "currency": "NGN",
+  "provider": "paystack",
+  "provider_ref": "PSK-9281",
+  "reference": "order-78901",
+  "customer": {
+    "email": "customer@example.com",
+    "name": "Jane Doe"
+  },
+  "narration": null,
+  "metadata": null,
+  "created_at": "2024-01-15T14:02:11Z",
+  "updated_at": "2024-01-15T14:02:15Z"
+}
+```
+
+<Note>
+  For providers that process transactions asynchronously, the initial response to `POST /v1/transactions` may return a `pending` or `processing` status. Poll this endpoint at a reasonable interval (for example, every 2–5 seconds) to track the transaction through to a terminal state (`successful`, `settled`, or `failed`). Avoid aggressive polling — most providers resolve within a few seconds.
+</Note>

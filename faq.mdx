@@ -1,0 +1,121 @@
+---
+title: "Capisum FAQ: Common Questions Answered"
+sidebarTitle: "FAQ"
+description: "Answers to the most common questions about Capisum — what it is, how it works, which providers are supported, compliance, pricing, and sandbox access."
+---
+
+Whether you're evaluating Capisum for a new project or already integrating, these answers cover the most common questions about what Capisum does, how it fits into your stack, what it leaves to you, and what you can expect as the platform evolves. If you don't find what you're looking for here, reach out at [capisum.com/contact](https://capisum.com/contact).
+
+---
+
+<Accordion title="What is Capisum?">
+  Capisum is a unified API layer that lets your application connect to payment gateways, digital banks, wallets, crypto platforms, and account infrastructure providers through one standard integration. Instead of building and maintaining a separate integration for every provider your product needs, you integrate with Capisum once and route requests to any supported provider from that single interface.
+
+  The core value is standardization: every provider speaks its own request format, uses its own status vocabulary, and throws its own error shapes. Capisum absorbs that variation behind adapters so your application always works with the same transaction model, the same response fields, and the same error codes — regardless of which backend executed the operation.
+</Accordion>
+
+<Accordion title="Does Capisum process payments directly?">
+  No. Capisum is not a payment processor and does not sit in the money flow. It does not replace the underlying providers, hold funds on your behalf, or issue cards or accounts. When you send a payment request through Capisum, the actual transaction is executed by the provider you selected — Paystack, Flutterwave, Monnify, or whichever adapter you've configured.
+
+  What Capisum does is standardize how your application connects to those providers: it validates your request, translates it into the provider's native format, forwards it, receives the provider's response, normalizes it back into the Capisum standard shape, and returns it to your app. The money moves between your customer and the provider — Capisum handles the translation layer in between.
+</Accordion>
+
+<Accordion title="Which providers can I connect to?">
+  Capisum supports 30+ providers across payment gateways, digital banks, wallets, crypto platforms, and account infrastructure. Currently live or in beta integrations include:
+
+  - **Payment gateways:** Paystack, Flutterwave, Monnify, Interswitch, Remita, Korapay, SeerBit, Squad
+  - **Digital banks & wallets:** OPay, PalmPay, Kuda
+  - **Crypto platforms:** Quidax, Binance, Luno
+  - **Account infrastructure:** Bridge, Unit, Treasury Prime
+
+  New providers are being added continuously. See the full list, availability status, and supported operations on the [providers overview](/providers/overview) page.
+</Accordion>
+
+<Accordion title="Can I choose which provider handles a transaction?">
+  Yes. You control provider selection explicitly by setting the `provider` field on each request. There is no automatic or opaque routing — every call goes exactly where you direct it.
+
+  ```typescript
+  const transaction = await capisum.payments.create({
+    provider: "paystack", // you decide
+    type: "pay_in",
+    amount: 500000,
+    currency: "NGN",
+  });
+  ```
+
+  This makes your routing predictable and auditable in the MVP. Smart routing policies — rules that automatically select or fall back to a provider based on cost, availability, geography, or other criteria — are planned as an optional dashboard feature for teams that want to move beyond manual selection as their volume grows.
+</Accordion>
+
+<Accordion title="What operations does Capisum support?">
+  The current focus covers the core payment and account operations that engineering teams need most:
+
+  - **Pay-ins** — Accept payments from customers through supported gateways and wallets
+  - **Payouts** — Disburse funds to bank accounts or wallets
+  - **Provider selection** — Route any operation to a specific provider per request
+  - **Transaction status** — Query the current state of any transaction by ID
+  - **Standardized responses** — Receive consistent response fields regardless of provider
+  - **Provider monitoring** — Track the operational status of connected providers
+
+  Additional operation types — including account provisioning, balance queries, and crypto ramp operations — are on the roadmap as more provider adapters reach general availability.
+</Accordion>
+
+<Accordion title="Does Capisum handle KYC or compliance?">
+  No. Capisum does not perform KYC, KYB, AML screening, or any other compliance process on your behalf. Your team is responsible for completing verification and compliance requirements directly with each provider you connect to.
+
+  Capisum's scope is integration, standardization, routing, and observability — it connects your app to the providers you've already onboarded and credentialed. If you're building a regulated fintech product, ensure your compliance posture with each provider is in place before you route live transactions through Capisum. The Custom plan includes compliance review support for teams that need guidance on this; contact [capisum.com/contact](https://capisum.com/contact) to discuss.
+</Accordion>
+
+<Accordion title="Do I need separate accounts with each provider?">
+  Yes. Capisum connects and standardizes your existing provider relationships — it doesn't create them for you. Before you can route transactions to a provider through Capisum, you'll need:
+
+  1. An active account with that provider
+  2. API credentials (keys, secrets, or tokens) issued by the provider
+  3. Any compliance, KYC, or activation steps the provider requires
+
+  Once you have credentials, you add them to your Capisum dashboard and the adapter handles everything from there. You keep your direct relationship with each provider; Capisum gives you one consistent API surface to operate all of them through.
+</Accordion>
+
+<Accordion title="What happens when a provider fails?">
+  When a provider returns an error or becomes unavailable, Capisum maps the failure to a stable, normalized error code and returns it in a consistent error envelope. Your application doesn't need to know how Paystack's error messages differ from Flutterwave's — you handle `PROVIDER_TIMEOUT`, `INSUFFICIENT_FUNDS`, `INVALID_ACCOUNT`, and the rest of the stable code set, and your retry logic, alerting, and support playbooks work identically across every provider.
+
+  Each error also carries a `retryable` boolean field. `retryable: true` signals transient failures where a retry is appropriate (e.g. `PROVIDER_TIMEOUT`). `retryable: false` signals terminal failures where retrying without changing something won't help (e.g. `INSUFFICIENT_FUNDS`).
+
+  Smart routing with automatic retry and provider failover — where Capisum can re-route a failed request to a fallback provider based on your configured policies — is a planned feature. It will be opt-in and configurable from the dashboard, never applied automatically.
+</Accordion>
+
+<Accordion title="Is there a sandbox environment?">
+  Yes. Capisum provides a full sandbox environment so you can build and test your integration without touching real funds or live provider accounts. To use it, authenticate with a test API key (`cap_sk_test_...`) — all requests made with a test key are processed in the sandbox, including simulated provider responses, error scenarios, and webhook events.
+
+  The sandbox mirrors the production API exactly: same endpoints, same request shapes, same response fields. This means you can develop and test against the sandbox and deploy to production with only a key swap.
+
+  See the [sandbox testing guide](/guides/sandbox-testing) for a full walkthrough, including how to simulate specific provider responses and trigger error conditions for testing your error-handling logic.
+</Accordion>
+
+<Accordion title="Is Capisum designed for developers?">
+  Yes. Capisum is built specifically for engineering teams. The product is designed around the problems developers actually face when integrating multiple fintech providers: different request formats, different response shapes, different error models, different authentication schemes, and the ongoing maintenance burden as those provider APIs change.
+
+  Capisum gives you one clean REST API, a typed SDK, consistent objects and errors, and full transaction logs — so you spend your time building your product rather than writing and maintaining per-provider adapter code. If your team has previously integrated more than one payment provider and written glue code to normalize their responses, Capisum replaces that work entirely.
+</Accordion>
+
+<Accordion title="What pricing plans are available?">
+  Capisum offers three plans to match where your team is:
+
+  - **Pay-as-you-go** — Usage-based pricing, no monthly commitment. You pay per API call and get access to both sandbox and production, all supported providers, pay-in and payout operations, and email support. Best for teams in early development or with unpredictable volume.
+
+  - **Monthly subscription — $20/month** — Includes 100,000 API calls per month, up to 10 connected providers, provider status monitoring, and everything in the pay-as-you-go tier. Best for teams shipping real fintech workflows with predictable volume.
+
+  - **Custom / Enterprise** — Unlimited providers, custom API call limits, dedicated support, SLA options, compliance review support, and custom routing rules. Contact [capisum.com/contact](https://capisum.com/contact) to discuss your requirements.
+
+  All plans include sandbox access. See the full breakdown at [capisum.com/#pricing](https://capisum.com/#pricing).
+</Accordion>
+
+<Accordion title="How do I get my API key?">
+  Capisum is currently in early access. To get started:
+
+  1. Join the waitlist at [capisum.com/waitlist](https://capisum.com/waitlist)
+  2. Once you receive access, log into your dashboard
+  3. Navigate to **Settings → API Keys**
+  4. Copy your test key (`cap_sk_test_...`) to start building against the sandbox, or your live key for production traffic
+
+  Keep your API keys out of source control. Use environment variables or a secrets manager to inject them at runtime. If a key is ever compromised, you can rotate it from the same Settings page without changing your integration code.
+</Accordion>
