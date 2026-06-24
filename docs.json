@@ -4,8 +4,9 @@
   "description": "Customer API documentation for Capisum integrators.",
   "theme": "luma",
   "logo": {
-    "light": "https://media.brand.dev/fa2cb93b-803e-4e1e-95ad-49f03dc45e02.svg",
-    "dark": "https://media.brand.dev/fa2cb93b-803e-4e1e-95ad-49f03dc45e02.svg"
+    "light": "/logo/icon.svg",
+    "dark": "/logo/icon.svg",
+    "href": "/"
   },
   "favicon": "/favicon.svg",
   "colors": {
@@ -20,6 +21,9 @@
       "twitter:card": "summary_large_image",
       "og:type": "website"
     }
+  },
+  "search": {
+    "prompt": "Search docs..."
   },
   "api": {
     "openapi": "openapi.json",
@@ -42,119 +46,58 @@
     }
   },
   "navigation": {
-    "tabs": [
+    "groups": [
       {
-        "tab": "Customer API",
-        "icon": "code",
-        "groups": [
-          {
-            "group": "Authentication",
-            "icon": "key",
-            "pages": [
-              "index",
-              "quickstart",
-              "authentication"
-            ]
-          },
-          {
-            "group": "Guides",
-            "icon": "book-open",
-            "pages": [
-              "guides/providers",
-              "guides/payouts",
-              "guides/idempotency",
-              "guides/pagination",
-              "guides/errors"
-            ]
-          },
-          {
-            "group": "Providers",
-            "openapi": "openapi.json",
-            "pages": [
-              "GET /v1/providers",
-              "GET /v1/providers/{slug}/status"
-            ]
-          },
-          {
-            "group": "Transactions",
-            "openapi": "openapi.json",
-            "pages": [
-              "POST /v1/transactions/payout",
-              "GET /v1/transactions",
-              "GET /v1/transactions/ref/{reference}",
-              "GET /v1/transactions/{id}",
-              "POST /v1/transactions/{id}/verify"
-            ]
-          }
+        "group": "Authentication",
+        "icon": "key",
+        "pages": [
+          "index",
+          "quickstart",
+          "authentication"
+        ]
+      },
+      {
+        "group": "Guides",
+        "icon": "book-open",
+        "pages": [
+          "guides/providers",
+          "guides/payouts",
+          "guides/idempotency",
+          "guides/pagination",
+          "guides/errors"
+        ]
+      },
+      {
+        "group": "Providers",
+        "openapi": "openapi.json",
+        "pages": [
+          "GET /v1/providers",
+          "GET /v1/providers/{slug}/status"
+        ]
+      },
+      {
+        "group": "Transactions",
+        "openapi": "openapi.json",
+        "pages": [
+          "POST /v1/transactions/payout",
+          "GET /v1/transactions",
+          "GET /v1/transactions/ref/{reference}",
+          "GET /v1/transactions/{id}",
+          "POST /v1/transactions/{id}/verify"
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Website",
-          "href": "https://capisum.com",
-          "icon": "globe"
-        },
-        {
-          "anchor": "Products",
-          "href": "https://capisum.com/products",
-          "icon": "layer-group"
-        },
-        {
-          "anchor": "Providers",
-          "href": "https://capisum.com/providers",
-          "icon": "plug"
-        },
-        {
-          "anchor": "Dashboard",
-          "href": "https://app.capisum.com",
-          "icon": "grid-2"
-        },
-        {
-          "anchor": "Support",
-          "href": "mailto:support@capisum.com",
-          "icon": "life-ring"
-        }
-      ]
-    }
+    ]
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Website",
-        "href": "https://capisum.com"
-      },
-      {
-        "label": "Products",
-        "href": "https://capisum.com/products"
-      },
-      {
-        "label": "Providers",
-        "href": "https://capisum.com/providers"
-      },
-      {
-        "label": "Contact",
-        "href": "https://capisum.com/contact"
-      }
-    ],
+    "links": [],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
+      "label": "Sign in",
       "href": "https://app.capisum.com"
     }
   },
   "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
+    "options": ["assistant"]
   },
   "footer": {
     "links": [

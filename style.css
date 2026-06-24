@@ -1,0 +1,12 @@
+/* Sidebar separator from main content */
+sidebar {
+  border-right: 1px solid rgba(120, 120, 120, 0.22);
+}
+
+/* Keep the top bar minimal: logo, search, assistant, sign in, theme toggle */
+navbar-link,
+nav-anchors,
+nav-anchor,
+.nav-tabs {
+  display: none;
+}
