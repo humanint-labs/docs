@@ -7,6 +7,14 @@ icon: "circle-question"
 ---
 
 <AccordionGroup>
+  <Accordion title="What is the difference between /v1 and /api/v1?">
+    **`/v1/*`** is the public integrator API. Authenticate with `Authorization: Bearer cps_...` (API key). This is what your backend calls.
+
+    **`/api/v1/*`** is the dashboard backend. Authenticate with a short-lived JWT from token exchange. It powers the Capisum web app — provider credential storage, API key CRUD, routing rules, billing, and team management.
+
+    This documentation site covers **`/v1/*` only**.
+  </Accordion>
+
   <Accordion title="Why doesn't GET /v1/providers show my connected providers?">
     `GET /v1/providers` returns the **provider catalog** — slugs Capisum can route to (today, `fincra`). It does not reflect your organization's connection status.
 

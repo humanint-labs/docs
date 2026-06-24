@@ -32,6 +32,18 @@ See [Authentication](/authentication) for key format and [Environments](/guides/
 | Amounts | Integers in minor currency units — see [Payouts](/guides/payouts#amounts) |
 | Idempotency | `X-Idempotency-Key` required for payout creation — see [Idempotency](/guides/idempotency) |
 
+## Public API vs dashboard
+
+| Surface | Prefix | Auth | Documented here |
+| --- | --- | --- | --- |
+| Public integrator API | `/v1/*` | `Bearer cps_...` | Yes |
+| Dashboard backend | `/api/v1/*` | JWT (session) | No |
+| Incoming provider webhooks | `/v1/webhooks/*` | Provider signature | Yes (setup only) |
+
+<Warning>
+  Do not call `/api/v1/providers`, `/api/v1/api-keys`, or `/api/v1/routing/*` from your application. Those are dashboard routes.
+</Warning>
+
 ## Shipped endpoints
 
 ### Providers
