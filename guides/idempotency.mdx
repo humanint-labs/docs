@@ -1,0 +1,73 @@
+---
+title: "Idempotency"
+sidebarTitle: "Idempotency"
+description: "Safely retry payout requests with X-Idempotency-Key without creating duplicate transactions."
+keywords: ["idempotency", "X-Idempotency-Key", "retry", "duplicate payout", "safe retries"]
+icon: "rotate"
+---
+
+`POST /v1/transactions/payout` requires an `X-Idempotency-Key` header. Capisum uses this key to deduplicate requests within your organization.
+
+## Header format
+
+```
+X-Idempotency-Key: payout-order-12345
+```
+
+| Constraint | Value |
+| --- | --- |
+| Length | 1–128 characters |
+| Characters | Alphanumeric, underscore (`_`), hyphen (`-`) |
+
+## Behavior
+
+1. **First request** — Capisum creates a transaction and associates it with the idempotency key.
+2. **Retry with the same key** — Capisum returns the **original** transaction instead of creating a duplicate.
+3. **Different key** — Treated as a new payout.
+
+<Tip>
+  Generate a unique key per logical payout — for example, your internal order ID or a UUID. Reuse the same key when retrying after network timeouts.
+</Tip>
+
+## Example
+
+```bash
+IDEM_KEY="order_abc123_payout_1"
+
+curl -X POST "$CAPISUM_BASE_URL/v1/transactions/payout" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "X-Idempotency-Key: $IDEM_KEY" \
+  -d '{ ... }'
+
+# Safe to retry with the same key after a timeout
+curl -X POST "$CAPISUM_BASE_URL/v1/transactions/payout" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "X-Idempotency-Key: $IDEM_KEY" \
+  -d '{ ... }'
+```
+
+## Validation errors
+
+| Condition | HTTP status | Code |
+| --- | --- | --- |
+| Header missing | 400 | `VALIDATION_ERROR` |
+| Invalid format | 400 | `VALIDATION_ERROR` |
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "X-Idempotency-Key header is required for this operation",
+    "retryable": false,
+    "request_id": "req_01h2example"
+  }
+}
+```
+
+## Scope
+
+Idempotency keys are scoped to your **organization**. Two organizations can use the same key string without conflict.
+
+Pay-in creation also requires idempotency when that endpoint becomes available.

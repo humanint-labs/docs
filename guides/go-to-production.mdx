@@ -1,0 +1,73 @@
+---
+title: "Go to production"
+sidebarTitle: "Go to production"
+description: "Checklist for moving from staging integration to live Fincra payouts."
+keywords: ["production", "go live", "staging", "Fincra", "deployment"]
+icon: "rocket"
+---
+
+Use this checklist when you are ready to process live payouts through Capisum.
+
+## Before you switch
+
+<Check>
+  Completed end-to-end payout tests in **staging** using a staging API key and Fincra sandbox credentials.
+</Check>
+
+<Check>
+  Verified payout status updates via `POST /v1/transactions/{id}/verify` or incoming Fincra webhooks.
+</Check>
+
+<Check>
+  Confirmed [idempotency](/guides/idempotency) retry behavior for your payout creation flow.
+</Check>
+
+<Check>
+  Reviewed [error handling](/guides/errors) and logging for `request_id` in support escalations.
+</Check>
+
+## Production setup
+
+<Steps>
+  <Step title="Connect Fincra for production">
+    In the [dashboard](https://app.capisum.com), add **live** Fincra credentials for the production environment.
+  </Step>
+  <Step title="Register production webhooks">
+    Configure the organization-scoped Fincra webhook URL for `production`. See [Webhooks](/guides/webhooks).
+  </Step>
+  <Step title="Create a production API key">
+    Generate a new key with `environment: production`. Never reuse staging keys in production.
+  </Step>
+  <Step title="Update application configuration">
+    Point your deployment secrets to the production key and `https://api.capisum.com`.
+  </Step>
+  <Step title="Run a small live payout">
+    Send a low-value payout and confirm it reaches `settled` status.
+  </Step>
+</Steps>
+
+## Security
+
+- Store production keys in a secrets manager
+- Restrict production key access to production infrastructure only
+- Rotate keys by creating a replacement, migrating traffic, then revoking the old key
+- Never log full API keys or payout recipient details in plaintext
+
+## Monitoring
+
+After launch:
+
+1. Watch for `failed` and `processing` transactions that do not progress
+2. Use `GET /v1/transactions?status_group=failed` to audit failures
+3. Include `request_id` when contacting [support](mailto:support@capisum.com)
+
+## Related guides
+
+<Columns cols={2}>
+  <Card title="Environments" icon="layer-group" href="/guides/environments">
+    How staging and production scope keys and data.
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/guides/webhooks">
+    Production Fincra webhook configuration.
+  </Card>
+</Columns>

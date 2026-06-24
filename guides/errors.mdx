@@ -1,0 +1,93 @@
+---
+title: "Errors"
+sidebarTitle: "Errors"
+description: "Error response format, HTTP status codes, and retry guidance for the Capisum public API."
+keywords: ["errors", "error codes", "VALIDATION_ERROR", "PROVIDER_ERROR", "retryable", "request_id"]
+icon: "triangle-exclamation"
+---
+
+Capisum returns structured JSON errors with a consistent shape. Successful responses wrap resources in a `data` field; errors use an `error` object.
+
+## Error shape
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "retryable": false,
+    "request_id": "req_01h2example",
+    "details": {}
+  }
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `code` | Machine-readable error code |
+| `message` | Human-readable description |
+| `retryable` | Whether retrying the same request may succeed |
+| `request_id` | Request ID for support — also sent as `x-request-id` |
+| `details` | Optional structured context (validation issues, provider payload) |
+
+Response headers may also include:
+
+- `x-capisum-error-code`
+- `x-capisum-error-message`
+
+## HTTP status codes
+
+| Status | Typical codes |
+| --- | --- |
+| 400 | `VALIDATION_ERROR`, `INVALID_REQUEST`, `MISSING_IDEMPOTENCY_KEY` |
+| 401 | `UNAUTHORIZED` |
+| 403 | `FORBIDDEN` |
+| 404 | `NOT_FOUND`, `TRANSACTION_NOT_FOUND`, `PROVIDER_NOT_CONNECTED` |
+| 409 | `CONFLICT`, `ALREADY_EXISTS` |
+| 429 | `RATE_LIMIT_EXCEEDED` |
+| 502 | `PROVIDER_ERROR`, `PROVIDER_TIMEOUT` |
+| 503 | `SERVICE_UNAVAILABLE` |
+| 500 | `INTERNAL_ERROR` |
+
+## Common public API errors
+
+| Code | When it happens | Retry? |
+| --- | --- | --- |
+| `UNAUTHORIZED` | Missing or invalid API key | No — fix credentials |
+| `VALIDATION_ERROR` | Invalid request body or query | No — fix the payload |
+| `TRANSACTION_NOT_FOUND` | Unknown transaction ID or reference | No |
+| `PROVIDER_NOT_CONNECTED` | Provider not connected for this environment | No — connect in dashboard |
+| `NO_ROUTE_FOUND` | No routing rule matches the payout | No — configure routing in dashboard |
+| `PROVIDER_TIMEOUT` | Upstream provider timed out | Yes — retry verify or use idempotency |
+| `PROVIDER_ERROR` | Provider rejected the request | Depends on `retryable` field |
+| `RATE_LIMIT_EXCEEDED` | Too many requests | Yes — backoff and retry |
+
+## Validation errors
+
+Zod validation failures return `VALIDATION_ERROR` with a `details` object:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "retryable": false,
+    "request_id": "req_01h2example",
+    "details": {
+      "fieldErrors": {
+        "recipient": ["recipient.bank_code is required for bank_account payouts"]
+      },
+      "formErrors": []
+    }
+  }
+}
+```
+
+## Retry strategy
+
+1. Check the `retryable` field in the error body
+2. For payout creation, always reuse the same `X-Idempotency-Key` when retrying
+3. For status checks, call `POST /v1/transactions/{id}/verify` instead of creating a new payout
+4. Include `request_id` when contacting [support](mailto:support@capisum.com)
+
+See the [FAQ](/guides/faq) for troubleshooting common error scenarios.

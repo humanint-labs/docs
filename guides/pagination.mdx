@@ -1,0 +1,86 @@
+---
+title: "Pagination"
+sidebarTitle: "Pagination"
+description: "Cursor-based pagination for listing transactions with starting_after and ending_before."
+keywords: ["pagination", "cursor", "starting_after", "ending_before", "list transactions"]
+icon: "list"
+---
+
+`GET /v1/transactions` returns a cursor-paginated list. Use query parameters to page forward and backward through results.
+
+## Response shape
+
+```json
+{
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "type": "payout",
+      "status": "settled",
+      "reference": "txn_abc123"
+    }
+  ],
+  "hasMore": true,
+  "nextCursor": "550e8400-e29b-41d4-a716-446655440000",
+  "prevCursor": "660e8400-e29b-41d4-a716-446655440001"
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `data` | Array of transactions for this page |
+| `hasMore` | `true` when additional pages exist in the current direction |
+| `nextCursor` | Pass as `starting_after` to fetch the next page |
+| `prevCursor` | Pass as `ending_before` to fetch the previous page |
+
+## Query parameters
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `limit` | `20` | Page size (1–100) |
+| `starting_after` | — | Transaction ID cursor for the next page |
+| `ending_before` | — | Transaction ID cursor for the previous page |
+
+You can combine pagination with filters such as `type`, `status`, `provider`, and `search`. See [List transactions](/api-reference/introduction#transactions) in the API reference.
+
+## Forward pagination
+
+```bash
+# First page
+curl -s "$CAPISUM_BASE_URL/v1/transactions?type=payout&limit=20" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY"
+
+# Next page (use nextCursor from the previous response)
+curl -s "$CAPISUM_BASE_URL/v1/transactions?type=payout&limit=20&starting_after=550e8400-e29b-41d4-a716-446655440000" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY"
+```
+
+## Backward pagination
+
+```bash
+curl -s "$CAPISUM_BASE_URL/v1/transactions?type=payout&limit=20&ending_before=660e8400-e29b-41d4-a716-446655440001" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY"
+```
+
+<Tip>
+  Do not use `starting_after` and `ending_before` on the same request. Pick one direction per call.
+</Tip>
+
+## Implementation pattern
+
+<Steps>
+  <Step title="Fetch the first page">
+    Call `GET /v1/transactions` with your filters and `limit`.
+  </Step>
+  <Step title="Check hasMore">
+    When `hasMore` is `true`, more results exist beyond this page.
+  </Step>
+  <Step title="Pass nextCursor">
+    Set `starting_after` to `nextCursor` and repeat until `hasMore` is `false`.
+  </Step>
+</Steps>
+
+## Related
+
+- [List transactions API](/api-reference/introduction#transactions)
+- [Payouts guide](/guides/payouts) for filtering by `type=payout`

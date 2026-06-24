@@ -1,0 +1,1027 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Capisum Public API",
+    "description": "Payment orchestration API for integrators. Authenticate with an organization API key (`Authorization: Bearer cps_...`). The key's environment (staging or production) scopes provider credentials.\n\n**Shipped today:** Fincra payouts in NGN, GHS, and KES.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Capisum Support",
+      "email": "support@capisum.com",
+      "url": "https://capisum.com"
+    }
+  },
+  "externalDocs": {
+    "description": "Integration guides",
+    "url": "https://docs.capisum.com/quickstart"
+  },
+  "servers": [
+    {
+      "url": "https://api.capisum.com",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Incoming webhooks"
+    },
+    {
+      "name": "Providers"
+    },
+    {
+      "name": "Transactions"
+    }
+  ],
+  "paths": {
+    "/v1/providers": {
+      "get": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "List available providers",
+        "operationId": "get_v1_providers",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailableProviderListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Does not list which providers you have already connected.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/providers/{slug}/status": {
+      "get": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Get provider status",
+        "operationId": "get_v1_providers_slug_status",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderHealthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "description": "Returns the latest health snapshot for a provider in the API key's environment. If no health data exists, returns `{ \"status\": \"unknown\" }`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "fincra"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/transactions/payout": {
+      "post": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Create payout",
+        "operationId": "post_v1_transactions_payout",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Initialize a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN).\n\nSupported currencies: NGN (bank_account), GHS and KES (bank_account or mobile_money).\n\nRequires `X-Idempotency-Key`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries. Reusing a key returns the original transaction."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayoutRequest"
+              },
+              "examples": {
+                "ngn_bank": {
+                  "summary": "NGN bank payout",
+                  "value": {
+                    "amount": "500000",
+                    "currency": "NGN",
+                    "provider": "fincra",
+                    "recipient": {
+                      "destination": "bank_account",
+                      "bank_code": "305",
+                      "account_number": "7068270185",
+                      "account_name": "Test Recipient"
+                    },
+                    "metadata": {
+                      "description": "NGN vendor payout"
+                    }
+                  }
+                },
+                "ghs_mobile_money": {
+                  "summary": "GHS mobile money payout",
+                  "value": {
+                    "amount": "10000",
+                    "currency": "GHS",
+                    "provider": "fincra",
+                    "recipient": {
+                      "destination": "mobile_money",
+                      "mobile_money_code": "MTN",
+                      "account_number": "2330803443433",
+                      "account_name": "Ama Mensah"
+                    }
+                  }
+                },
+                "kes_mobile_money": {
+                  "summary": "KES mobile money payout",
+                  "value": {
+                    "amount": "50000",
+                    "currency": "KES",
+                    "provider": "fincra",
+                    "recipient": {
+                      "destination": "mobile_money",
+                      "mobile_money_code": "SAFARICOM",
+                      "account_number": "254803456789",
+                      "account_name": "John Kamau"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "label": "cURL",
+            "source": "curl -X POST https://api.capisum.com/v1/transactions/payout \\\n  -H \"Authorization: Bearer cps_your_key\" \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-Idempotency-Key: payout-order-123\" \\\n  -d '{\n    \"amount\": \"500000\",\n    \"currency\": \"NGN\",\n    \"provider\": \"fincra\",\n    \"recipient\": {\n      \"destination\": \"bank_account\",\n      \"bank_code\": \"305\",\n      \"account_number\": \"7068270185\",\n      \"account_name\": \"Test Recipient\"\n    }\n  }'"
+          },
+          {
+            "lang": "javascript",
+            "label": "Node.js",
+            "source": "const response = await fetch('https://api.capisum.com/v1/transactions/payout', {\n  method: 'POST',\n  headers: {\n    Authorization: 'Bearer cps_your_key',\n    'Content-Type': 'application/json',\n    'X-Idempotency-Key': 'payout-order-123',\n  },\n  body: JSON.stringify({\n    amount: '500000',\n    currency: 'NGN',\n    provider: 'fincra',\n    recipient: {\n      destination: 'bank_account',\n      bank_code: '305',\n      account_number: '7068270185',\n      account_name: 'Test Recipient',\n    },\n  }),\n});\nconst { data } = await response.json();"
+          },
+          {
+            "lang": "python",
+            "label": "Python",
+            "source": "import requests\n\nresponse = requests.post(\n    'https://api.capisum.com/v1/transactions/payout',\n    headers={\n        'Authorization': 'Bearer cps_your_key',\n        'X-Idempotency-Key': 'payout-order-123',\n    },\n    json={\n        'amount': '500000',\n        'currency': 'NGN',\n        'provider': 'fincra',\n        'recipient': {\n            'destination': 'bank_account',\n            'bank_code': '305',\n            'account_number': '7068270185',\n            'account_name': 'Test Recipient',\n        },\n    },\n)\nprint(response.json()['data'])"
+          }
+        ]
+      }
+    },
+    "/v1/transactions": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "List transactions",
+        "operationId": "get_v1_transactions",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "description": "List transactions for your organization. Results are cursor-paginated.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "starting_after",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Transaction ID cursor for the next page."
+          },
+          {
+            "name": "ending_before",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Transaction ID cursor for the previous page."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pay_in",
+                "payout",
+                "refund"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "processing",
+                "authorized",
+                "settled",
+                "failed",
+                "cancelled",
+                "refunded"
+              ]
+            }
+          },
+          {
+            "name": "status_group",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "successful",
+                "pending",
+                "failed",
+                "refunded"
+              ]
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "created_after",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "environment",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "staging",
+                "production"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/v1/transactions/ref/{reference}": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Get transaction by reference",
+        "operationId": "get_v1_transactions_ref_reference",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reference",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/transactions/{id}": {
+      "get": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Get transaction by ID",
+        "operationId": "get_v1_transactions_id",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/transactions/{id}/verify": {
+      "post": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Verify transaction",
+        "operationId": "post_v1_transactions_id_verify",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Poll the upstream provider for the latest status and update the transaction record.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/webhooks/fincra/{organizationSlug}/{environment}": {
+      "post": {
+        "tags": [
+          "Incoming webhooks"
+        ],
+        "summary": "Fincra webhook",
+        "operationId": "post_v1_webhooks_fincra_organizationSlug_environment",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomingWebhookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "description": "Organization-scoped Fincra webhook URL. Capisum validates the signature using the webhook secret stored when you connected Fincra.",
+        "parameters": [
+          {
+            "name": "organizationSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "staging",
+                "production"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/webhooks/fincra": {
+      "post": {
+        "tags": [
+          "Incoming webhooks"
+        ],
+        "summary": "Fincra webhook (legacy)",
+        "operationId": "post_v1_webhooks_fincra",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncomingWebhookResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "description": "Legacy unscoped path. Prefer the organization-scoped URL for new integrations.",
+        "x-hidden": true,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKeyAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Organization API key (`cps_...`) from the Capisum dashboard."
+      }
+    },
+    "schemas": {
+      "AvailableProvider": {
+        "type": "object",
+        "required": [
+          "slug",
+          "name",
+          "configurable"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "example": "fincra"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fincra"
+          },
+          "configurable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AvailableProviderListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailableProvider"
+            }
+          }
+        }
+      },
+      "ProviderHealth": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "healthy"
+          },
+          "successRate": {
+            "type": "number",
+            "nullable": true
+          },
+          "latencyP50Ms": {
+            "type": "integer",
+            "nullable": true
+          },
+          "latencyP95Ms": {
+            "type": "integer",
+            "nullable": true
+          },
+          "requestCount": {
+            "type": "integer",
+            "nullable": true
+          },
+          "errorCount": {
+            "type": "integer",
+            "nullable": true
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "ProviderHealthResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ProviderHealth"
+          }
+        }
+      },
+      "PayoutRecipient": {
+        "type": "object",
+        "required": [
+          "account_number"
+        ],
+        "properties": {
+          "destination": {
+            "type": "string",
+            "enum": [
+              "bank_account",
+              "mobile_money"
+            ]
+          },
+          "account_number": {
+            "type": "string"
+          },
+          "account_name": {
+            "type": "string"
+          },
+          "bank_code": {
+            "type": "string"
+          },
+          "mobile_money_code": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2
+          },
+          "phone": {
+            "type": "string"
+          }
+        }
+      },
+      "PayoutRequest": {
+        "type": "object",
+        "required": [
+          "amount",
+          "recipient"
+        ],
+        "properties": {
+          "amount": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "description": "Amount in minor units."
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "NGN",
+            "enum": [
+              "NGN",
+              "GHS",
+              "KES"
+            ]
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/PayoutRecipient"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "provider": {
+            "type": "string",
+            "description": "Optional explicit provider slug (for example, `fincra`)."
+          }
+        }
+      },
+      "Transaction": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "status",
+          "amount",
+          "currency",
+          "provider",
+          "reference",
+          "created_at",
+          "updated_at",
+          "environment"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "pay_in",
+              "payout",
+              "refund"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "authorized",
+              "settled",
+              "failed",
+              "cancelled",
+              "refunded"
+            ]
+          },
+          "amount": {
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "provider_ref": {
+            "type": "string",
+            "nullable": true
+          },
+          "customer_email": {
+            "type": "string",
+            "nullable": true
+          },
+          "customer_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true
+          },
+          "error_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "error_message": {
+            "type": "string",
+            "nullable": true
+          },
+          "latency_ms": {
+            "type": "integer",
+            "nullable": true
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "staging",
+              "production"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "authorized_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "settled_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "failed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "TransactionResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Transaction"
+          }
+        }
+      },
+      "TransactionListResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "hasMore",
+          "nextCursor",
+          "prevCursor"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transaction"
+            }
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          },
+          "prevCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "IncomingWebhookResult": {
+        "type": "object",
+        "properties": {
+          "processed": {
+            "type": "boolean"
+          },
+          "duplicate": {
+            "type": "boolean"
+          },
+          "eventId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "IncomingWebhookResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/IncomingWebhookResult"
+          }
+        }
+      },
+      "ErrorBody": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "retryable",
+              "request_id"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              },
+              "request_id": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing or invalid API key",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorBody"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorBody"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Request validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorBody"
+            }
+          }
+        }
+      },
+      "ProviderError": {
+        "description": "Upstream provider error or timeout",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorBody"
+            }
+          }
+        }
+      }
+    }
+  }
+}
