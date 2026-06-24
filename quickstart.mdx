@@ -2,15 +2,15 @@
 title: "Quickstart"
 sidebarTitle: "Quickstart"
 description: "Create a staging payout with your Capisum API key."
-keywords: ["quickstart", "payout", "Fincra", "API key", "NGN payout"]
+keywords: ["quickstart", "payout", "API key", "NGN payout"]
 icon: "bolt"
 ---
 
-This guide uses the **public API** at `/v1/*`. Dashboard setup (connecting Fincra, creating keys) happens at [app.capisum.com](https://app.capisum.com).
+This guide uses the **customer API** at `/v1/*`. Dashboard setup (connecting a provider, creating keys) happens at [app.capisum.com](https://app.capisum.com).
 
 ## Prerequisites
 
-- Fincra connected for **staging** in the dashboard
+- A payment provider connected for **staging** in the dashboard
 - A **staging** API key (`cps_...`) from the dashboard
 
 <Warning>
@@ -82,6 +82,9 @@ curl -s -X POST "$CAPISUM_BASE_URL/v1/transactions/{id}/verify" \
 ## Next steps
 
 <Columns cols={2}>
+  <Card title="Providers" icon="plug" href="/guides/providers">
+    Available providers and capabilities.
+  </Card>
   <Card title="Authentication" icon="key" href="/authentication">
     API keys and environments.
   </Card>

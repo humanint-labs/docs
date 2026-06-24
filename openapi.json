@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Capisum Customer API",
-    "description": "Customer API for creating payouts and querying transactions. Authenticate with an organization API key (`Authorization: Bearer cps_...`). The key's environment (staging or production) scopes provider credentials.\n\n**Shipped today:** Fincra payouts in NGN, GHS, and KES.",
+    "description": "Customer API for creating payouts and querying transactions. Authenticate with an organization API key (`Authorization: Bearer cps_...`). The key's environment (staging or production) scopes provider credentials.\n\n**Shipped today:** Payouts in NGN, GHS, and KES.",
     "version": "1.0.0",
     "contact": {
       "name": "Capisum Support",

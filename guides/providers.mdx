@@ -1,0 +1,69 @@
+---
+title: "Providers"
+sidebarTitle: "Providers"
+description: "Payment providers available through the Capisum customer API and what each supports today."
+keywords: ["providers", "Fincra", "payout", "NGN", "GHS", "KES", "provider catalog"]
+icon: "plug"
+---
+
+Use [`GET /v1/providers`](/api-reference) to list provider slugs Capisum can route to. Connect credentials in the [dashboard](https://app.capisum.com) before creating transactions.
+
+<Note>
+  The customer API returns the provider **catalog**, not your connected providers. Use [`GET /v1/providers/{slug}/status`](/api-reference) or the dashboard to confirm a provider is connected and healthy.
+</Note>
+
+## Available providers
+
+| Provider | Slug | Customer API today | Currencies | Regions |
+| --- | --- | --- | --- | --- |
+| Fincra | `fincra` | Payouts | NGN, GHS, KES | Nigeria, Ghana, Kenya |
+
+### Fincra (`fincra`)
+
+Cross-border payment infrastructure for collections, payouts, and virtual accounts across Africa.
+
+**Supported on the customer API**
+
+| Operation | Status |
+| --- | --- |
+| Payouts | Available |
+| Pay-in | Not available |
+| Refunds | Not available |
+
+**Payout rails**
+
+| Currency | Bank account | Mobile money |
+| --- | --- | --- |
+| NGN | Yes | No |
+| GHS | Yes | Yes |
+| KES | Yes | Yes |
+
+Set `"provider": "fincra"` on [`POST /v1/transactions/payout`](/api-reference) to route explicitly, or omit it to use your organization's routing rules. See [Payouts](/guides/payouts) for recipient fields and examples.
+
+**Check provider health**
+
+```bash
+curl "$CAPISUM_BASE_URL/v1/providers/fincra/status" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY"
+```
+
+If no health data exists yet, the response is `{ "status": "unknown" }`.
+
+## Listing providers
+
+```bash
+curl "$CAPISUM_BASE_URL/v1/providers" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY"
+```
+
+<ResponseExample>
+
+```json
+{
+  "data": [
+    { "slug": "fincra", "name": "Fincra", "configurable": true }
+  ]
+}
+```
+
+</ResponseExample>
