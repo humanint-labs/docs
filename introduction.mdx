@@ -1,5 +1,5 @@
 ---
-title: "What Is Capisum? Unified Fintech API Layer"
+title: "What Is Capisum? One API for Payments, Banks, and Crypto"
 sidebarTitle: "Introduction"
 description: "Capisum is a unified API layer for payment gateways, digital banks, wallets, and crypto platforms. Learn what Capisum is and how it works."
 ---
@@ -31,22 +31,22 @@ Capisum also does not handle KYC, KYB, or compliance on your behalf. Those respo
 ## Key features
 
 <CardGroup cols={2}>
-  <Card title="Unified API objects" icon="layer-group">
+  <Card title="Unified API objects" icon="layer-group" href="/concepts/unified-api">
     Work with one transaction, customer, and account model across every provider. The same fields and the same lifecycle apply whether you are using a payment gateway, a digital bank, or a crypto platform.
   </Card>
-  <Card title="Provider adapters" icon="plug">
+  <Card title="Provider adapters" icon="plug" href="/providers/overview">
     Each gateway, bank, wallet, and crypto platform sits behind an adapter that translates your Capisum request into the provider's native API format. You never write provider-specific serialization code.
   </Card>
-  <Card title="Manual provider selection" icon="sliders">
+  <Card title="Manual provider selection" icon="sliders" href="/concepts/provider-routing">
     Choose exactly which provider handles each transaction. Manual selection is the default in the current release, giving you predictable, auditable routing you control. Optional smart routing is on the roadmap.
   </Card>
-  <Card title="Standard errors" icon="triangle-exclamation">
+  <Card title="Standard errors" icon="triangle-exclamation" href="/concepts/error-handling">
     Every failure returns a consistent error envelope with a stable code, a human-readable message, and a `retryable` flag. Your retry logic, alerting rules, and support playbooks only need to be written once.
   </Card>
-  <Card title="Standard responses" icon="check-circle">
+  <Card title="Standard responses" icon="check-circle" href="/concepts/standard-objects">
     Capisum normalizes every provider's response into one predictable payload. `status`, `amount`, `provider_ref`, and all other fields are always in the same place — no conditional parsing per provider.
   </Card>
-  <Card title="Multi-category providers" icon="grid-2">
+  <Card title="Multi-category providers" icon="grid-2" href="/providers/overview">
     Connect payment gateways (Paystack, Flutterwave, Monnify), digital banks and wallets (Kuda, OPay, PalmPay), crypto platforms (Quidax, Binance, Luno), and account infrastructure (Mono, Anchor, Bridge) through one integration layer.
   </Card>
 </CardGroup>

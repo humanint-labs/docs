@@ -1,14 +1,14 @@
 ---
-title: "GET /v1/transactions — List Transactions"
+title: "GET /v1/transactions — List Transactions | Capisum"
 sidebarTitle: "List Transactions"
-description: "GET /v1/transactions — List and filter Capisum transactions by status, provider, type, date range, and more. Returns paginated results with cursor navigation."
+description: "List and filter Capisum transactions by status, provider, type, and date range using GET /v1/transactions. Results are cursor-paginated."
 ---
 
 Use this endpoint to retrieve a paginated list of transactions on your Capisum account. You can filter results by status, provider, operation type, your own reference string, or a datetime range — making it straightforward to build reconciliation reports, power dashboard views, or audit specific transaction cohorts. Results are returned in reverse chronological order and paginated using a cursor, so you can walk through large sets without skipping or duplicating records.
 
 ## Endpoint
 
-```
+```text
 GET https://api.capisum.com/v1/transactions
 ```
 
@@ -56,7 +56,7 @@ curl "https://api.capisum.com/v1/transactions?status=settled&provider=paystack&l
 ```
 
 ```typescript TypeScript
-const result = await capisum.transactions.list({
+const result = await capisum.payments.list({
   status: "settled",
   provider: "paystack",
   limit: 20,
@@ -68,7 +68,7 @@ for (const txn of result.data) {
 
 // Get next page
 if (result.has_more) {
-  const nextPage = await capisum.transactions.list({
+  const nextPage = await capisum.payments.list({
     cursor: result.next_cursor,
     limit: 20,
   });

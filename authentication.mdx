@@ -1,5 +1,5 @@
 ---
-title: "Authenticate Requests to the Capisum API"
+title: "API Key Authentication: Securing Your Capisum Requests"
 sidebarTitle: "Authentication"
 description: "Capisum uses API keys to authenticate every request. Learn how to get your key, pass it correctly, and follow security best practices."
 ---
@@ -35,7 +35,7 @@ Your API keys are available in the Capisum dashboard:
 
 Include your API key in the `Authorization` header of every request, using the `Bearer` scheme:
 
-```
+```http
 Authorization: Bearer cap_sk_live_your_key_here
 ```
 
@@ -56,7 +56,11 @@ const capisum = new Capisum({
 });
 
 // All subsequent calls on this client instance are automatically authenticated.
-const transaction = await capisum.payments.create({ ... });
+const transaction = await capisum.payments.create({
+  provider: "paystack",
+  amount: 500000,
+  currency: "NGN",
+});
 ```
 
 ```python Python
@@ -68,7 +72,11 @@ client = capisum.Client(
 )
 
 # All subsequent calls on this client instance are automatically authenticated.
-transaction = client.payments.create({ ... })
+transaction = client.payments.create({
+    "provider": "paystack",
+    "amount": 500000,
+    "currency": "NGN",
+})
 ```
 
 </CodeGroup>

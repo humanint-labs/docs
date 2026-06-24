@@ -1,14 +1,14 @@
 ---
-title: "POST /v1/transactions — Create a Transaction"
+title: "POST /v1/transactions — Create a Transaction | Capisum"
 sidebarTitle: "Create Transaction"
-description: "POST /v1/transactions — Create a pay-in or payout transaction through any supported Capisum provider. Accepts provider, amount, currency, and customer or recipient."
+description: "POST /v1/transactions — Create a pay-in or payout transaction. Specify provider, amount, currency, and customer or recipient details."
 ---
 
 Use this endpoint to initiate a transaction through any provider connected to your Capisum account. You specify the provider, operation type (`pay_in` or `payout`), amount, currency, and a unique reference — Capisum normalizes your request, routes it to the selected provider's adapter, and returns a standard transaction object regardless of which backend executed the call. For pay-ins, include a `customer` object; for payouts, include a `recipient` object with the destination account details.
 
 ## Endpoint
 
-```
+```text
 POST https://api.capisum.com/v1/transactions
 ```
 

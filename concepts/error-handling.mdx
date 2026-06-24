@@ -1,5 +1,5 @@
 ---
-title: "Error Handling and Error Codes in Capisum"
+title: "Error Handling in Capisum: Codes, Envelopes, and Retries"
 sidebarTitle: "Error Handling"
 description: "Capisum normalizes provider errors into stable codes. Learn the error envelope, retryable vs terminal errors, and standard HTTP status codes."
 ---
@@ -29,7 +29,7 @@ Here are the fields in the error object:
 </ResponseField>
 
 <ResponseField name="message" type="string" required>
-  A human-readable description of the error in plain English. This is suitable for logging and for internal debugging, but should not be displayed verbatim to end users without sanitization.
+  A human-readable description of the error in plain English. This is suitable for logging and for debugging in your application, but should not be displayed verbatim to end users without sanitization.
 </ResponseField>
 
 <ResponseField name="retryable" type="boolean" required>
