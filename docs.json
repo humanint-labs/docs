@@ -92,6 +92,21 @@
     "global": {
       "anchors": [
         {
+          "anchor": "Website",
+          "href": "https://capisum.com",
+          "icon": "globe"
+        },
+        {
+          "anchor": "Products",
+          "href": "https://capisum.com/products",
+          "icon": "layer-group"
+        },
+        {
+          "anchor": "Providers",
+          "href": "https://capisum.com/providers",
+          "icon": "plug"
+        },
+        {
           "anchor": "Dashboard",
           "href": "https://app.capisum.com",
           "icon": "grid-2"
@@ -111,8 +126,16 @@
         "href": "https://capisum.com"
       },
       {
-        "label": "Support",
-        "href": "mailto:support@capisum.com"
+        "label": "Products",
+        "href": "https://capisum.com/products"
+      },
+      {
+        "label": "Providers",
+        "href": "https://capisum.com/providers"
+      },
+      {
+        "label": "Contact",
+        "href": "https://capisum.com/contact"
       }
     ],
     "primary": {
@@ -134,6 +157,46 @@
     ]
   },
   "footer": {
+    "links": [
+      {
+        "header": "Capisum",
+        "items": [
+          {
+            "label": "Website",
+            "href": "https://capisum.com"
+          },
+          {
+            "label": "Products",
+            "href": "https://capisum.com/products"
+          },
+          {
+            "label": "Providers",
+            "href": "https://capisum.com/providers"
+          },
+          {
+            "label": "Sandbox",
+            "href": "https://capisum.com/sandbox"
+          },
+          {
+            "label": "Contact",
+            "href": "https://capisum.com/contact"
+          }
+        ]
+      },
+      {
+        "header": "Developers",
+        "items": [
+          {
+            "label": "Dashboard",
+            "href": "https://app.capisum.com"
+          },
+          {
+            "label": "Support",
+            "href": "mailto:support@capisum.com"
+          }
+        ]
+      }
+    ],
     "socials": {}
   }
 }
