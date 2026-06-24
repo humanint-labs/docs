@@ -60,6 +60,7 @@
             "group": "Guides",
             "icon": "book-open",
             "pages": [
+              "guides/providers",
               "guides/payouts",
               "guides/idempotency",
               "guides/pagination",
