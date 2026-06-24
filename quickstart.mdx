@@ -1,5 +1,5 @@
 ---
-title: "Get Started with Capisum in Minutes"
+title: "Quickstart: Process Your First Transaction with Capisum"
 sidebarTitle: "Quickstart"
 description: "Make your first Capisum API call in under 5 minutes. Connect a provider, authenticate, and process your first transaction with working code examples."
 ---
@@ -172,6 +172,28 @@ Before you begin, make sure you have the following:
     <ResponseField name="created_at" type="string">
       ISO 8601 timestamp of when the transaction was created in Capisum.
     </ResponseField>
+  </Step>
+
+  <Step title="Look up a transaction">
+    Use `GET /v1/transactions/:id` to retrieve any transaction by the `id` Capisum returned when you created it. This is useful for polling status on asynchronous transactions or reconciling records later.
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl https://api.capisum.com/v1/transactions/txn_8f2k9m \
+      -H "Authorization: Bearer cap_sk_test_your_key_here"
+    ```
+
+    ```typescript TypeScript
+    const transaction = await capisum.payments.get("txn_8f2k9m");
+
+    console.log(transaction.status);       // successful
+    console.log(transaction.provider_ref); // PSK-9281
+    ```
+
+    </CodeGroup>
+
+    The response is the same normalized transaction object returned when you created the transaction — the same fields, the same status vocabulary, regardless of provider.
   </Step>
 
   <Step title="Handle errors">

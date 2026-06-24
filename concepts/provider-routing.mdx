@@ -1,7 +1,7 @@
 ---
-title: "Provider Routing in Capisum Explained"
+title: "Provider Routing in Capisum: Manual Control per Transaction"
 sidebarTitle: "Provider Routing"
-description: "Choose which provider handles each transaction by setting the provider field. Manual routing gives you predictable control, with smart routing coming later."
+description: "Choose which provider handles each transaction by setting the provider field. Manual routing gives predictable control, with smart routing coming later."
 ---
 
 Every transaction in Capisum is associated with exactly one provider, and you decide which one. You specify the provider by name in your request body, and Capisum routes that transaction to the corresponding adapter. There is no ambiguity about which backend ran a call — the provider you set is the provider that executes, and the response always confirms it. This explicit, predictable routing model is deliberate: you stay in control of every payment flow from the start.

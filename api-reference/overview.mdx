@@ -1,5 +1,5 @@
 ---
-title: "Capisum REST API Reference Overview"
+title: "Capisum REST API Overview — Endpoints, Auth, and Limits"
 sidebarTitle: "Overview"
 description: "Capisum REST API base URL, authentication, content type, rate limits, versioning, and a full endpoint index. Everything to start making API calls."
 ---
@@ -10,7 +10,7 @@ The Capisum REST API gives you a single, stable integration surface for payment 
 
 All API requests target the following base URL:
 
-```
+```text
 https://api.capisum.com/v1
 ```
 
@@ -100,9 +100,10 @@ curl -X POST https://api.capisum.com/v1/transactions \
 {
   "id": "txn_8f2k9m",
   "status": "successful",
-  "provider": "paystack",
   "amount": 500000,
-  "currency": "NGN"
+  "currency": "NGN",
+  "provider": "paystack",
+  "provider_ref": "PSK-9281"
 }
 ```
 

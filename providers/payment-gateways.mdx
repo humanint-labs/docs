@@ -1,5 +1,5 @@
 ---
-title: "Payment Gateway Integrations on Capisum"
+title: "Payment Gateway Integrations — Capisum Provider Network"
 sidebarTitle: "Payment Gateways"
 description: "Connect Paystack, Flutterwave, Monnify, and 6 more payment gateways through the Capisum unified API. Supports pay-in, payout, and virtual accounts."
 ---
@@ -28,7 +28,7 @@ The same `capisum.payments.create()` call works across all payment gateways. The
     });
 
     // Switch to Flutterwave — same call shape
-    const transaction = await capisum.payments.create({
+    const flutterwaveTransaction = await capisum.payments.create({
       provider: "flutterwave",
       type: "pay_in",
       amount: 500000,

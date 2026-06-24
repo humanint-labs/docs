@@ -1,7 +1,7 @@
 ---
-title: "API Authentication Reference for Capisum"
+title: "Capisum API Authentication — Keys, Headers, and Security"
 sidebarTitle: "Authentication"
-description: "Authenticate Capisum API requests with Bearer API keys. Learn key formats, header syntax, environment scoping, error responses, and security best practices."
+description: "Authenticate Capisum API requests with Bearer API keys. Learn key formats, header syntax, environment scoping, error responses, and security practices."
 ---
 
 Every request to the Capisum API must be authenticated with an API key. You pass your key in the `Authorization` header using the Bearer scheme — there are no cookies, no session tokens, and no OAuth flows at the API level. Capisum issues separate keys for your production (live) and sandbox (test) environments, and each key is strictly scoped to the environment it was created for. Using the wrong key for the wrong environment is a common source of `403` errors and is covered in detail below.
@@ -29,7 +29,7 @@ The `live` and `test` segments are load-bearing — Capisum uses them to route y
 
 Include your API key on every request in the `Authorization` header:
 
-```
+```http
 Authorization: Bearer cap_sk_live_xxxxxxxxxxxxxxxxxxxx
 ```
 

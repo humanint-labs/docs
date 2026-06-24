@@ -1,7 +1,7 @@
 ---
-title: "Account Infrastructure Integrations on Capisum"
+title: "Account Infrastructure Integrations — Capisum API"
 sidebarTitle: "Account Infrastructure"
-description: "Connect Mono, Okra, Anchor, Bridge, and more account infrastructure providers through Capisum. Supports account data, provisioning, stablecoins, and pay-by-bank."
+description: "Connect Mono, Okra, Anchor, Bridge, and Maplerad through Capisum. Retrieve account data, provision accounts, settle stablecoins, and initiate pay-by-bank."
 ---
 
 Account infrastructure providers sit at a different layer from payment gateways and wallets. They power the underlying financial data and account primitives that your product needs — open banking data retrieval, embedded account provisioning, virtual USD account issuance, stablecoin settlement rails, and pay-by-bank payment initiation. Capisum wraps these providers behind the same unified API surface, so you can combine account data from Mono, provisioned accounts from Anchor, and stablecoin infrastructure from Bridge without building separate integrations for each.
@@ -28,11 +28,9 @@ Account infrastructure operations use the same request structure as other Capisu
   <Tab title="TypeScript">
     ```typescript
     // Retrieve account data via Mono
-    const transaction = await capisum.payments.create({
+    const accountData = await capisum.payments.create({
       provider: "mono",
-      type: "pay_in",
-      amount: 200000,
-      currency: "NGN",
+      type: "data",
       customer: { email: "customer@example.com" },
       reference: "account-link-001",
     });
@@ -45,9 +43,7 @@ Account infrastructure operations use the same request structure as other Capisu
       -H "Content-Type: application/json" \
       -d '{
         "provider": "mono",
-        "type": "pay_in",
-        "amount": 200000,
-        "currency": "NGN",
+        "type": "data",
         "customer": { "email": "customer@example.com" },
         "reference": "account-link-001"
       }'

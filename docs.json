@@ -6,7 +6,7 @@
     "light": "https://media.brand.dev/fa2cb93b-803e-4e1e-95ad-49f03dc45e02.svg",
     "dark": "https://media.brand.dev/fa2cb93b-803e-4e1e-95ad-49f03dc45e02.svg"
   },
-  "favicon": "https://icons.duckduckgo.com/ip3/capisum.com.ico",
+  "favicon": "/favicon.svg",
   "colors": {
     "primary": "#040404",
     "light": "#6B7280",

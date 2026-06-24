@@ -1,14 +1,14 @@
 ---
 title: "GET /v1/transactions/:id — Retrieve a Transaction"
 sidebarTitle: "Get Transaction"
-description: "GET /v1/transactions/:id — Retrieve a single Capisum transaction by ID. Returns the full transaction object including status, provider reference, and customer details."
+description: "GET /v1/transactions/:id — Retrieve a single transaction by ID. Returns status, amount, provider reference, and full customer or recipient details."
 ---
 
 Use this endpoint to fetch the current state of any transaction by its Capisum transaction ID. The response includes the full normalized transaction object — including the latest `status`, the provider's own reference, and the customer or recipient details submitted at creation time. Because some providers process transactions asynchronously, you can call this endpoint repeatedly to track status progression from `pending` through to `settled` or `failed`.
 
 ## Endpoint
 
-```
+```text
 GET https://api.capisum.com/v1/transactions/{id}
 ```
 
@@ -28,7 +28,7 @@ curl https://api.capisum.com/v1/transactions/txn_8f2k9m \
 ```
 
 ```typescript TypeScript
-const transaction = await capisum.transactions.get("txn_8f2k9m");
+const transaction = await capisum.payments.get("txn_8f2k9m");
 ```
 
 </CodeGroup>

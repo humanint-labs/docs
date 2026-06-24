@@ -1,14 +1,14 @@
 ---
-title: "GET /v1/providers/:id — Get a Provider"
+title: "GET /v1/providers/:id — Retrieve a Provider | Capisum"
 sidebarTitle: "Get Provider"
-description: "GET /v1/providers/:id — Retrieve details for a specific Capisum provider by slug. Returns category, status, supported operations, currencies, and connection status."
+description: "GET /v1/providers/:id — Retrieve a specific provider by slug. Returns category, status, operations, currencies, and account connection status."
 ---
 
 The `/v1/providers/{id}` endpoint returns the full detail record for a single provider, identified by its slug. In addition to the fields available in the list response, this endpoint surfaces two account-scoped fields: `connected` tells you whether your Capisum account has an active connection to the provider, and `sandbox_available` tells you whether you can run test transactions against it without going live. Use this endpoint to inspect provider capabilities before building a routing decision into your application.
 
 ## Endpoint
 
-```
+```text
 GET https://api.capisum.com/v1/providers/{id}
 ```
 
