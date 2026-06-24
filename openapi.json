@@ -58,7 +58,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Does not list which providers you have already connected.",
+        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Public API route: `GET /v1/providers`. Not the dashboard route `GET /api/v1/providers` (connected providers list).",
         "security": [
           {
             "apiKeyAuth": []

@@ -1,57 +1,73 @@
 ---
-title: "Capisum: One API for Every Payment Provider"
-sidebarTitle: "Home"
-description: "Connect payment gateways, digital banks, wallets, and crypto platforms through one unified API. Stop maintaining fragmented provider integrations."
+title: "Introduction"
+sidebarTitle: "Introduction"
+description: "Capisum routes payments through your connected providers with a single integrator API."
+keywords: ["Capisum", "payment orchestration", "payouts", "Fincra", "Africa payments", "API"]
+icon: "house"
 ---
 
-Capisum gives your engineering team a single API to send transactions, process payouts, and manage accounts across payment gateways, digital banks, wallets, and crypto platforms. Instead of building and maintaining a separate integration for each provider, you connect once to Capisum and route requests to any supported provider with the same request shape, response format, and error codes.
+Capisum is a payment orchestration platform. You connect providers in the dashboard, define routing rules, and call the **public integrator API** at `/v1/*` to create and track payments.
 
-<CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Make your first API call in minutes with step-by-step setup instructions.
-  </Card>
-  <Card title="API Reference" icon="code" href="/api-reference/overview">
-    Explore every endpoint, parameter, and response object in the Capisum API.
-  </Card>
-  <Card title="Providers" icon="plug" href="/providers/overview">
-    Browse the full network of supported payment gateways, wallets, and more.
-  </Card>
-  <Card title="Core Concepts" icon="book" href="/concepts/unified-api">
-    Understand how Capisum normalizes providers, objects, and error handling.
-  </Card>
-</CardGroup>
+<Warning>
+  This documentation covers the **public API** (`/v1/*`, API key auth). Dashboard backend routes (`/api/v1/*`, JWT auth) are not documented here.
+</Warning>
 
-## How Capisum Works
+## What you can do today
+
+| Capability | Public endpoint |
+| --- | --- |
+| Fincra payouts (NGN, GHS, KES) | `POST /v1/transactions/payout` |
+| List and look up transactions | `GET /v1/transactions`, `GET /v1/transactions/ref/{reference}` |
+| Poll payout status | `POST /v1/transactions/{id}/verify` |
+| List supported provider slugs | `GET /v1/providers` |
+| Check provider health | `GET /v1/providers/{slug}/status` |
+
+## Base URL
+
+| Environment | Base URL |
+| --- | --- |
+| Production | `https://api.capisum.com` |
+| Local development | `http://localhost:3000` |
+
+All public endpoints are prefixed with `/v1`. Authenticate with `Authorization: Bearer cps_...`.
+
+## How it works
+
+```mermaid
+sequenceDiagram
+  participant App as Your application
+  participant Capisum as Capisum API (/v1)
+  participant Provider as Payment provider
+
+  App->>Capisum: POST /v1/transactions/payout
+  Capisum->>Provider: Route payout via connected credentials
+  Provider-->>Capisum: Webhook status update
+  Capisum-->>App: Transaction status (poll or webhook)
+```
 
 <Steps>
-  <Step title="Connect a provider">
-    Add your provider credentials (Paystack, Flutterwave, Kuda, Quidax, etc.) through the Capisum dashboard. Your credentials are stored securely and never exposed to your application code.
+  <Step title="Connect Fincra in the dashboard">
+    Add provider credentials at [app.capisum.com](https://app.capisum.com). This is not a public API operation.
   </Step>
-  <Step title="Send a request">
-    Call `POST /v1/transactions` with the provider, amount, currency, and operation type. Capisum validates and normalizes the request before forwarding it.
+  <Step title="Create an API key">
+    Generate a staging or production key in the dashboard. Keys use the `cps_` prefix.
   </Step>
-  <Step title="Capisum routes to the provider">
-    Capisum's adapter layer translates your request into the provider's native API format, handles authentication, and forwards the call.
-  </Step>
-  <Step title="Receive a standard response">
-    Capisum returns a consistent response object regardless of which provider executed the transaction — same fields, same status vocabulary, every time.
+  <Step title="Call the public API">
+    Use the key as a Bearer token against `/v1/*` endpoints.
   </Step>
 </Steps>
 
-## What You Can Build
-
-<CardGroup cols={3}>
-  <Card title="Pay-ins" icon="arrow-down-to-arc" href="/guides/make-a-payment">
-    Accept cards, bank transfers, and local payment methods from any supported gateway.
+<Columns cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Create your first staging payout.
   </Card>
-  <Card title="Payouts" icon="arrow-up-from-arc" href="/guides/process-payout">
-    Disburse funds to bank accounts, wallets, and crypto addresses through a single endpoint.
+  <Card title="Authentication" icon="key" href="/authentication">
+    API keys and environment scoping.
   </Card>
-  <Card title="Sandbox Testing" icon="flask" href="/guides/sandbox-testing">
-    Test every integration and flow without touching production credentials or live funds.
+  <Card title="API reference" icon="code" href="/api-reference/introduction">
+    Shipped `/v1` endpoints and schemas.
   </Card>
-</CardGroup>
-
-<Note>
-  Capisum is currently in early access. [Join the waitlist](https://capisum.com/waitlist) to get your API keys and dashboard access.
-</Note>
+  <Card title="FAQ" icon="circle-question" href="/guides/faq">
+    Public API vs dashboard routes.
+  </Card>
+</Columns>

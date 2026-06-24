@@ -1,145 +1,57 @@
 ---
-title: "API Key Authentication: Securing Your Capisum Requests"
+title: "Authentication"
 sidebarTitle: "Authentication"
-description: "Capisum uses API keys to authenticate every request. Learn how to get your key, pass it correctly, and follow security best practices."
+description: "Authenticate public API requests with organization API keys (Bearer cps_...)."
+keywords: ["authentication", "API key", "Bearer token", "cps_"]
+icon: "key"
 ---
 
-Every request you make to the Capisum API must include an API key. Capisum uses API keys as Bearer tokens — you attach your key to the `Authorization` header of every HTTP request, and Capisum verifies it before processing anything. There are no session tokens, OAuth flows, or cookies involved. If the key is valid, your request proceeds. If it is not, you get a `401 Unauthorized` response immediately.
+The **public integrator API** (`/v1/*`) uses organization API keys. Create and revoke keys in the [dashboard](https://app.capisum.com).
 
-## Key types
+<Info>
+  Dashboard session APIs (`/api/v1/*`) use short-lived JWTs from token exchange. Those are for the Capisum web app — not for server-to-server integration.
+</Info>
 
-Capisum issues two types of API keys per account. Both use the same authentication mechanism — the only difference is which environment they target.
+## API key format
 
-| Key type | Prefix | Environment | Purpose |
-|---|---|---|---|
-| **Live key** | `cap_sk_live_...` | Production | Real transactions, real providers, real money movement |
-| **Test key** | `cap_sk_test_...` | Sandbox | Safe testing without production credentials or real transactions |
-
-<Tip>
-  Always develop and test with your `cap_sk_test_...` key. Only switch to your `cap_sk_live_...` key when you are ready to process real transactions. The sandbox behaves identically to production — same endpoints, same request shapes, same response fields.
-</Tip>
-
-## Getting your API key
-
-Your API keys are available in the Capisum dashboard:
-
-1. Log in to [capisum.com](https://capisum.com/waitlist) and open your account dashboard.
-2. Navigate to **Settings → API Keys**.
-3. Copy your test key to begin developing, or your live key when you are ready for production.
-
-<Note>
-  Your live key is shown only once at creation time. Store it immediately in a secure secrets manager or environment variable. If you lose it, you will need to rotate it from the dashboard.
-</Note>
-
-## Passing your key
-
-Include your API key in the `Authorization` header of every request, using the `Bearer` scheme:
-
-```http
-Authorization: Bearer cap_sk_live_your_key_here
+```
+cps_8Kx9mN2pQ7rT4vW1yZ3aB5cD6eF0gH
 ```
 
-The examples below show how to do this in cURL, TypeScript, and Python.
+Keys use the `cps_` prefix. The full key is shown once at creation.
 
-<CodeGroup>
+## Authorization header
 
-```bash cURL
-curl https://api.capisum.com/v1/transactions \
-  -H "Authorization: Bearer cap_sk_live_your_key_here"
+```bash
+curl "$CAPISUM_BASE_URL/v1/transactions" \
+  -H "Authorization: Bearer cps_your_key_here"
 ```
 
-```typescript TypeScript
-import Capisum from '@capisum/sdk';
+| Header | Required | Description |
+| --- | --- | --- |
+| `Authorization` | Yes | `Bearer cps_...` |
+| `Content-Type` | For JSON bodies | `application/json` |
+| `X-Idempotency-Key` | For payout creation | See [Idempotency](/guides/idempotency) |
 
-const capisum = new Capisum({
-  apiKey: process.env.CAPISUM_API_KEY,
-});
+## Environment scoping
 
-// All subsequent calls on this client instance are automatically authenticated.
-const transaction = await capisum.payments.create({
-  provider: "paystack",
-  amount: 500000,
-  currency: "NGN",
-});
-```
+Each key is bound to **staging** or **production** at creation. The key determines which provider credentials and transaction records are used. You cannot override environment per request.
 
-```python Python
-import os
-import capisum
+See [Environments](/guides/environments).
 
-client = capisum.Client(
-    api_key=os.environ.get("CAPISUM_API_KEY")
-)
+## Errors
 
-# All subsequent calls on this client instance are automatically authenticated.
-transaction = client.payments.create({
-    "provider": "paystack",
-    "amount": 500000,
-    "currency": "NGN",
-})
-```
-
-</CodeGroup>
-
-When you initialize the TypeScript or Python SDK with your key, the SDK attaches it to every request automatically. You do not need to set the header manually on each call.
-
-## Authentication errors
-
-If your key is missing, malformed, or invalid, Capisum returns `HTTP 401 Unauthorized` with the following error envelope:
+| HTTP status | Code | Meaning |
+| --- | --- | --- |
+| 401 | `UNAUTHORIZED` | Missing or invalid API key |
 
 ```json
 {
   "error": {
     "code": "UNAUTHORIZED",
-    "message": "Invalid or missing API key.",
-    "retryable": false
+    "message": "Invalid API key",
+    "retryable": false,
+    "request_id": "req_01h2example"
   }
 }
 ```
-
-<ResponseField name="error.code" type="string">
-  Always `UNAUTHORIZED` for authentication failures. Stable across API versions.
-</ResponseField>
-
-<ResponseField name="error.message" type="string">
-  A human-readable description of the failure. Do not rely on this string in code — use `error.code` instead.
-</ResponseField>
-
-<ResponseField name="error.retryable" type="boolean">
-  Always `false` for authentication errors. A bad key will not become valid on retry — you need to fix the key or rotate it.
-</ResponseField>
-
-Common causes of a `401` response:
-
-- The `Authorization` header is missing from the request entirely.
-- The key is prefixed with the wrong scheme (e.g. `Token` instead of `Bearer`).
-- You are using a test key (`cap_sk_test_...`) against a production-only operation, or vice versa.
-- The key has been rotated or revoked in the dashboard.
-
-## Security best practices
-
-Following these practices protects your account and your customers:
-
-<Warning>
-  Never include your API key in client-side code — browser JavaScript, mobile app bundles, or any code that is shipped to end users. Your live key grants full API access. If it leaks, rotate it immediately.
-</Warning>
-
-- **Use environment variables.** Store your key in `CAPISUM_API_KEY` (or equivalent) and read it at runtime. Never hard-code it in source files or commit it to version control.
-- **Separate test and live keys.** Use `cap_sk_test_...` in your development and staging environments. Only load `cap_sk_live_...` in production. An accidental live key in staging can trigger real transactions.
-- **Rotate keys if compromised.** If you suspect a key has been exposed, go to **Settings → API Keys** in the dashboard and rotate it immediately. The old key is invalidated the moment you rotate. Update your environment variables and redeploy before traffic resumes.
-- **Restrict access.** Limit which team members and systems have access to your live key. Use your secrets manager's access controls to scope permissions.
-- **Audit key usage.** The Capisum dashboard logs all API requests with timestamps and outcomes. Review these regularly to catch unexpected usage patterns.
-
-## Key rotation
-
-To rotate a key without downtime:
-
-1. In the dashboard, go to **Settings → API Keys**.
-2. Generate a new key — the old key remains valid while you deploy.
-3. Update your environment variable or secrets manager with the new key.
-4. Deploy the update and verify traffic is flowing successfully.
-5. Revoke the old key from the dashboard once you have confirmed the new key is working.
-
-<Note>
-  During the rotation window, both the old and new keys are valid. Revoke the old key only after you are confident the new one is in use everywhere.
-</Note>
