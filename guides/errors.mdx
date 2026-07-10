@@ -55,6 +55,7 @@ Response headers may also include:
 | --- | --- | --- |
 | `UNAUTHORIZED` | Missing or invalid API key | No — fix credentials |
 | `VALIDATION_ERROR` | Invalid request body or query | No — fix the payload |
+| `INVALID_STATUS_TRANSITION` | Retry requested while payout is still in flight | No — poll or verify first |
 | `TRANSACTION_NOT_FOUND` | Unknown transaction ID or reference | No |
 | `PROVIDER_NOT_CONNECTED` | Provider not connected for this environment | No — connect in dashboard |
 | `NO_ROUTE_FOUND` | No routing rule matches the payout | No — configure routing in dashboard |
@@ -75,7 +76,8 @@ Zod validation failures return `VALIDATION_ERROR` with a `details` object:
     "request_id": "req_01h2example",
     "details": {
       "fieldErrors": {
-        "recipient": ["recipient.bank_code is required for bank_account payouts"]
+        "reference": ["reference must be 16–50 characters and contain only lowercase letters, digits, underscores, or hyphens"],
+        "destination": ["recipient.bank_id is required for bank_account payouts. Use GET /v1/reference/banks."]
       },
       "formErrors": []
     }

@@ -26,7 +26,13 @@
   ],
   "tags": [
     {
+      "name": "Payouts"
+    },
+    {
       "name": "Providers"
+    },
+    {
+      "name": "Reference"
     },
     {
       "name": "Transactions"
@@ -55,10 +61,90 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Public API route: `GET /v1/providers`. Not the dashboard route `GET /api/v1/providers` (connected providers list).",
+        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Lists configurable payout providers that support NGN bank transfers.",
         "security": [
           {
             "apiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/payouts/capabilities": {
+      "get": {
+        "tags": [
+          "Payouts"
+        ],
+        "summary": "Get payout contract and provider capabilities",
+        "operationId": "get_v1_payouts_capabilities",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutCapabilitiesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "description": "Returns supported payout providers, currencies, and destination types for the current contract version. The capabilities payload is NGN bank-focused; GHS and KES bank/mobile-money payouts are also accepted on POST /v1/transactions/payout when your routing rules and provider credentials support them.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/reference/banks": {
+      "get": {
+        "tags": [
+          "Reference"
+        ],
+        "summary": "List canonical banks",
+        "operationId": "get_v1_reference_banks",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankReferenceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "description": "Returns Capisum canonical bank identifiers for payouts. Use `bank_id` on payout recipients; Capisum resolves provider-specific codes at execution time. Filter with `provider` to see only banks mappable to that provider.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "currency",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 3,
+              "default": "NGN"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional provider slug (e.g. palmpay, fincra)."
           }
         ]
       }
@@ -135,7 +221,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Initialize a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN).\n\nSupported currencies: NGN (bank_account), GHS and KES (bank_account or mobile_money).\n\nRequires `X-Idempotency-Key`.",
+        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported NGN providers and `GET /v1/reference/banks` for canonical `bank_id` values. When `provider` is set, the destination must be valid for that provider.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -167,15 +253,13 @@
                     "amount": "500000",
                     "currency": "NGN",
                     "provider": "fincra",
-                    "recipient": {
-                      "destination": "bank_account",
-                      "bank_code": "305",
+                    "destination": {
+                      "type": "bank_account",
+                      "bank_id": "ng.opay",
                       "account_number": "7068270185",
                       "account_name": "Test Recipient"
                     },
-                    "metadata": {
-                      "description": "NGN vendor payout"
-                    }
+                    "description": "NGN vendor payout"
                   }
                 },
                 "ghs_mobile_money": {
@@ -184,8 +268,8 @@
                     "amount": "10000",
                     "currency": "GHS",
                     "provider": "fincra",
-                    "recipient": {
-                      "destination": "mobile_money",
+                    "destination": {
+                      "type": "mobile_money",
                       "mobile_money_code": "MTN",
                       "account_number": "2330803443433",
                       "account_name": "Ama Mensah"
@@ -198,8 +282,8 @@
                     "amount": "50000",
                     "currency": "KES",
                     "provider": "fincra",
-                    "recipient": {
-                      "destination": "mobile_money",
+                    "destination": {
+                      "type": "mobile_money",
                       "mobile_money_code": "SAFARICOM",
                       "account_number": "254803456789",
                       "account_name": "John Kamau"
@@ -214,17 +298,17 @@
           {
             "lang": "bash",
             "label": "cURL",
-            "source": "curl -X POST https://api.capisum.com/v1/transactions/payout \\\n  -H \"Authorization: Bearer cps_your_key\" \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-Idempotency-Key: payout-order-123\" \\\n  -d '{\n    \"amount\": \"500000\",\n    \"currency\": \"NGN\",\n    \"provider\": \"fincra\",\n    \"recipient\": {\n      \"destination\": \"bank_account\",\n      \"bank_code\": \"305\",\n      \"account_number\": \"7068270185\",\n      \"account_name\": \"Test Recipient\"\n    }\n  }'"
+            "source": "curl -X POST https://api.capisum.com/v1/transactions/payout \\\n  -H \"Authorization: Bearer cps_your_key\" \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-Idempotency-Key: payout-order-123\" \\\n  -d '{\n    \"amount\": \"500000\",\n    \"currency\": \"NGN\",\n    \"provider\": \"fincra\",\n    \"destination\": {\n      \"type\": \"bank_account\",\n      \"bank_id\": \"ng.opay\",\n      \"account_number\": \"7068270185\",\n      \"account_name\": \"Test Recipient\"\n    }\n  }'"
           },
           {
             "lang": "javascript",
             "label": "Node.js",
-            "source": "const response = await fetch('https://api.capisum.com/v1/transactions/payout', {\n  method: 'POST',\n  headers: {\n    Authorization: 'Bearer cps_your_key',\n    'Content-Type': 'application/json',\n    'X-Idempotency-Key': 'payout-order-123',\n  },\n  body: JSON.stringify({\n    amount: '500000',\n    currency: 'NGN',\n    provider: 'fincra',\n    recipient: {\n      destination: 'bank_account',\n      bank_code: '305',\n      account_number: '7068270185',\n      account_name: 'Test Recipient',\n    },\n  }),\n});\nconst { data } = await response.json();"
+            "source": "const response = await fetch('https://api.capisum.com/v1/transactions/payout', {\n  method: 'POST',\n  headers: {\n    Authorization: 'Bearer cps_your_key',\n    'Content-Type': 'application/json',\n    'X-Idempotency-Key': 'payout-order-123',\n  },\n  body: JSON.stringify({\n    amount: '500000',\n    currency: 'NGN',\n    provider: 'fincra',\n    destination: {\n      type: 'bank_account',\n      bank_id: 'ng.opay',\n      account_number: '7068270185',\n      account_name: 'Test Recipient',\n    },\n  }),\n});\nconst { data } = await response.json();"
           },
           {
             "lang": "python",
             "label": "Python",
-            "source": "import requests\n\nresponse = requests.post(\n    'https://api.capisum.com/v1/transactions/payout',\n    headers={\n        'Authorization': 'Bearer cps_your_key',\n        'X-Idempotency-Key': 'payout-order-123',\n    },\n    json={\n        'amount': '500000',\n        'currency': 'NGN',\n        'provider': 'fincra',\n        'recipient': {\n            'destination': 'bank_account',\n            'bank_code': '305',\n            'account_number': '7068270185',\n            'account_name': 'Test Recipient',\n        },\n    },\n)\nprint(response.json()['data'])"
+            "source": "import requests\n\nresponse = requests.post(\n    'https://api.capisum.com/v1/transactions/payout',\n    headers={\n        'Authorization': 'Bearer cps_your_key',\n        'X-Idempotency-Key': 'payout-order-123',\n    },\n    json={\n        'amount': '500000',\n        'currency': 'NGN',\n        'provider': 'fincra',\n        'destination': {\n            'type': 'bank_account',\n            'bank_id': 'ng.opay',\n            'account_number': '7068270185',\n            'account_name': 'Test Recipient',\n        },\n    },\n)\nprint(response.json()['data'])"
           }
         ]
       }
@@ -320,10 +404,12 @@
               "enum": [
                 "successful",
                 "pending",
+                "review",
                 "failed",
                 "refunded"
               ]
-            }
+            },
+            "description": "Filter by lifecycle group. `pending` includes queued/processing states; `review` includes uncertain/manual_review."
           },
           {
             "name": "provider",
@@ -507,11 +593,20 @@
       "AvailableProvider": {
         "type": "object",
         "required": [
+          "id",
           "slug",
           "name",
-          "configurable"
+          "status",
+          "configurable",
+          "capabilities",
+          "supported_currencies",
+          "supported_destinations"
         ],
         "properties": {
+          "id": {
+            "type": "string",
+            "example": "provider_fincra"
+          },
           "slug": {
             "type": "string",
             "example": "fincra"
@@ -520,15 +615,64 @@
             "type": "string",
             "example": "Fincra"
           },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available"
+            ],
+            "example": "available"
+          },
           "configurable": {
-            "type": "boolean"
+            "type": "boolean",
+            "example": true
+          },
+          "capabilities": {
+            "type": "object",
+            "required": [
+              "payin",
+              "payout",
+              "balance"
+            ],
+            "properties": {
+              "payin": {
+                "type": "boolean",
+                "example": false
+              },
+              "payout": {
+                "type": "boolean",
+                "example": true
+              },
+              "balance": {
+                "type": "boolean",
+                "example": false
+              }
+            }
+          },
+          "supported_currencies": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "NGN"
+              ]
+            }
+          },
+          "supported_destinations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "bank_account"
+              ]
+            }
           }
         }
       },
       "AvailableProviderListResponse": {
         "type": "object",
         "required": [
-          "data"
+          "data",
+          "meta"
         ],
         "properties": {
           "data": {
@@ -536,6 +680,24 @@
             "items": {
               "$ref": "#/components/schemas/AvailableProvider"
             }
+          },
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponseMeta"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "pagination"
+                ],
+                "properties": {
+                  "pagination": {
+                    "$ref": "#/components/schemas/PaginationMeta"
+                  }
+                }
+              }
+            ]
           }
         }
       },
@@ -587,29 +749,64 @@
           }
         }
       },
-      "PayoutRecipient": {
+      "PayoutBankDestination": {
         "type": "object",
         "required": [
-          "account_number"
+          "type",
+          "account_number",
+          "bank_id"
         ],
         "properties": {
-          "destination": {
+          "type": {
             "type": "string",
             "enum": [
-              "bank_account",
-              "mobile_money"
+              "bank_account"
             ]
           },
           "account_number": {
             "type": "string"
           },
+          "bank_id": {
+            "type": "string",
+            "description": "Capisum canonical bank id from GET /v1/reference/banks (e.g. ng.opay).",
+            "example": "ng.opay"
+          },
           "account_name": {
             "type": "string"
           },
-          "bank_code": {
+          "country": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2
+          },
+          "phone": {
             "type": "string"
+          }
+        }
+      },
+      "PayoutMobileMoneyDestination": {
+        "type": "object",
+        "required": [
+          "type",
+          "account_number",
+          "mobile_money_code"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "mobile_money"
+            ]
+          },
+          "account_number": {
+            "type": "string",
+            "description": "Mobile wallet number."
           },
           "mobile_money_code": {
+            "type": "string",
+            "description": "Normalized network label. GHS: MTN, AIRTEL. KES: SAFARICOM, AIRTEL."
+          },
+          "account_name": {
             "type": "string"
           },
           "country": {
@@ -626,7 +823,7 @@
         "type": "object",
         "required": [
           "amount",
-          "recipient"
+          "destination"
         ],
         "properties": {
           "amount": {
@@ -651,8 +848,25 @@
               "KES"
             ]
           },
-          "recipient": {
-            "$ref": "#/components/schemas/PayoutRecipient"
+          "destination": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PayoutBankDestination"
+              },
+              {
+                "$ref": "#/components/schemas/PayoutMobileMoneyDestination"
+              }
+            ]
+          },
+          "reference": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]{16,50}$",
+            "description": "Optional merchant-facing payout reference (16\u201350 chars; lowercase letters, digits, `_`, `-`). Capisum generates a provider-safe `pout_*` reference when omitted.",
+            "example": "pout_a1b2c3d4e5f6789012345ab"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable payout description."
           },
           "metadata": {
             "type": "object",
@@ -660,7 +874,212 @@
           },
           "provider": {
             "type": "string",
-            "description": "Optional explicit provider slug (for example, `fincra`)."
+            "description": "Optional explicit provider slug (for example, `fincra`, `paystack`, `flutterwave`, `palmpay`)."
+          },
+          "recipient": {
+            "deprecated": true,
+            "description": "Deprecated alias for `destination`.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PayoutBankDestination"
+              },
+              {
+                "$ref": "#/components/schemas/PayoutMobileMoneyDestination"
+              }
+            ]
+          }
+        }
+      },
+      "PayoutCapabilities": {
+        "type": "object",
+        "required": [
+          "contract_version",
+          "currencies",
+          "destination_types",
+          "providers"
+        ],
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "example": "2026-03"
+          },
+          "currencies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "code",
+                "country",
+                "destinations"
+              ],
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "example": "NGN"
+                },
+                "country": {
+                  "type": "string",
+                  "example": "NG"
+                },
+                "destinations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "bank_account"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "destination_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "bank_account"
+              ]
+            },
+            "example": [
+              "bank_account"
+            ]
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "slug",
+                "name",
+                "currencies",
+                "destinations"
+              ],
+              "properties": {
+                "slug": {
+                  "type": "string",
+                  "example": "fincra"
+                },
+                "name": {
+                  "type": "string",
+                  "example": "Fincra"
+                },
+                "currencies": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "NGN"
+                    ]
+                  }
+                },
+                "destinations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "bank_account"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "PayoutCapabilitiesResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PayoutCapabilities"
+          }
+        }
+      },
+      "BankReferenceRecord": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "currency",
+          "country"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "ng.opay"
+          },
+          "name": {
+            "type": "string",
+            "example": "OPay"
+          },
+          "currency": {
+            "type": "string",
+            "example": "NGN"
+          },
+          "country": {
+            "type": "string",
+            "example": "NG"
+          }
+        }
+      },
+      "BankReferenceData": {
+        "type": "object",
+        "required": [
+          "contract_version",
+          "description",
+          "supported_currencies",
+          "usage",
+          "currency",
+          "country",
+          "banks"
+        ],
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "example": "2026-03"
+          },
+          "description": {
+            "type": "string"
+          },
+          "supported_currencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "currency": {
+            "type": "string",
+            "example": "NGN"
+          },
+          "country": {
+            "type": "string",
+            "example": "NG"
+          },
+          "banks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankReferenceRecord"
+            }
+          }
+        }
+      },
+      "BankReferenceResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BankReferenceData"
           }
         }
       },
@@ -674,6 +1093,11 @@
           "currency",
           "provider",
           "reference",
+          "description",
+          "destination",
+          "failure",
+          "timeline",
+          "metadata",
           "created_at",
           "updated_at",
           "environment"
@@ -694,8 +1118,13 @@
           "status": {
             "type": "string",
             "enum": [
+              "queued",
               "pending",
               "processing",
+              "pending_provider_confirmation",
+              "uncertain",
+              "manual_review",
+              "completed",
               "authorized",
               "settled",
               "failed",
@@ -715,9 +1144,36 @@
           "reference": {
             "type": "string"
           },
-          "provider_ref": {
+          "provider_reference": {
             "type": "string",
             "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "destination": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TransactionDestination"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "failure": {
+            "$ref": "#/components/schemas/TransactionFailure"
+          },
+          "timeline": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransactionTimelineEvent"
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
           },
           "customer_email": {
             "type": "string",
@@ -725,23 +1181,6 @@
           },
           "customer_name": {
             "type": "string",
-            "nullable": true
-          },
-          "metadata": {
-            "type": "object",
-            "nullable": true,
-            "additionalProperties": true
-          },
-          "error_code": {
-            "type": "string",
-            "nullable": true
-          },
-          "error_message": {
-            "type": "string",
-            "nullable": true
-          },
-          "latency_ms": {
-            "type": "integer",
             "nullable": true
           },
           "environment": {
@@ -759,31 +1198,197 @@
             "type": "string",
             "format": "date-time"
           },
-          "authorized_at": {
+          "authorization_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Present on pay-in create responses when the provider returns a checkout URL."
+          }
+        }
+      },
+      "TransactionDestination": {
+        "type": "object",
+        "required": [
+          "type",
+          "account_number"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "bank_account",
+              "mobile_money"
+            ]
+          },
+          "bank_id": {
+            "type": "string",
+            "example": "ng.opay"
+          },
+          "account_number": {
+            "type": "string"
+          },
+          "account_name": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string",
+            "example": "NG"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "mobile_money_code": {
+            "type": "string"
+          }
+        }
+      },
+      "TransactionFailure": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "at": {
             "type": "string",
             "format": "date-time",
             "nullable": true
           },
-          "settled_at": {
+          "retryable": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "TransactionTimelineEvent": {
+        "type": "object",
+        "required": [
+          "status",
+          "at"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "created"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ResponseMeta": {
+        "type": "object",
+        "required": [
+          "request_id",
+          "timestamp"
+        ],
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "example": "req_xxx"
+          },
+          "timestamp": {
             "type": "string",
             "format": "date-time",
+            "example": "2026-07-07T09:20:00.000Z"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMeta"
+          }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "required": [
+          "limit",
+          "has_more",
+          "next_cursor"
+        ],
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "example": 20
+          },
+          "has_more": {
+            "type": "boolean",
+            "example": false
+          },
+          "next_cursor": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "prev_cursor": {
+            "type": "string",
             "nullable": true
           },
-          "failed_at": {
+          "page": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "type",
+          "retryable",
+          "details"
+        ],
+        "properties": {
+          "code": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "example": "INVALID_PROVIDER"
+          },
+          "message": {
+            "type": "string",
+            "example": "The selected provider is not supported."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "validation_error",
+              "authentication_error",
+              "authorization_error",
+              "not_found_error",
+              "conflict_error",
+              "provider_error",
+              "rate_limit_error",
+              "api_error"
+            ],
+            "example": "validation_error"
+          },
+          "retryable": {
+            "type": "boolean",
+            "example": false
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
           }
         }
       },
       "TransactionResponse": {
         "type": "object",
         "required": [
-          "data"
+          "data",
+          "meta"
         ],
         "properties": {
           "data": {
             "$ref": "#/components/schemas/Transaction"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
           }
         }
       },
@@ -791,9 +1396,7 @@
         "type": "object",
         "required": [
           "data",
-          "hasMore",
-          "nextCursor",
-          "prevCursor"
+          "meta"
         ],
         "properties": {
           "data": {
@@ -802,51 +1405,38 @@
               "$ref": "#/components/schemas/Transaction"
             }
           },
-          "hasMore": {
-            "type": "boolean"
-          },
-          "nextCursor": {
-            "type": "string",
-            "nullable": true
-          },
-          "prevCursor": {
-            "type": "string",
-            "nullable": true
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponseMeta"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "pagination"
+                ],
+                "properties": {
+                  "pagination": {
+                    "$ref": "#/components/schemas/PaginationMeta"
+                  }
+                }
+              }
+            ]
           }
         }
       },
       "ErrorBody": {
         "type": "object",
         "required": [
-          "error"
+          "error",
+          "meta"
         ],
         "properties": {
           "error": {
-            "type": "object",
-            "required": [
-              "code",
-              "message",
-              "retryable",
-              "request_id"
-            ],
-            "properties": {
-              "code": {
-                "type": "string"
-              },
-              "message": {
-                "type": "string"
-              },
-              "retryable": {
-                "type": "boolean"
-              },
-              "request_id": {
-                "type": "string"
-              },
-              "details": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
+            "$ref": "#/components/schemas/ApiError"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
           }
         }
       }

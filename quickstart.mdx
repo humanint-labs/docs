@@ -24,7 +24,16 @@ export CAPISUM_API_KEY="cps_your_key_here"
 export CAPISUM_BASE_URL="https://api.capisum.com"
 ```
 
-## 2. List available providers
+## 2. List NGN banks
+
+```bash
+curl -s "$CAPISUM_BASE_URL/v1/reference/banks?currency=NGN" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY"
+```
+
+Pick a `bank_id` from the response (for example `ng.opay` for OPay).
+
+## 3. List available providers
 
 ```bash
 curl -s "$CAPISUM_BASE_URL/v1/providers" \
@@ -36,7 +45,10 @@ curl -s "$CAPISUM_BASE_URL/v1/providers" \
 ```json
 {
   "data": [
-    { "slug": "fincra", "name": "Fincra", "configurable": true }
+    { "slug": "fincra", "name": "Fincra", "configurable": true },
+    { "slug": "paystack", "name": "Paystack", "configurable": true },
+    { "slug": "flutterwave", "name": "Flutterwave", "configurable": true },
+    { "slug": "palmpay", "name": "PalmPay", "configurable": true }
   ]
 }
 ```
@@ -47,7 +59,7 @@ curl -s "$CAPISUM_BASE_URL/v1/providers" \
   This returns the provider **catalog**, not your connected providers. Use `GET /v1/providers/fincra/status` or the dashboard to check connection health.
 </Note>
 
-## 3. Create a payout
+## 4. Create a payout
 
 ```bash
 curl -s -X POST "$CAPISUM_BASE_URL/v1/transactions/payout" \
@@ -57,17 +69,19 @@ curl -s -X POST "$CAPISUM_BASE_URL/v1/transactions/payout" \
   -d '{
     "amount": "500000",
     "currency": "NGN",
-    "provider": "fincra",
-    "recipient": {
-      "destination": "bank_account",
-      "bank_code": "305",
+    "provider": "paystack",
+    "destination": {
+      "type": "bank_account",
+      "bank_id": "ng.opay",
       "account_number": "7068270185",
       "account_name": "Test Recipient"
     }
   }'
 ```
 
-## 4. Check status
+The response returns `status: queued`. Capisum submits the payout to the provider asynchronously.
+
+## 5. Check status
 
 ```bash
 # By reference

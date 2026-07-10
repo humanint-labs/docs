@@ -24,21 +24,39 @@ Pass `amount` as a string or integer. Capisum stores and returns amounts as inte
 
 | Currency | `bank_account` | `mobile_money` |
 | --- | --- | --- |
-| NGN | Yes (`bank_code` required) | No |
-| GHS | Yes | Yes (`mobile_money_code` required) |
-| KES | Yes | Yes (`mobile_money_code` required) |
+| NGN | Yes (`bank_id` required) | No |
+| GHS | Yes (`bank_id` required) | Yes (`mobile_money_code` required) |
+| KES | Yes (`bank_id` required) | Yes (`mobile_money_code` required) |
 
-### Recipient object
+Use [`GET /v1/reference/banks`](/api-reference) to list canonical `bank_id` values. Capisum resolves provider-specific institution codes internally at payout time.
+
+### Destination object
+
+Use `destination` on create requests. `recipient` is a deprecated alias.
 
 | Field | Required | Description |
 | --- | --- | --- |
+| `type` | Recommended | `bank_account` or `mobile_money` |
 | `account_number` | Yes | Bank account or mobile wallet number |
-| `destination` | No | `bank_account` or `mobile_money`. Inferred from `bank_code` or `mobile_money_code` when omitted |
-| `bank_code` | For bank payouts | NGN CBN bank code (Opay = `305`) |
+| `bank_id` | For bank payouts | Capisum canonical bank id (e.g. `ng.opay` for OPay) |
 | `mobile_money_code` | For mobile money | GHS: `MTN`, `AIRTEL`. KES: `SAFARICOM`, `AIRTEL` |
 | `account_name` | Recommended | Display name for the recipient |
 | `country` | No | ISO 3166-1 alpha-2 code. Defaults from currency |
 | `phone` | No | Wallet phone. Defaults to `account_number` |
+
+<Warning>
+  `bank_code` is a deprecated escape hatch and is not part of the supported contract. Use `bank_id` instead. `bank_code` cannot be combined with `bank_id`.
+</Warning>
+
+## References
+
+| Field | Who sets it | Format |
+| --- | --- | --- |
+| `reference` (request body) | You (optional) | 16–50 chars; lowercase letters, digits, `_`, `-` |
+| `reference` (response) | Capisum | Your merchant-facing payout id (`pout_*` when auto-generated) |
+| `provider_reference` | Provider | Provider transfer id after submission |
+
+Capisum generates a provider-safe `pout_*` reference when you omit `reference`. On the first provider attempt, that merchant reference is used as the provider transfer idempotency key. Retries after a confirmed failure or reversal use fresh internal transfer references — you only track the merchant `reference` in your integration.
 
 ## Provider routing
 
@@ -46,7 +64,7 @@ Set `provider` to route explicitly:
 
 ```json
 {
-  "provider": "fincra"
+  "provider": "paystack"
 }
 ```
 
@@ -64,16 +82,14 @@ When omitted, Capisum selects a provider using your organization's routing rules
     {
       "amount": "500000",
       "currency": "NGN",
-      "provider": "fincra",
-      "recipient": {
-        "destination": "bank_account",
-        "bank_code": "305",
+      "provider": "paystack",
+      "destination": {
+        "type": "bank_account",
+        "bank_id": "ng.opay",
         "account_number": "7068270185",
         "account_name": "Test Recipient"
       },
-      "metadata": {
-        "description": "Vendor payout"
-      }
+      "description": "Vendor payout"
     }
     ```
   </Tab>
@@ -83,8 +99,8 @@ When omitted, Capisum selects a provider using your organization's routing rules
       "amount": "10000",
       "currency": "GHS",
       "provider": "fincra",
-      "recipient": {
-        "destination": "mobile_money",
+      "destination": {
+        "type": "mobile_money",
         "mobile_money_code": "MTN",
         "account_number": "2330803443433",
         "account_name": "Ama Mensah"
@@ -97,9 +113,9 @@ When omitted, Capisum selects a provider using your organization's routing rules
     {
       "amount": "50000",
       "currency": "KES",
-      "provider": "fincra",
-      "recipient": {
-        "destination": "mobile_money",
+      "provider": "flutterwave",
+      "destination": {
+        "type": "mobile_money",
         "mobile_money_code": "SAFARICOM",
         "account_number": "254803456789",
         "account_name": "John Kamau"
@@ -111,15 +127,25 @@ When omitted, Capisum selects a provider using your organization's routing rules
 
 ## Transaction lifecycle
 
+Payout creation returns immediately with `status: queued`. Capisum submits the payout to the provider asynchronously in the background.
+
 | Status | Meaning |
 | --- | --- |
-| `pending` | Record created, not yet sent to provider |
-| `processing` | Submitted to provider |
-| `settled` | Payout completed successfully |
-| `failed` | Provider rejected or errored |
+| `queued` | Accepted; waiting for worker submission |
+| `processing` | Provider submission in progress |
+| `pending_provider_confirmation` | Submitted; awaiting provider webhook or polling |
+| `uncertain` | Provider outcome unclear (timeout or ambiguous response) |
+| `manual_review` | Needs attention; eligible for dashboard retry after failed attempt |
+| `completed` / `settled` | Payout succeeded |
+| `failed` | Terminal failure |
+| `refunded` | Provider reversed the transfer |
 | `cancelled` | Cancelled before settlement |
 
 Poll status with `GET /v1/transactions/{id}`, `GET /v1/transactions/ref/{reference}`, or `POST /v1/transactions/{id}/verify`.
+
+<Note>
+  Use `status_group=review` when listing transactions to find payouts in `uncertain` or `manual_review`.
+</Note>
 
 ## Idempotency
 

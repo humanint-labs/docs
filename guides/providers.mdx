@@ -2,7 +2,7 @@
 title: "Providers"
 sidebarTitle: "Providers"
 description: "Payment providers available through the Capisum customer API and what each supports today."
-keywords: ["providers", "Fincra", "payout", "NGN", "GHS", "KES", "provider catalog"]
+keywords: ["providers", "Fincra", "Paystack", "Flutterwave", "PalmPay", "payout", "NGN", "GHS", "KES", "provider catalog"]
 icon: "plug"
 ---
 
@@ -14,15 +14,18 @@ Use [`GET /v1/providers`](/api-reference) to list provider slugs Capisum can rou
 
 ## Available providers
 
-| Provider | Slug | Customer API today | Currencies | Regions |
-| --- | --- | --- | --- | --- |
-| Fincra | `fincra` | Payouts | NGN, GHS, KES | Nigeria, Ghana, Kenya |
+| Provider | Slug | Customer API today | NGN bank | GHS | KES |
+| --- | --- | --- | --- | --- | --- |
+| Fincra | `fincra` | Payouts | Yes | Bank + mobile money | Bank + mobile money |
+| Paystack | `paystack` | Payouts | Yes | Bank + mobile money | Mobile money only |
+| Flutterwave | `flutterwave` | Payouts | Yes | Bank + mobile money | Bank + mobile money |
+| PalmPay | `palmpay` | Payouts | Yes | — | — |
+
+All providers share the same Capisum payout state machine: queued submission, per-attempt provider transfer references, webhook matching, and verify-before-retry. Each adapter handles its own request format, status mapping, and webhook parsing.
 
 ### Fincra (`fincra`)
 
 Cross-border payment infrastructure for collections, payouts, and virtual accounts across Africa.
-
-**Supported on the customer API**
 
 | Operation | Status |
 | --- | --- |
@@ -30,20 +33,44 @@ Cross-border payment infrastructure for collections, payouts, and virtual accoun
 | Pay-in | Not available |
 | Refunds | Not available |
 
-**Payout rails**
+### Paystack (`paystack`)
 
-| Currency | Bank account | Mobile money |
-| --- | --- | --- |
-| NGN | Yes | No |
-| GHS | Yes | Yes |
-| KES | Yes | Yes |
+Nigerian and African payment gateway with transfer APIs.
 
-Set `"provider": "fincra"` on [`POST /v1/transactions/payout`](/api-reference) to route explicitly, or omit it to use your organization's routing rules. See [Payouts](/guides/payouts) for recipient fields and examples.
+| Operation | Status |
+| --- | --- |
+| Payouts | Available |
+| Pay-in | Not available |
+| Refunds | Not available |
+
+Paystack reuses stored transfer recipients per organization credential to avoid duplicate beneficiary creation.
+
+### Flutterwave (`flutterwave`)
+
+Pan-African payments platform with direct transfer APIs.
+
+| Operation | Status |
+| --- | --- |
+| Payouts | Available |
+| Pay-in | Not available |
+| Refunds | Not available |
+
+### PalmPay (`palmpay`)
+
+Nigerian digital wallet and merchant payout APIs.
+
+| Operation | Status |
+| --- | --- |
+| Payouts | Available (NGN bank only) |
+| Pay-in | Not available |
+| Refunds | Not available |
+
+Set `"provider": "<slug>"` on [`POST /v1/transactions/payout`](/api-reference) to route explicitly, or omit it to use your organization's routing rules. See [Payouts](/guides/payouts) for destination fields and examples.
 
 **Check provider health**
 
 ```bash
-curl "$CAPISUM_BASE_URL/v1/providers/fincra/status" \
+curl "$CAPISUM_BASE_URL/v1/providers/paystack/status" \
   -H "Authorization: Bearer $CAPISUM_API_KEY"
 ```
 
@@ -61,9 +88,14 @@ curl "$CAPISUM_BASE_URL/v1/providers" \
 ```json
 {
   "data": [
-    { "slug": "fincra", "name": "Fincra", "configurable": true }
+    { "slug": "fincra", "name": "Fincra", "configurable": true },
+    { "slug": "paystack", "name": "Paystack", "configurable": true },
+    { "slug": "flutterwave", "name": "Flutterwave", "configurable": true },
+    { "slug": "palmpay", "name": "PalmPay", "configurable": true }
   ]
 }
 ```
 
 </ResponseExample>
+
+Use [`GET /v1/payouts/capabilities`](/api-reference) for the NGN-focused contract version and supported destination types.
