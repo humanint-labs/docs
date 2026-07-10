@@ -61,6 +61,7 @@
         "icon": "book-open",
         "pages": [
           "guides/providers",
+          "guides/provider-network",
           "guides/payouts",
           "guides/idempotency",
           "guides/pagination",
