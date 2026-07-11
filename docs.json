@@ -63,6 +63,7 @@
           "guides/providers",
           "guides/provider-network",
           "guides/payouts",
+          "guides/account-verification",
           "guides/idempotency",
           "guides/pagination",
           "guides/errors"
@@ -73,7 +74,9 @@
         "openapi": "openapi.json",
         "pages": [
           "GET /v1/providers",
-          "GET /v1/providers/{slug}/status"
+          "GET /v1/providers/{slug}/status",
+          "GET /v1/providers/{slug}/balance",
+          "POST /v1/verify/account"
         ]
       },
       {

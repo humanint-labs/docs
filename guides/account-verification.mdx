@@ -1,0 +1,101 @@
+---
+title: "Account verification and balances"
+sidebarTitle: "Account verification"
+description: "Resolve Nigerian bank account names and read connected provider wallet balances through the Capisum customer API."
+keywords: ["account verification", "name enquiry", "balance", "PalmPay", "Paystack", "bank_id"]
+icon: "building-columns"
+---
+
+Use these endpoints before payouts to confirm beneficiary details, or to monitor wallet balances on connected providers.
+
+## Verify a bank account
+
+`POST /v1/verify/account` resolves the account holder name through a connected provider that supports account resolution.
+
+Supported providers today:
+
+| Provider | Slug | Notes |
+| --- | --- | --- |
+| Fincra | `fincra` | NGN bank account resolution |
+| Paystack | `paystack` | NGN bank resolve API |
+| Flutterwave | `flutterwave` | NGN bank account look-up |
+| PalmPay | `palmpay` | NGN bank name enquiry |
+
+### Request
+
+```json
+{
+  "provider": "palmpay",
+  "account_number": "0123456789",
+  "bank_id": "ng.opay",
+  "currency": "NGN"
+}
+```
+
+Use `bank_id` from [`GET /v1/reference/banks`](/api-reference) whenever possible. Capisum resolves the provider-specific bank code internally. You can pass `bank_code` only as an escape hatch when a canonical bank id is unavailable.
+
+The `provider` field must match a provider connected in the same environment as your API key (staging or production).
+
+### Response
+
+```json
+{
+  "data": {
+    "provider": "palmpay",
+    "account_name": "JOHN DOE",
+    "account_number": "0123456789",
+    "bank_code": "100004",
+    "bank_id": "ng.opay",
+    "currency": "NGN"
+  },
+  "meta": {
+    "request_id": "req_xxx",
+    "timestamp": "2026-07-11T12:00:00.000Z"
+  }
+}
+```
+
+If the account cannot be resolved, Capisum returns a normalized `INVALID_ACCOUNT` error.
+
+## Get provider balance
+
+`GET /v1/providers/{slug}/balance` returns the connected provider wallet balance for the API key environment.
+
+Supported providers today:
+
+| Provider | Slug | Currency filter |
+| --- | --- | --- |
+| Fincra | `fincra` | Optional `?currency=NGN`, `?currency=USD`, etc. |
+| Paystack | `paystack` | Optional `?currency=NGN` or `?currency=GHS` |
+| Flutterwave | `flutterwave` | Optional `?currency=NGN`, `?currency=GHS`, `?currency=KES` |
+| PalmPay | `palmpay` | NGN only |
+
+Amounts are returned in **minor units**. For NGN, `500000` means ₦5,000.00.
+
+### Example
+
+```bash
+curl -s https://api.capisum.com/v1/providers/palmpay/balance \
+  -H "Authorization: Bearer cps_live_..."
+```
+
+```json
+{
+  "data": {
+    "provider": "palmpay",
+    "currency": "NGN",
+    "available": 500000,
+    "ledger": 525000
+  },
+  "meta": {
+    "request_id": "req_xxx",
+    "timestamp": "2026-07-11T12:00:00.000Z"
+  }
+}
+```
+
+`available` is the spendable balance. `ledger` is included when the provider exposes additional wallet components such as frozen or unsettled funds.
+
+## Capability discovery
+
+[`GET /v1/providers`](/api-reference) includes a `capabilities.balance` flag for providers that expose balance lookup through the customer API. Account resolution is available for all four payout providers when connected in your workspace.

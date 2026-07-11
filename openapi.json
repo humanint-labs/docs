@@ -36,6 +36,9 @@
     },
     {
       "name": "Transactions"
+    },
+    {
+      "name": "Verification"
     }
   ],
   "paths": {
@@ -188,6 +191,112 @@
             }
           }
         ]
+      }
+    },
+    "/v1/providers/{slug}/balance": {
+      "get": {
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Get provider balance",
+        "operationId": "get_v1_providers_slug_balance",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderBalanceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Returns the available balance for a connected provider in the API key's environment. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN). Supported for `fincra`, `paystack`, `flutterwave`, and `palmpay`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "fincra"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 3
+            },
+            "description": "Optional currency filter. Paystack may return multiple wallet balances."
+          }
+        ]
+      }
+    },
+    "/v1/verify/account": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Verify bank account",
+        "operationId": "post_v1_verify_account",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyAccountResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Resolve a bank account name through a connected provider that supports account resolution. Use `bank_id` from `GET /v1/reference/banks` when possible. Supported for `fincra`, `paystack`, `flutterwave`, and `palmpay`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyAccountRequest"
+              }
+            }
+          }
+        }
       }
     },
     "/v1/transactions/payout": {
@@ -746,6 +855,136 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/ProviderHealth"
+          }
+        }
+      },
+      "VerifyAccountRequest": {
+        "type": "object",
+        "required": [
+          "provider",
+          "account_number"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "Connected provider slug to use for resolution (for example, `palmpay` or `paystack`).",
+            "example": "palmpay"
+          },
+          "account_number": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 20,
+            "example": "0123456789"
+          },
+          "bank_id": {
+            "type": "string",
+            "description": "Capisum canonical bank id from GET /v1/reference/banks (recommended).",
+            "example": "ng.opay"
+          },
+          "bank_code": {
+            "type": "string",
+            "description": "Optional provider-specific bank code escape hatch when bank_id is unavailable."
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "NGN",
+            "example": "NGN"
+          }
+        }
+      },
+      "VerifyAccountResult": {
+        "type": "object",
+        "required": [
+          "provider",
+          "account_name",
+          "account_number",
+          "bank_code",
+          "currency"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "palmpay"
+          },
+          "account_name": {
+            "type": "string",
+            "example": "JOHN DOE"
+          },
+          "account_number": {
+            "type": "string",
+            "example": "0123456789"
+          },
+          "bank_code": {
+            "type": "string",
+            "example": "100004"
+          },
+          "bank_id": {
+            "type": "string",
+            "example": "ng.opay"
+          },
+          "currency": {
+            "type": "string",
+            "example": "NGN"
+          }
+        }
+      },
+      "VerifyAccountResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/VerifyAccountResult"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        }
+      },
+      "ProviderBalanceResult": {
+        "type": "object",
+        "required": [
+          "provider",
+          "currency",
+          "available"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "palmpay"
+          },
+          "currency": {
+            "type": "string",
+            "example": "NGN"
+          },
+          "available": {
+            "type": "integer",
+            "description": "Spendable balance in minor units.",
+            "example": 500000
+          },
+          "ledger": {
+            "type": "integer",
+            "description": "Total wallet balance in minor units when the provider exposes it.",
+            "example": 525000
+          }
+        }
+      },
+      "ProviderBalanceResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ProviderBalanceResult"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
           }
         }
       },

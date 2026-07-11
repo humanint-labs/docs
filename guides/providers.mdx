@@ -30,6 +30,8 @@ Cross-border payment infrastructure for collections, payouts, and virtual accoun
 | Operation | Status |
 | --- | --- |
 | Payouts | Available |
+| Account verification | Available (NGN) |
+| Balance lookup | Available |
 | Pay-in | Not available |
 | Refunds | Not available |
 
@@ -40,6 +42,8 @@ Nigerian and African payment gateway with transfer APIs.
 | Operation | Status |
 | --- | --- |
 | Payouts | Available |
+| Account verification | Available (NGN) |
+| Balance lookup | Available |
 | Pay-in | Not available |
 | Refunds | Not available |
 
@@ -52,6 +56,8 @@ Pan-African payments platform with direct transfer APIs.
 | Operation | Status |
 | --- | --- |
 | Payouts | Available |
+| Account verification | Available (NGN) |
+| Balance lookup | Available |
 | Pay-in | Not available |
 | Refunds | Not available |
 
@@ -62,6 +68,8 @@ Nigerian digital wallet and merchant payout APIs.
 | Operation | Status |
 | --- | --- |
 | Payouts | Available (NGN bank only) |
+| Account verification | Available (NGN) |
+| Balance lookup | Available (NGN) |
 | Pay-in | Not available |
 | Refunds | Not available |
 
@@ -75,6 +83,8 @@ curl "$CAPISUM_BASE_URL/v1/providers/paystack/status" \
 ```
 
 If no health data exists yet, the response is `{ "status": "unknown" }`.
+
+See [Account verification](/guides/account-verification) for name enquiry and balance endpoints.
 
 ## Listing providers
 
