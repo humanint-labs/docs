@@ -6,7 +6,7 @@ keywords: ["quickstart", "payout", "API key", "NGN payout"]
 icon: "bolt"
 ---
 
-This guide uses the **customer API** at `/v1/*`. Dashboard setup (connecting a provider, creating keys) happens at [app.capisum.com](https://app.capisum.com). Learn about [provider coverage on capisum.com](https://capisum.com/providers) or read the [sandbox overview](https://capisum.com/sandbox) before your first payout.
+This guide uses the API at `/v1/*`. Dashboard setup (connecting a provider, creating keys) happens at [app.capisum.com](https://app.capisum.com). Read the [Sandbox](/guides/sandbox) guide first if you have not connected a staging provider yet.
 
 ## Prerequisites
 
@@ -102,7 +102,10 @@ curl -s -X POST "$CAPISUM_BASE_URL/v1/transactions/{id}/verify" \
   <Card title="Authentication" icon="key" href="/authentication">
     API keys and environments.
   </Card>
-  <Card title="Payouts" icon="money-bill-transfer" href="/guides/payouts">
-    Currencies and recipient fields.
+  <Card title="Payout integration" icon="money-bill-transfer" href="/guides/payouts">
+    Currencies, destinations, and go-live checklist.
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/guides/webhooks">
+    Receive payout status events at your server.
   </Card>
 </Columns>

@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "Capisum",
-  "description": "Customer API documentation for Capisum integrators.",
+  "description": "API documentation for Capisum integrators.",
   "theme": "luma",
   "logo": {
     "light": "/logo/icon-light.svg",
@@ -46,54 +46,84 @@
     }
   },
   "navigation": {
-    "groups": [
+    "tabs": [
       {
-        "group": "Authentication",
-        "icon": "key",
-        "pages": [
-          "index",
-          "quickstart",
-          "authentication"
-        ]
-      },
-      {
-        "group": "Guides",
+        "tab": "Guides",
         "icon": "book-open",
-        "pages": [
-          "guides/providers",
-          "guides/provider-network",
-          "guides/payouts",
-          "guides/account-verification",
-          "guides/idempotency",
-          "guides/pagination",
-          "guides/errors"
+        "groups": [
+          {
+            "group": "Get started",
+            "icon": "rocket",
+            "pages": [
+              "index",
+              "quickstart",
+              "guides/sandbox",
+              "authentication"
+            ]
+          },
+          {
+            "group": "Payouts",
+            "icon": "money-bill-transfer",
+            "pages": [
+              "guides/payouts",
+              "guides/webhooks",
+              "guides/account-verification"
+            ]
+          },
+          {
+            "group": "Providers",
+            "icon": "plug",
+            "pages": [
+              "guides/providers",
+              "guides/provider-network"
+            ]
+          },
+          {
+            "group": "API essentials",
+            "icon": "list",
+            "pages": [
+              "guides/idempotency",
+              "guides/pagination",
+              "guides/errors"
+            ]
+          }
         ]
       },
       {
-        "group": "Providers",
+        "tab": "API reference",
+        "icon": "square-terminal",
         "openapi": "openapi.json",
-        "pages": [
-          "GET /v1/providers",
-          "GET /v1/providers/{slug}/status",
-          "GET /v1/providers/{slug}/balance",
-          "POST /v1/verify/account"
-        ]
-      },
-      {
-        "group": "Transactions",
-        "openapi": "openapi.json",
-        "pages": [
-          "POST /v1/transactions/payout",
-          "GET /v1/transactions",
-          "GET /v1/transactions/ref/{reference}",
-          "GET /v1/transactions/{id}",
-          "POST /v1/transactions/{id}/verify"
+        "groups": [
+          {
+            "group": "Providers",
+            "pages": [
+              "GET /v1/providers",
+              "GET /v1/providers/{slug}/status",
+              "GET /v1/providers/{slug}/balance",
+              "POST /v1/verify/account"
+            ]
+          },
+          {
+            "group": "Transactions",
+            "pages": [
+              "POST /v1/transactions/payout",
+              "GET /v1/transactions",
+              "GET /v1/transactions/ref/{reference}",
+              "GET /v1/transactions/{id}",
+              "POST /v1/transactions/{id}/verify"
+            ]
+          }
         ]
       }
     ]
   },
   "navbar": {
-    "links": [],
+    "links": [
+      {
+        "label": "API reference",
+        "href": "/api-reference"
+      }
+    ],
     "primary": {
       "type": "button",
       "label": "Sign in",
@@ -117,14 +147,6 @@
             "href": "https://capisum.com/products"
           },
           {
-            "label": "Providers",
-            "href": "https://capisum.com/providers"
-          },
-          {
-            "label": "Sandbox",
-            "href": "https://capisum.com/sandbox"
-          },
-          {
             "label": "Contact",
             "href": "https://capisum.com/contact"
           }
@@ -136,6 +158,10 @@
           {
             "label": "Dashboard",
             "href": "https://app.capisum.com"
+          },
+          {
+            "label": "Sandbox",
+            "href": "/guides/sandbox"
           },
           {
             "label": "Support",

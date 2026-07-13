@@ -8,7 +8,7 @@
 
 ## Terminology
 
-- **Customer API** — `/v1/*`, API key auth (`cps_...`)
+- **Customer API** (internal) — `/v1/*`, API key auth (`cps_...`). User-facing docs say **API**, not "customer API".
 - **Dashboard API** — `/api/v1/*`, JWT auth — do not document here
 - **Minor units** — smallest currency unit (kobo, pesewa, cent)
 - **Catalog vs connected** — `GET /v1/providers` lists available slugs, not connection status
@@ -21,7 +21,7 @@
 
 ## Content boundaries
 
-**Document:** authentication, providers, payouts, transactions, pagination, idempotency, errors.
+**Document:** authentication, providers, payouts, webhooks (outgoing), transactions, pagination, idempotency, errors, sandbox.
 
 **Do not document:** dashboard session APIs, API key CRUD, provider credential management, routing CRUD, billing, audit, team, stats, incoming webhooks, Capisum admin `/api/v1/internal/*`.
 

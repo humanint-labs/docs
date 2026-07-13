@@ -1,58 +1,44 @@
 ---
-title: "Customer API"
+title: "Overview"
 sidebarTitle: "Overview"
-description: "Capisum customer API for creating payouts and querying transactions."
-keywords: ["Capisum", "customer API", "payouts", "providers"]
+description: "Capisum is a unified API for connecting and operating multiple financial providers through one consistent integration."
+keywords: ["Capisum", "unified API", "payouts", "payment providers", "financial infrastructure", "fintech integration"]
 icon: "house"
 ---
 
-The Capisum **customer API** (`/v1/*`) is what your backend calls to create payouts and query transactions. Authenticate every request with an API key:
+Capisum is a unified API for connecting and operating multiple financial providers through one consistent integration.
 
-```
-Authorization: Bearer cps_your_key_here
-```
+Instead of building and maintaining separate integrations for every payment gateway, bank, wallet, or financial infrastructure provider, you connect your existing provider accounts to Capisum using your own credentials.
 
-Base URL: `https://api.capisum.com`
+Your application sends one standardized request. Capisum translates it into the selected provider's format, normalizes the response, tracks the transaction, and delivers consistent webhook events to your server.
 
-## Endpoints
+Capisum does not hold your funds or replace your providers. It removes provider-specific complexity so your team can add, switch, and manage providers without rebuilding your payment infrastructure.
 
-| Method | Path | Description |
-| --- | --- | --- |
-| `POST` | `/v1/transactions/payout` | Create a payout |
-| `GET` | `/v1/transactions` | List transactions |
-| `GET` | `/v1/transactions/ref/{reference}` | Get by reference |
-| `GET` | `/v1/transactions/{id}` | Get by ID |
-| `POST` | `/v1/transactions/{id}/verify` | Poll provider for status |
-| `GET` | `/v1/providers` | List available provider slugs |
-| `GET` | `/v1/providers/{slug}/status` | Provider health |
+## Available capabilities
+
+The API is available at `https://api.capisum.com/v1`. Payouts are the primary transaction type.
+
+| Capability | Endpoint |
+| --- | --- |
+| Create a payout | `POST /v1/transactions/payout` |
+| List and query transactions | `GET /v1/transactions` |
+| Verify account names | `POST /v1/verify/account` |
+| Check provider health and balance | `GET /v1/providers/{slug}/status`, `GET /v1/providers/{slug}/balance` |
+| Receive status webhooks | Configure in the [dashboard](https://app.capisum.com/webhooks/config) |
 
 ## Get started
 
 <Columns cols={2}>
   <Card title="Quickstart" icon="bolt" href="/quickstart">
-    First staging payout.
+    Create your first staging payout in minutes.
   </Card>
-  <Card title="Providers" icon="plug" href="/guides/providers">
-    Available providers and capabilities.
+  <Card title="Sandbox" icon="flask" href="/guides/sandbox">
+    Set up staging credentials and test your integration.
   </Card>
-  <Card title="Authentication" icon="key" href="/authentication">
-    API keys and environments.
+  <Card title="Payout integration" icon="money-bill-transfer" href="/guides/payouts">
+    Amounts, destinations, lifecycle, and go-live checklist.
   </Card>
-</Columns>
-
-## Learn more
-
-<Columns cols={2}>
-  <Card title="Products" icon="layer-group" href="https://capisum.com/products">
-    Unified API, routing, logs, and dashboard.
-  </Card>
-  <Card title="Provider coverage" icon="globe" href="https://capisum.com/providers">
-    Gateways, banks, wallets, and infrastructure partners.
-  </Card>
-  <Card title="Sandbox" icon="flask" href="https://capisum.com/sandbox">
-    Test integrations before production.
-  </Card>
-  <Card title="Contact" icon="envelope" href="https://capisum.com/contact">
-    Sales, support, and partnership questions.
+  <Card title="Webhooks" icon="webhook" href="/guides/webhooks">
+    Event catalog, signature verification, and retries.
   </Card>
 </Columns>

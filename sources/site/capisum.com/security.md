@@ -2,4 +2,4 @@
 
 # Security
 
-Security practices, compliance posture, and responsible disclosure.
+Security practices, incident notification (72-hour breach target for Customer Personal Data), and responsible disclosure.

@@ -1,0 +1,107 @@
+---
+title: "Sandbox"
+sidebarTitle: "Sandbox"
+description: "Test payouts, webhooks, and provider integrations with staging credentials before going live."
+keywords: ["sandbox", "staging", "test environment", "sandbox API key", "test payouts"]
+icon: "flask"
+---
+
+The Capisum **sandbox** (staging environment) lets you build and test integrations without moving real funds. Use sandbox API keys, provider sandbox credentials, and a test webhook URL to validate your full payout flow before switching to production.
+
+## Sandbox vs production
+
+Capisum isolates staging and production at every layer. Data, credentials, and webhooks never cross environments.
+
+| | Sandbox | Production |
+| --- | --- | --- |
+| API key prefix | `cps_...` (staging key) | `cps_...` (production key) |
+| Provider credentials | Provider sandbox/test keys | Provider live keys |
+| Funds | Test balances only | Real money movement |
+| Webhook endpoint | Separate URL per environment | Separate URL per environment |
+| Dashboard switcher | **Sandbox** in the top bar | **Live** in the top bar |
+
+A staging API key only reads and writes staging transactions. Create separate keys for each environment in [API keys](https://app.capisum.com/api-keys).
+
+## Set up sandbox
+
+<Steps>
+  <Step title="Connect a provider">
+    Open [Providers](https://app.capisum.com/providers) with the dashboard set to **Sandbox**. Connect at least one provider using its sandbox or test API credentials.
+  </Step>
+  <Step title="Create a staging API key">
+    Go to [API keys](https://app.capisum.com/api-keys) and create a key for **Sandbox**. Store it securely — the full key is shown once.
+  </Step>
+  <Step title="Configure a webhook URL">
+    Add a test receiver at [Webhooks → Configuration](https://app.capisum.com/webhooks/config). Use a tool like [webhook.site](https://webhook.site) or an ngrok tunnel during local development.
+  </Step>
+  <Step title="Run the quickstart">
+    Follow the [Quickstart](/quickstart) to create your first staging payout.
+  </Step>
+</Steps>
+
+## Test a payout
+
+Use small amounts in sandbox. For NGN, `10000` kobo equals ₦100.00.
+
+```bash
+export CAPISUM_API_KEY="cps_your_staging_key"
+export CAPISUM_BASE_URL="https://api.capisum.com"
+
+curl -s -X POST "$CAPISUM_BASE_URL/v1/transactions/payout" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "X-Idempotency-Key: sandbox-test-$(uuidgen)" \
+  -d '{
+    "amount": "10000",
+    "currency": "NGN",
+    "provider": "paystack",
+    "destination": {
+      "type": "bank_account",
+      "bank_id": "ng.opay",
+      "account_number": "7068270185",
+      "account_name": "Sandbox Recipient"
+    }
+  }'
+```
+
+Watch the transaction in [Transactions](https://app.capisum.com/transactions) and confirm outgoing webhook deliveries under [Webhooks → Outgoing](https://app.capisum.com/webhooks/outgoing).
+
+## Test webhooks
+
+After a payout progresses, Capisum delivers events such as `payout.initiated` and `payout.completed` to your sandbox endpoint. Verify the `X-Capisum-Signature` header before trusting the payload. See [Webhooks](/guides/webhooks) for the event catalog and verification examples.
+
+<Tip>
+  Keep sandbox and production signing secrets separate. Each environment has its own endpoint and secret in the dashboard.
+</Tip>
+
+## Verify accounts and balances
+
+Sandbox supports the same API helpers as production:
+
+- [`POST /v1/verify/account`](/guides/account-verification) — resolve NGN bank account names
+- [`GET /v1/providers/{slug}/balance`](/guides/account-verification) — read connected wallet balances
+- [`GET /v1/providers/{slug}/status`](/guides/providers) — check provider health
+
+## Go live
+
+When sandbox testing passes, switch to production:
+
+1. Connect providers with **live** credentials in the dashboard (**Live** environment).
+2. Create a **production** API key.
+3. Register your production webhook URL and store the new signing secret.
+4. Follow the [Payout integration](/guides/payouts) go-live checklist.
+
+<Warning>
+  Never use production API keys in client-side code, public repositories, or shared logs.
+</Warning>
+
+## Related
+
+<Columns cols={2}>
+  <Card title="Quickstart" icon="bolt" href="/quickstart">
+    Step-by-step first staging payout.
+  </Card>
+  <Card title="Authentication" icon="key" href="/authentication">
+    API keys and environment scoping.
+  </Card>
+</Columns>

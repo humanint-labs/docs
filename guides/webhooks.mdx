@@ -1,0 +1,342 @@
+---
+title: "Webhooks"
+sidebarTitle: "Webhooks"
+description: "Receive real-time payout status updates at your endpoint with signed outgoing webhooks."
+keywords: ["webhooks", "outgoing webhooks", "X-Capisum-Signature", "payout.initiated", "payout.completed", "event catalog"]
+icon: "webhook"
+---
+
+Capisum sends **outgoing webhooks** to your server when a transaction status changes. Configure one endpoint per environment in the [dashboard](https://app.capisum.com/webhooks/config). Capisum signs every delivery so you can verify authenticity before updating your systems.
+
+<Info>
+  Outgoing webhooks are the recommended way to learn when a payout completes or fails. Polling `GET /v1/transactions/{id}` works as a fallback, but webhooks reduce latency and API load.
+</Info>
+
+## How it works
+
+<Steps>
+  <Step title="Configure your endpoint">
+    Add an HTTPS URL in the dashboard for **sandbox** or **live**. Capisum generates a signing secret when the endpoint is first created.
+  </Step>
+  <Step title="Create a payout">
+    When a provider reports a status change, Capisum maps it to a client event and queues a delivery.
+  </Step>
+  <Step title="Verify and respond">
+    Your server verifies `X-Capisum-Signature`, processes the event, and returns `2xx`. Non-`2xx` responses trigger automatic retries.
+  </Step>
+</Steps>
+
+Each organization has **one active endpoint per environment**. Sandbox and live deliveries never cross environments.
+
+## Request format
+
+Capisum delivers webhooks as `POST` requests with a JSON body.
+
+| Header | Description |
+| --- | --- |
+| `Content-Type` | `application/json` |
+| `X-Capisum-Event` | Event type (for example `payout.completed`) |
+| `X-Capisum-Delivery-Id` | Unique delivery ID for logging and support |
+| `X-Capisum-Timestamp` | Unix timestamp (seconds) used in signature generation |
+| `X-Capisum-Signature` | HMAC-SHA256 hex digest of `{timestamp}.{raw_body}` |
+
+### Payload envelope
+
+Every delivery uses the same top-level shape:
+
+```json
+{
+  "event": "payout.completed",
+  "transaction_id": "550e8400-e29b-41d4-a716-446655440000",
+  "reference": "pout_vendor_july_001",
+  "status": "completed",
+  "data": { }
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `event` | Client event type (see [Event catalog](#event-catalog)) |
+| `transaction_id` | Capisum transaction UUID |
+| `reference` | Your merchant-facing payout reference |
+| `status` | Transaction status after the change |
+| `data` | Full public transaction object (same fields as `GET /v1/transactions/{id}`) |
+
+## Verify signatures
+
+Compute the expected signature from the raw request body and `X-Capisum-Timestamp`:
+
+```
+signature_payload = "{timestamp}.{raw_body}"
+expected_signature = HMAC_SHA256_HEX(signature_payload, signing_secret)
+```
+
+Compare `expected_signature` to `X-Capisum-Signature` using a constant-time comparison.
+
+<Tabs>
+  <Tab title="Node.js">
+    ```javascript
+    import { createHmac, timingSafeEqual } from "node:crypto";
+
+    function verifyCapisumWebhook(rawBody, signature, timestamp, secret) {
+      const payload = `${timestamp}.${rawBody}`;
+      const expected = createHmac("sha256", secret).update(payload).digest("hex");
+
+      const expectedBuf = Buffer.from(expected, "utf8");
+      const signatureBuf = Buffer.from(signature, "utf8");
+
+      if (expectedBuf.length !== signatureBuf.length) {
+        return false;
+      }
+
+      return timingSafeEqual(expectedBuf, signatureBuf);
+    }
+  ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    import hmac
+    import hashlib
+
+    def verify_capisum_webhook(raw_body: bytes, signature: str, timestamp: str, secret: str) -> bool:
+        payload = f"{timestamp}.{raw_body.decode('utf-8')}".encode("utf-8")
+        expected = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+        return hmac.compare_digest(expected, signature)
+    ```
+  </Tab>
+</Tabs>
+
+<Warning>
+  Always verify signatures against the **raw request body**. Parsing JSON before verification can change whitespace and break the digest.
+</Warning>
+
+## Respond to deliveries
+
+Return any `2xx` HTTP status to acknowledge success. Capisum treats other status codes and network errors as delivery failures.
+
+Make your handler **idempotent**. Capisum may retry the same delivery, and duplicate events can arrive if your endpoint times out after processing.
+
+## Retries
+
+Failed deliveries retry automatically:
+
+| Setting | Value |
+| --- | --- |
+| Maximum attempts | 5 per delivery |
+| Backoff | Exponential, starting at 60 seconds |
+| Timeout | 30 seconds per HTTP request |
+
+Monitor delivery status in the dashboard under **Webhooks → Outgoing**. You can retry failed deliveries manually from the dashboard when your endpoint is healthy again.
+
+## Event catalog
+
+Capisum emits events when a transaction **status changes** to a mapped terminal or milestone state. Intermediate transitions (for example `processing` → `pending_provider_confirmation`) do not generate webhooks.
+
+### Payout events
+
+Payouts are the supported transaction type on the API today.
+
+| Event | When it fires | Typical `status` in payload |
+| --- | --- | --- |
+| `payout.initiated` | Payout moves from `queued` to `processing` | `processing` |
+| `payout.completed` | Payout reaches `completed` | `completed` |
+| `payout.failed` | Payout reaches `failed` | `failed` |
+| `transaction.refunded` | A completed payout is reversed by the provider | `refunded` |
+
+Status changes to `uncertain`, `manual_review`, or other intermediate states do **not** emit webhooks. Use polling or the dashboard for those cases.
+
+### `payout.initiated`
+
+Fired when Capisum begins provider submission.
+
+```json
+{
+  "event": "payout.initiated",
+  "transaction_id": "550e8400-e29b-41d4-a716-446655440000",
+  "reference": "pout_vendor_july_001",
+  "status": "processing",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "type": "payout",
+    "status": "processing",
+    "amount": 500000,
+    "currency": "NGN",
+    "provider": "paystack",
+    "reference": "pout_vendor_july_001",
+    "provider_reference": null,
+    "provider_customer_reference": "pout_att_01h2example",
+    "description": "Vendor payout",
+    "destination": {
+      "type": "bank_account",
+      "bank_id": "ng.opay",
+      "account_number": "7068270185",
+      "account_name": "Test Recipient"
+    },
+    "failure": null,
+    "timeline": [],
+    "metadata": {},
+    "customer_email": null,
+    "customer_name": null,
+    "environment": "staging",
+    "latency_ms": null,
+    "created_at": "2026-07-11T11:59:00.000Z",
+    "updated_at": "2026-07-11T12:00:05.000Z"
+  }
+}
+```
+
+### `payout.completed`
+
+Fired when the provider confirms the transfer succeeded.
+
+```json
+{
+  "event": "payout.completed",
+  "transaction_id": "550e8400-e29b-41d4-a716-446655440000",
+  "reference": "pout_vendor_july_001",
+  "status": "completed",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "type": "payout",
+    "status": "completed",
+    "amount": 500000,
+    "currency": "NGN",
+    "provider": "paystack",
+    "reference": "pout_vendor_july_001",
+    "provider_reference": "TRF_a1b2c3d4e5",
+    "provider_customer_reference": "pout_att_01h2example",
+    "description": "Vendor payout",
+    "destination": {
+      "type": "bank_account",
+      "bank_id": "ng.opay",
+      "account_number": "7068270185",
+      "account_name": "Test Recipient"
+    },
+    "failure": null,
+    "timeline": [],
+    "metadata": {},
+    "customer_email": null,
+    "customer_name": null,
+    "environment": "staging",
+    "latency_ms": 4200,
+    "created_at": "2026-07-11T11:59:00.000Z",
+    "updated_at": "2026-07-11T12:01:30.000Z"
+  }
+}
+```
+
+### `payout.failed`
+
+Fired when the payout reaches a terminal failure state.
+
+```json
+{
+  "event": "payout.failed",
+  "transaction_id": "660e8400-e29b-41d4-a716-446655440001",
+  "reference": "pout_vendor_july_002",
+  "status": "failed",
+  "data": {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "type": "payout",
+    "status": "failed",
+    "amount": 100000,
+    "currency": "NGN",
+    "provider": "paystack",
+    "reference": "pout_vendor_july_002",
+    "provider_reference": "TRF_failed_xyz",
+    "provider_customer_reference": "pout_att_01h3example",
+    "description": "Vendor payout",
+    "destination": {
+      "type": "bank_account",
+      "bank_id": "ng.opay",
+      "account_number": "0000000000",
+      "account_name": "Invalid Account"
+    },
+    "failure": {
+      "code": "INVALID_ACCOUNT",
+      "message": "Could not resolve destination account",
+      "provider_code": "invalid_account_number",
+      "provider_message": "Account number is invalid"
+    },
+    "timeline": [],
+    "metadata": {},
+    "customer_email": null,
+    "customer_name": null,
+    "environment": "staging",
+    "latency_ms": 2100,
+    "created_at": "2026-07-11T12:05:00.000Z",
+    "updated_at": "2026-07-11T12:05:45.000Z"
+  }
+}
+```
+
+### `transaction.refunded`
+
+Fired when a previously completed payout is reversed by the provider.
+
+```json
+{
+  "event": "transaction.refunded",
+  "transaction_id": "550e8400-e29b-41d4-a716-446655440000",
+  "reference": "pout_vendor_july_001",
+  "status": "refunded",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "type": "payout",
+    "status": "refunded",
+    "amount": 500000,
+    "currency": "NGN",
+    "provider": "paystack",
+    "reference": "pout_vendor_july_001",
+    "provider_reference": "TRF_a1b2c3d4e5",
+    "provider_customer_reference": "pout_att_01h2example",
+    "description": "Vendor payout",
+    "destination": {
+      "type": "bank_account",
+      "bank_id": "ng.opay",
+      "account_number": "7068270185",
+      "account_name": "Test Recipient"
+    },
+    "failure": null,
+    "timeline": [],
+    "metadata": {},
+    "customer_email": null,
+    "customer_name": null,
+    "environment": "production",
+    "latency_ms": 4200,
+    "created_at": "2026-07-11T11:59:00.000Z",
+    "updated_at": "2026-07-12T09:15:00.000Z"
+  }
+}
+```
+
+## Integration checklist
+
+<Steps>
+  <Step title="Expose an HTTPS endpoint">
+    Use a route dedicated to Capisum events. Local development tools like ngrok work for sandbox testing.
+  </Step>
+  <Step title="Register the URL in the dashboard">
+    Open [Webhooks → Configuration](https://app.capisum.com/webhooks/config) and save your URL for the target environment. Copy the signing secret when it is first shown.
+  </Step>
+  <Step title="Verify every delivery">
+    Reject requests with invalid signatures before updating order or ledger state.
+  </Step>
+  <Step title="Handle events idempotently">
+    Key your handler on `transaction_id` or `reference` so retries do not double-apply side effects.
+  </Step>
+  <Step title="Return 2xx quickly">
+    Acknowledge the webhook promptly. Offload slow work to a background job in your application.
+  </Step>
+</Steps>
+
+## Related
+
+<Columns cols={2}>
+  <Card title="Payout integration" icon="money-bill-transfer" href="/guides/payouts">
+    Create payouts and understand the transaction lifecycle.
+  </Card>
+  <Card title="Sandbox" icon="flask" href="/guides/sandbox">
+    Test webhooks with staging credentials before going live.
+  </Card>
+</Columns>

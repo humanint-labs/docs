@@ -1,7 +1,7 @@
 ---
 title: "Providers"
 sidebarTitle: "Providers"
-description: "Payment providers available through the Capisum customer API and what each supports today."
+description: "Payment providers available through the Capisum API and what each supports today."
 keywords: ["providers", "Fincra", "Paystack", "Flutterwave", "PalmPay", "payout", "NGN", "GHS", "KES", "provider catalog"]
 icon: "plug"
 ---
@@ -9,12 +9,12 @@ icon: "plug"
 Use [`GET /v1/providers`](/api-reference) to list provider slugs Capisum can route to. Connect credentials in the [dashboard](https://app.capisum.com) before creating transactions. See the [provider network](/guides/provider-network) for the broader integration landscape.
 
 <Note>
-  The customer API returns the provider **catalog**, not your connected providers. Use [`GET /v1/providers/{slug}/status`](/api-reference) or the dashboard to confirm a provider is connected and healthy.
+  The API returns the provider **catalog**, not your connected providers. Use [`GET /v1/providers/{slug}/status`](/api-reference) or the dashboard to confirm a provider is connected and healthy.
 </Note>
 
 ## Available providers
 
-| Provider | Slug | Customer API today | NGN bank | GHS | KES |
+| Provider | Slug | API today | NGN bank | GHS | KES |
 | --- | --- | --- | --- | --- | --- |
 | Fincra | `fincra` | Payouts | Yes | Bank + mobile money | Bank + mobile money |
 | Paystack | `paystack` | Payouts | Yes | Bank + mobile money | Mobile money only |
@@ -73,7 +73,7 @@ Nigerian digital wallet and merchant payout APIs.
 | Pay-in | Not available |
 | Refunds | Not available |
 
-Set `"provider": "<slug>"` on [`POST /v1/transactions/payout`](/api-reference) to route explicitly, or omit it to use your organization's routing rules. See [Payouts](/guides/payouts) for destination fields and examples.
+Set `"provider": "<slug>"` on [`POST /v1/transactions/payout`](/api-reference) to route explicitly, or omit it to use your organization's routing rules. See [Payout integration](/guides/payouts) for destination fields and examples.
 
 **Check provider health**
 

@@ -1,7 +1,7 @@
 ---
 title: "Account verification and balances"
 sidebarTitle: "Account verification"
-description: "Resolve Nigerian bank account names and read connected provider wallet balances through the Capisum customer API."
+description: "Resolve Nigerian bank account names and read connected provider wallet balances through the Capisum API."
 keywords: ["account verification", "name enquiry", "balance", "PalmPay", "Paystack", "bank_id"]
 icon: "building-columns"
 ---
@@ -98,4 +98,4 @@ curl -s https://api.capisum.com/v1/providers/palmpay/balance \
 
 ## Capability discovery
 
-[`GET /v1/providers`](/api-reference) includes a `capabilities.balance` flag for providers that expose balance lookup through the customer API. Account resolution is available for all four payout providers when connected in your workspace.
+[`GET /v1/providers`](/api-reference) includes a `capabilities.balance` flag for providers that expose balance lookup through the API. Account resolution is available for all four payout providers when connected in your workspace.

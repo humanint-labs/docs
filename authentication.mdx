@@ -1,12 +1,12 @@
 ---
 title: "Authentication"
 sidebarTitle: "Authentication"
-description: "Authenticate customer API requests with organization API keys (Bearer cps_...)."
+description: "Authenticate API requests with organization API keys (Bearer cps_...)."
 keywords: ["authentication", "API key", "Bearer token", "cps_", "staging", "production"]
 icon: "key"
 ---
 
-The customer API (`/v1/*`) uses organization API keys. Create keys in the [dashboard](https://app.capisum.com).
+The API (`/v1/*`) uses organization API keys. Create keys in the [dashboard](https://app.capisum.com).
 
 ## API key format
 
@@ -38,7 +38,7 @@ Each key is bound to **staging** or **production** at creation:
 | Staging | Sandbox provider credentials, test payouts |
 | Production | Live provider credentials, real funds |
 
-A staging key never reads or writes production transactions. Create separate keys for each environment.
+A staging key never reads or writes production transactions. Create separate keys for each environment. See [Sandbox](/guides/sandbox) for the full staging setup flow.
 
 <Warning>
   Never use production API keys in client-side code, public repositories, or shared logs.
