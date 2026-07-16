@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "name": "Capisum",
   "description": "Capisum documentation for integrating and managing multiple payment providers through one unified API.",
-  "theme": "aspen",
+  "theme": "luma",
   "logo": {
     "light": "/logo/icon-light.svg",
     "dark": "/logo/icon-dark.svg",
