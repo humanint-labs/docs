@@ -1,8 +1,8 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "Capisum",
-  "description": "API documentation for Capisum integrators.",
-  "theme": "luma",
+  "description": "Capisum documentation for integrating and managing multiple payment providers through one unified API.",
+  "theme": "aspen",
   "logo": {
     "light": "/logo/icon-light.svg",
     "dark": "/logo/icon-dark.svg",
@@ -10,8 +10,8 @@
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#14532D",
-    "light": "#22C55E",
+    "primary": "#D4A0FF",
+    "light": "#FAFAFA",
     "dark": "#15803D"
   },
   "seo": {
@@ -113,7 +113,8 @@
               "POST /v1/transactions/{id}/verify"
             ]
           }
-        ]
+        ],
+        "hidden": true
       }
     ]
   },
@@ -171,5 +172,16 @@
       }
     ],
     "socials": {}
+  },
+  "appearance": {
+    "strict": false
+  },
+  "fonts": {
+    "family": "Geist"
+  },
+  "background": {
+    "color": {
+      "dark": "#0A0A0A"
+    }
   }
 }
