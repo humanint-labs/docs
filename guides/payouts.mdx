@@ -17,7 +17,7 @@ Complete these steps before processing real payouts in production:
     Connect providers with sandbox credentials and run the [Quickstart](/quickstart). Confirm payouts reach `completed` and [webhooks](/guides/webhooks) verify correctly.
   </Step>
   <Step title="Connect live providers">
-    Switch the dashboard to **Live** and connect each provider with production API credentials.
+    Switch the dashboard to **Live** and connect each provider with production API credentials. For Paystack, [disable Transfer OTP](/guides/providers#disable-transfer-otp) in the Paystack Dashboard (required for payouts; account-wide, including test).
   </Step>
   <Step title="Create a production API key">
     Generate a production key in [API keys](https://app.capisum.com/api-keys). Store it server-side only.
