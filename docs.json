@@ -119,12 +119,7 @@
     ]
   },
   "navbar": {
-    "links": [
-      {
-        "label": "API reference",
-        "href": "/api-reference"
-      }
-    ],
+    "links": [],
     "primary": {
       "type": "button",
       "label": "Sign in",
