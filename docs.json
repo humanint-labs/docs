@@ -113,8 +113,7 @@
               "POST /v1/transactions/{id}/verify"
             ]
           }
-        ],
-        "hidden": true
+        ]
       }
     ]
   },
