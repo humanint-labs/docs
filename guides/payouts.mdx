@@ -160,7 +160,7 @@ Payout creation returns immediately with `status: queued`. Capisum submits the p
 | --- | --- |
 | `queued` | Accepted; waiting for worker submission |
 | `processing` | Provider submission in progress |
-| `pending_provider_confirmation` | Submitted; awaiting provider webhook or polling |
+| `pending_provider_confirmation` | Submitted to provider; awaiting webhook or confirmation poll |
 | `uncertain` | Provider outcome unclear (timeout or ambiguous response) |
 | `manual_review` | Needs attention; eligible for dashboard retry after failed attempt |
 | `completed` / `settled` | Payout succeeded |
@@ -168,7 +168,7 @@ Payout creation returns immediately with `status: queued`. Capisum submits the p
 | `refunded` | Provider reversed the transfer |
 | `cancelled` | Cancelled before settlement |
 
-Prefer [webhooks](/guides/webhooks) for terminal status updates. Use polling as a fallback:
+Prefer [webhooks](/guides/webhooks) for terminal status updates. Capisum also polls the provider after a **1 minute** webhook grace period (plus early confirm polls at ~15s / 30s / 60s). Use verify as a fallback:
 
 - `GET /v1/transactions/{id}` or `GET /v1/transactions/ref/{reference}` — read current status
 - `POST /v1/transactions/{id}/verify` — ask the provider for the latest status
