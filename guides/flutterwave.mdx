@@ -1,0 +1,95 @@
+---
+title: "Flutterwave"
+sidebarTitle: "Flutterwave"
+description: "Connect Flutterwave for Capisum payouts: credentials, transfer settings, static IP allowlisting, webhooks, and common error fixes."
+keywords: ["Flutterwave", "payouts", "static IP", "webhook", "PROVIDER_IP_NOT_WHITELISTED", "INSUFFICIENT_FUNDS", "direct transfers"]
+icon: "wave-pulse"
+---
+
+Capisum routes NGN (and other supported) payouts through your own Flutterwave v4 credentials. Connect Flutterwave in the [dashboard](https://app.capisum.com/providers), then create payouts with [`POST /v1/transactions/payout`](/api-reference).
+
+<Note>
+  Setup values (static outbound IPs, checklist copy, and common fixes) live in `config/flutterwave-setup.json` and power the Capisum dashboard Flutterwave review step.
+</Note>
+
+## Setup checklist
+
+Complete every item before sending live payouts.
+
+### 1. Valid live credentials
+
+In Capisum, connect:
+
+- Client ID
+- Client secret
+- Encryption key
+- Webhook secret hash (for signature verification)
+
+Use **live** Flutterwave v4 credentials for Capisum production. Sandbox credentials only work against Flutterwave sandbox.
+
+### 2. API transfers enabled
+
+Confirm API / direct transfers are enabled on your Flutterwave business. If transfer APIs are restricted, contact Flutterwave support before retrying Capisum payouts.
+
+### 3. Correct transfer source selected
+
+In Flutterwave transfer settings, select the wallet or funding source Capisum should debit. A mismatched source causes failed or rejected transfers even when credentials validate.
+
+### 4. Capisum static outbound IPs whitelisted
+
+Flutterwave live requires IP allowlisting. Capisum payouts are submitted by the **worker** service, not only the HTTP API — whitelist **all** Capisum static outbound IPs:
+
+```txt
+152.55.176.240
+152.55.177.181
+162.220.232.250
+162.220.232.251
+162.220.232.252
+```
+
+Add these in Flutterwave live IP allowlist settings. Missing any IP returns `PROVIDER_IP_NOT_WHITELISTED`.
+
+### 5. Sufficient wallet balance
+
+Fund the Flutterwave wallet that backs your selected transfer source. Low balance returns `INSUFFICIENT_FUNDS`.
+
+### 6. Capisum webhook URL configured
+
+In Flutterwave **Settings → Webhooks**, add:
+
+```txt
+https://capisum.com/webhooks/flutterwave
+```
+
+Enable transfer events (including `transfer.disburse` and related transfer updates), set a secret hash, and store that hash in Capisum.
+
+## Connect in Capisum
+
+1. Open [Providers](https://app.capisum.com/providers) and connect Flutterwave.
+2. Enter credentials and run validation.
+3. Paste the Capisum webhook URL into Flutterwave and confirm.
+4. Complete the final **Review** step — it lists this checklist with copy actions for IPs and the webhook URL.
+
+## Common error fixes
+
+| Symptom | Capisum code | Fix |
+| --- | --- | --- |
+| Request made from a non-whitelisted IP | `PROVIDER_IP_NOT_WHITELISTED` | Whitelist every Capisum static outbound IP in Flutterwave live settings (API and worker). |
+| Insufficient balance / wallet funds | `INSUFFICIENT_FUNDS` | Top up the Flutterwave wallet tied to your selected transfer source, then retry. |
+| Unauthorized or invalid client credentials | `PROVIDER_ERROR` | Confirm you pasted live Client ID and Client secret (not sandbox), then re-run validation. |
+| Transfers rejected without a clear balance error | — | Verify API transfers are enabled and the correct transfer source is selected. |
+| Payout stays processing after Flutterwave shows success | — | Confirm the Capisum webhook URL and secret hash are configured, and transfer events are enabled. |
+
+See [Errors](/guides/errors) for the public error envelope and [Webhooks](/guides/webhooks) for Capisum → your app outgoing deliveries.
+
+## API operations
+
+| Operation | Status |
+| --- | --- |
+| Payouts | Available |
+| Account verification | Available (NGN) |
+| Balance lookup | Available |
+| Pay-in | Not available |
+| Refunds | Not available |
+
+Set `"provider": "flutterwave"` on payout requests, or omit `provider` to use your routing rules. See [Payouts](/guides/payouts) and [Providers](/guides/providers).

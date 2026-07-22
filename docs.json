@@ -75,6 +75,7 @@
             "icon": "plug",
             "pages": [
               "guides/providers",
+              "guides/flutterwave",
               "guides/provider-network"
             ]
           },

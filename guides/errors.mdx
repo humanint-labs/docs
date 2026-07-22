@@ -61,6 +61,7 @@ Response headers may also include:
 | `NO_ROUTE_FOUND` | No routing rule matches the payout | No — configure routing in dashboard |
 | `PROVIDER_TIMEOUT` | Upstream provider timed out | Yes — retry verify or use idempotency |
 | `PROVIDER_ERROR` | Provider rejected the request | Depends on `retryable` field |
+| `PROVIDER_IP_NOT_WHITELISTED` | Provider blocked Capisum egress IP | No — whitelist Capisum static outbound IPs (see [Flutterwave](/guides/flutterwave)) |
 | `RATE_LIMIT_EXCEEDED` | Too many requests | Yes — backoff and retry |
 
 ## Validation errors
