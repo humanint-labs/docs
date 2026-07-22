@@ -9,68 +9,8 @@
     "162.220.232.252"
   ],
   "webhookUrl": "https://capisum.com/webhooks/flutterwave",
-  "payoutChecklist": [
-    {
-      "id": "live_credentials",
-      "title": "Valid live credentials",
-      "description": "Connect Flutterwave v4 Client ID, Client secret, and Encryption key from your live dashboard. Capisum live payouts require live-mode credentials."
-    },
-    {
-      "id": "api_transfers",
-      "title": "API transfers enabled",
-      "description": "In Flutterwave, confirm API / direct transfers are enabled for your business. Contact Flutterwave support if transfer APIs are restricted on your account."
-    },
-    {
-      "id": "transfer_source",
-      "title": "Correct transfer source selected",
-      "description": "In Flutterwave transfer settings, select the wallet or funding source Capisum should debit for NGN (and other) payouts. Mismatched sources cause failed or rejected transfers."
-    },
-    {
-      "id": "static_ips",
-      "title": "All Capisum static outbound IPs whitelisted",
-      "description": "Add every Capisum static outbound IP to the Flutterwave live IP allowlist. Payouts are submitted by the Capisum worker, so API-only IPs are not enough.",
-      "valueKind": "static_ips"
-    },
-    {
-      "id": "wallet_balance",
-      "title": "Sufficient wallet balance",
-      "description": "Fund the Flutterwave wallet that backs your selected transfer source. Insufficient balance returns INSUFFICIENT_FUNDS."
-    },
-    {
-      "id": "webhook_url",
-      "title": "Capisum webhook URL configured",
-      "description": "Add the Capisum Flutterwave webhook URL in Flutterwave Settings → Webhooks, enable transfer events, and store your secret hash in Capisum.",
-      "valueKind": "webhook_url"
-    }
-  ],
-  "commonErrorFixes": [
-    {
-      "id": "ip_not_whitelisted",
-      "symptom": "Request made from a non-whitelisted IP",
-      "errorCode": "PROVIDER_IP_NOT_WHITELISTED",
-      "fix": "Whitelist every Capisum static outbound IP in Flutterwave live settings (API and worker). Redeploy is not required after allowlisting if static egress is already enabled."
-    },
-    {
-      "id": "insufficient_funds",
-      "symptom": "Insufficient balance / wallet funds",
-      "errorCode": "INSUFFICIENT_FUNDS",
-      "fix": "Top up the Flutterwave wallet tied to your selected transfer source, then retry the payout."
-    },
-    {
-      "id": "unauthorized",
-      "symptom": "Unauthorized or invalid client credentials",
-      "errorCode": "PROVIDER_ERROR",
-      "fix": "Confirm you pasted live Client ID and Client secret (not sandbox), then re-run validation in Capisum."
-    },
-    {
-      "id": "transfers_disabled",
-      "symptom": "Transfers rejected or creation failed without a clear balance error",
-      "fix": "Verify API transfers are enabled and the correct transfer source is selected in the Flutterwave dashboard."
-    },
-    {
-      "id": "webhook_missed",
-      "symptom": "Payout stays processing after Flutterwave shows success",
-      "fix": "Confirm the Capisum webhook URL and secret hash are configured, and that transfer.disburse (and related transfer) events are enabled."
-    }
-  ]
+  "ipAllowlistTitle": "Whitelist Capisum static outbound IPs",
+  "ipAllowlistDescription": "Add every address below to your Flutterwave live IP allowlist. Capisum calls Flutterwave from these static outbound IPs.",
+  "transfersNote": "Enable transfers on your Flutterwave account before payouts can work. Contact Flutterwave support if API / direct transfers are not yet enabled for your business.",
+  "reviewConfirmation": "I've whitelisted these Capisum IPs in Flutterwave"
 }

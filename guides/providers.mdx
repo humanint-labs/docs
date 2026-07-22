@@ -70,17 +70,15 @@ Pan-African payments platform with direct transfer APIs.
 | Pay-in | Not available |
 | Refunds | Not available |
 
-#### Live payout setup
+#### Live setup
 
-Before sending live Flutterwave payouts through Capisum:
+Before using Flutterwave through Capisum:
 
-1. Connect **live** Flutterwave v4 credentials in the dashboard.
-2. Enable API / direct transfers and select the correct transfer source in Flutterwave.
-3. Whitelist **all** Capisum static outbound IPs (API and worker egress).
-4. Fund the wallet behind your transfer source.
-5. Configure the Capisum webhook URL and secret hash.
+1. Connect your Flutterwave v4 credentials in the dashboard.
+2. Whitelist **all** Capisum static outbound IPs in Flutterwave live settings.
+3. Enable transfers on your Flutterwave account (required before payouts can work).
 
-Full checklist, copyable IPs, webhook URL, and common error fixes: [Flutterwave setup](/guides/flutterwave).
+Full IP list and connect steps: [Flutterwave setup](/guides/flutterwave).
 
 ### PalmPay (`palmpay`)
 
