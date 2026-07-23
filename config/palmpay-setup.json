@@ -15,7 +15,7 @@
   "credentialsTitle": "Credentials",
   "credentialsDescription": "Enter your PalmPay account details, RSA private key, and platform public key.",
   "ipAllowlistTitle": "Whitelist Capisum outbound IPs",
-  "ipAllowlistDescription": "Add every Capisum static IP in PalmPay before connecting.",
+  "ipAllowlistDescription": "Add every Capisum static IP in PalmPay before connecting. Connection tests use the API service; payouts use the worker — both share these IPs, and missing any one can cause PROVIDER_TIMEOUT (PalmPay may hang instead of returning an allowlist error).",
   "reviewConfirmation": "I've whitelisted these Capisum IPs in PalmPay",
   "rsaSetupTitle": "Generate an RSA key pair locally",
   "rsaSetupDescription": "Generate keys locally, upload the public key to PalmPay as base64, and paste the private key into Capisum as base64.",
