@@ -17,12 +17,13 @@ Connect PalmPay in the [dashboard](https://app.capisum.com/providers) to use Cap
 PalmPay verifies Capisum requests with **your** public key. Generate a 2048-bit RSA key pair in your terminal:
 
 ```bash
-openssl genrsa -out palmpay_private.pem 2048
-openssl rsa -in palmpay_private.pem -pubout -out palmpay_public.pem
+openssl genrsa -out private.pem 2048
+openssl rsa -in private.pem -pubout -out public.pem
+pbcopy < public.pem
 ```
 
-1. Upload `palmpay_public.pem` in PalmPay API settings.
-2. Paste the contents of `palmpay_private.pem` into Capisum only.
+1. Paste the copied public key into PalmPay API settings.
+2. Paste the contents of `private.pem` into Capisum only.
 
 Capisum validates the private key and credentials when you click **Continue**, encrypts the private key at rest, never returns it in the dashboard or public API, and uses it to sign PalmPay requests (MD5 + RSA-SHA1).
 
