@@ -1,0 +1,67 @@
+---
+title: "PalmPay"
+sidebarTitle: "PalmPay"
+description: "Connect PalmPay to Capisum: generate an RSA key pair locally, upload the public key to PalmPay, store the private key in Capisum, and whitelist Capisum static outbound IPs."
+keywords: ["PalmPay", "RSA", "private key", "static IP", "IP allowlist", "webhook", "payout"]
+icon: "wallet"
+---
+
+Connect PalmPay in the [dashboard](https://app.capisum.com/providers) to use Capisum with your own PalmPay Open API credentials.
+
+<Note>
+  Static outbound IPs and setup copy live in `config/palmpay-setup.json` and power the Capisum dashboard PalmPay review step.
+</Note>
+
+## Generate an RSA key pair locally
+
+PalmPay verifies Capisum requests with **your** public key.
+
+1. In the Capisum PalmPay connect flow, generate a 2048-bit RSA key pair in your browser (or generate offline with OpenSSL).
+2. Upload the **public key** in PalmPay API settings.
+3. Paste the matching **private key** into Capisum only.
+
+Capisum validates the private key before saving, encrypts it at rest, never returns it in the dashboard or public API, and uses it to sign PalmPay requests (MD5 + RSA-SHA1).
+
+Keep a secure backup of the private key. After save, Capisum will not show it again.
+
+## PalmPay platform public key
+
+Separately, copy **PalmPay’s platform public key** from the PalmPay dashboard into Capisum. Capisum uses that key to verify incoming webhook signatures — it is not the public key you uploaded to PalmPay.
+
+## Whitelist Capisum static outbound IPs
+
+Add every Capisum static outbound IP to your PalmPay IP allowlist. Capisum calls PalmPay from these addresses:
+
+```txt
+152.55.176.240
+152.55.177.181
+162.220.232.250
+162.220.232.251
+162.220.232.252
+```
+
+## Connect in Capisum
+
+Open [Providers](https://app.capisum.com/providers) and connect PalmPay. Everything is on one setup screen:
+
+1. Generate (or paste) your RSA key pair — upload the public key to PalmPay and keep the private key in Capisum.
+2. Enter Merchant ID, App ID, and PalmPay’s platform public key.
+3. Copy the Capisum webhook URL into PalmPay payout notification settings:
+
+```txt
+https://capisum.com/webhooks/palmpay
+```
+
+4. Whitelist every Capisum static outbound IP shown on the same screen, then connect.
+
+## API operations
+
+| Operation | Status |
+| --- | --- |
+| Payouts | Available (NGN bank only) |
+| Account verification | Available (NGN) |
+| Balance lookup | Available (NGN) |
+| Pay-in | Not available |
+| Refunds | Not available |
+
+See [Providers](/guides/providers), [Payouts](/guides/payouts), and [Errors](/guides/errors).

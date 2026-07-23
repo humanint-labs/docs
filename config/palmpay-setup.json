@@ -1,0 +1,20 @@
+{
+  "providerSlug": "palmpay",
+  "docsPath": "/guides/palmpay",
+  "staticOutboundIps": [
+    "152.55.176.240",
+    "152.55.177.181",
+    "162.220.232.250",
+    "162.220.232.251",
+    "162.220.232.252"
+  ],
+  "webhookUrl": "https://capisum.com/webhooks/palmpay",
+  "ipAllowlistTitle": "Whitelist Capisum static outbound IPs",
+  "ipAllowlistDescription": "Add every address below to your PalmPay IP allowlist. Capisum calls PalmPay from these static outbound IPs.",
+  "rsaSetupTitle": "Generate an RSA key pair locally",
+  "rsaSetupDescription": "Generate a 2048-bit RSA key pair in your browser. Upload the public key to PalmPay, then paste the matching private key into Capisum. Capisum encrypts the private key at rest and never shows it again.",
+  "rsaPublicKeyHint": "Upload this public key in PalmPay API settings. Capisum does not store it.",
+  "rsaPrivateKeyHint": "Paste this matching private key into Capisum only. Keep a secure backup — Capisum will not display it after you save.",
+  "platformPublicKeyNote": "Separately, copy PalmPay’s platform public key from their dashboard into Capisum to verify incoming webhooks.",
+  "reviewConfirmation": "I've whitelisted these Capisum IPs in PalmPay"
+}

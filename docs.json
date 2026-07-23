@@ -76,6 +76,7 @@
             "pages": [
               "guides/providers",
               "guides/flutterwave",
+              "guides/palmpay",
               "guides/provider-network"
             ]
           },
