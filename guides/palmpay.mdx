@@ -16,9 +16,9 @@ Connect PalmPay in the [dashboard](https://app.capisum.com/providers) to use Cap
 
 On the Capisum connect page you will:
 
-1. Enter Merchant ID, App ID, and your RSA private key
+1. Enter Merchant ID, App ID, your RSA private key, and PalmPay’s platform public key
 2. Whitelist Capisum static outbound IPs in PalmPay
-3. Add the Capisum webhook URL and PalmPay’s platform public key
+3. Add the Capisum webhook URL
 4. Click **Connect** (Capisum validates credentials before saving)
 
 ## Generate an RSA key pair locally
@@ -51,7 +51,7 @@ If PalmPay returns a signature / sign error, the private key in Capisum usually 
 
 ## PalmPay platform public key
 
-Separately, copy **PalmPay’s platform public key** from the PalmPay developer/API settings into Capisum (Webhooks section on the connect screen).
+Separately, copy **PalmPay’s platform public key** from the PalmPay developer/API settings into Capisum (Credentials section on the connect screen).
 
 Capisum uses that key to verify incoming webhook signatures. It is **not** the `public.pem` you uploaded to PalmPay.
 
@@ -73,9 +73,9 @@ If connection fails with an IP whitelist error, confirm all five IPs are saved i
 
 Open [Providers](https://app.capisum.com/providers) and connect PalmPay. The page sections match this order:
 
-1. **Credentials** — Merchant ID, App ID, RSA private key
+1. **Credentials** — Merchant ID, App ID, RSA private key, and PalmPay platform public key
 2. **Outbound IPs** — copy each Capisum IP (or copy all) into PalmPay
-3. **Webhooks** — Capisum webhook URL plus PalmPay platform public key:
+3. **Webhooks** — Capisum webhook URL:
 
 ```txt
 https://capisum.com/webhooks/palmpay
