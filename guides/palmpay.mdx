@@ -37,10 +37,16 @@ Copy the public key as **base64** for PalmPay (DER → base64, no PEM headers):
 openssl rsa -pubin -in public.pem -outform DER | base64 | pbcopy
 ```
 
+Copy the private key as **base64** for Capisum (PKCS#8 DER → base64, no PEM headers):
+
+```bash
+openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in private.pem | base64 | pbcopy
+```
+
 | Key | Where it goes | Format |
 | --- | --- | --- |
 | `public.pem` | Upload to PalmPay | **Base64 only** — no `BEGIN` / `END` lines |
-| `private.pem` | Paste into Capisum | Full PEM **with** `BEGIN` / `END` lines |
+| `private.pem` | Paste into Capisum | **Base64 only** — no `BEGIN` / `END` lines |
 
 Capisum validates the private key when you connect, encrypts it at rest, never returns it in the dashboard or public API, and uses it to sign PalmPay requests (MD5 + RSA-SHA1).
 
@@ -52,7 +58,7 @@ If PalmPay returns a signature / sign error, the private key in Capisum usually 
 
 ## PalmPay platform public key
 
-Separately, copy **PalmPay’s platform public key** from the PalmPay developer/API settings into Capisum (Credentials section on the connect screen).
+Separately, copy **PalmPay’s platform public key** from the PalmPay merchant portal → Open API / developer settings (shown near your App ID) into Capisum (Credentials section on the connect screen).
 
 Capisum uses that key to verify incoming webhook signatures. It is **not** the `public.pem` you uploaded to PalmPay.
 

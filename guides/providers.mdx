@@ -97,7 +97,7 @@ Nigerian digital wallet and merchant payout APIs.
 Before using PalmPay through Capisum:
 
 1. Generate an RSA key pair locally with OpenSSL and upload the public key to PalmPay.
-2. Paste the matching private key into Capisum (encrypted at rest; never shown again).
+2. Paste the matching private key into Capisum as **base64 only** (encrypted at rest; never shown again).
 3. Add PalmPay’s platform public key for webhook verification.
 4. Whitelist **all** Capisum static outbound IPs in PalmPay.
 

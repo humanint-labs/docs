@@ -18,11 +18,12 @@
   "ipAllowlistDescription": "Add every Capisum static IP in PalmPay before connecting.",
   "reviewConfirmation": "I've whitelisted these Capisum IPs in PalmPay",
   "rsaSetupTitle": "Generate an RSA key pair locally",
-  "rsaSetupDescription": "Generate keys locally, upload the public key to PalmPay as base64, and paste the private key into Capisum.",
+  "rsaSetupDescription": "Generate keys locally, upload the public key to PalmPay as base64, and paste the private key into Capisum as base64.",
   "rsaGeneratePrivateCommand": "openssl genrsa -out private.pem 2048",
   "rsaExportPublicCommand": "openssl rsa -in private.pem -pubout -out public.pem",
   "rsaCopyPublicCommand": "openssl rsa -pubin -in public.pem -outform DER | base64 | pbcopy",
+  "rsaCopyPrivateCommand": "openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in private.pem | base64 | pbcopy",
   "rsaPublicKeyHint": "Paste into PalmPay as base64 only — do not include PEM headers.",
-  "rsaPrivateKeyHint": "Paste the full private.pem into Capisum, including BEGIN/END lines.",
-  "platformPublicKeyNote": "PalmPay’s platform public key verifies webhooks. It is not the public.pem you uploaded to PalmPay."
+  "rsaPrivateKeyHint": "Paste into Capisum as base64 only — do not include PEM headers.",
+  "platformPublicKeyNote": "Copy this from the PalmPay merchant portal → Open API / developer settings (shown near your App ID). It verifies webhooks — not the public.pem you uploaded to PalmPay."
 }
