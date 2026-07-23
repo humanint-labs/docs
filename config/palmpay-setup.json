@@ -18,6 +18,6 @@
   "rsaCopyPublicCommand": "pbcopy < public.pem",
   "rsaPublicKeyHint": "Paste the copied public key into PalmPay API settings. Capisum does not store your public key.",
   "rsaPrivateKeyHint": "Paste the contents of private.pem into Capisum only. Keep a secure backup — Capisum will not display it after you save.",
-  "platformPublicKeyNote": "Separately, copy PalmPay’s platform public key from their dashboard into Capisum to verify incoming webhooks.",
+  "platformPublicKeyNote": "Paste PalmPay’s platform public key from their developer/API settings (near your App ID) in the Webhooks section below. That is not the public.pem you uploaded to PalmPay.",
   "reviewConfirmation": "I've whitelisted these Capisum IPs in PalmPay"
 }
