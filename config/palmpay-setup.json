@@ -13,7 +13,7 @@
   "ipAllowlistDescription": "Add every address below to your PalmPay IP allowlist. Capisum calls PalmPay from these static outbound IPs.",
   "rsaSetupTitle": "Generate an RSA key pair locally",
   "rsaSetupDescription": "Run these commands in your terminal to create a 2048-bit RSA key pair. Upload the public key to PalmPay, then paste the matching private key into Capisum. Capisum encrypts the private key at rest and never shows it again after you save.",
-  "rsaGeneratePrivateCommand": "openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out palmpay_private.pem",
+  "rsaGeneratePrivateCommand": "openssl genrsa -out palmpay_private.pem 2048",
   "rsaExportPublicCommand": "openssl rsa -in palmpay_private.pem -pubout -out palmpay_public.pem",
   "rsaPublicKeyHint": "Upload palmpay_public.pem in PalmPay API settings. Capisum does not store your public key.",
   "rsaPrivateKeyHint": "Paste the contents of palmpay_private.pem into Capisum only. Keep a secure backup — Capisum will not display it after you save.",
