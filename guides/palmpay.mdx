@@ -2,7 +2,7 @@
 title: "PalmPay"
 sidebarTitle: "PalmPay"
 description: "Connect PalmPay to Capisum: generate an RSA key pair locally, upload the public key to PalmPay, store the private key in Capisum, and whitelist Capisum static outbound IPs."
-keywords: ["PalmPay", "RSA", "private key", "static IP", "IP allowlist", "webhook", "payout", "openssl"]
+keywords: ["PalmPay", "RSA", "private key", "static IP", "IP allowlist", "webhook", "notifyUrl", "remark", "payout", "openssl"]
 icon: "wallet"
 ---
 
@@ -18,8 +18,9 @@ On the Capisum connect page you will:
 
 1. Enter Merchant ID, App ID, your RSA private key, and PalmPay’s platform public key
 2. Whitelist Capisum static outbound IPs in PalmPay
-3. Add the Capisum webhook URL
-4. Click **Connect** (Capisum validates credentials before saving)
+3. Click **Connect** (Capisum validates credentials before saving)
+
+You do **not** configure a payout callback URL in PalmPay. Capisum automatically sends its webhook URL as `notifyUrl` on every [initiate merchant payment](https://docs.palmpay.com/#/en-us/pay-outs/initiate-merchant-payment) request. Merchants cannot override `notifyUrl`.
 
 ## Generate an RSA key pair locally
 
@@ -69,19 +70,23 @@ Add every Capisum static outbound IP to your PalmPay IP allowlist before connect
 
 If connection fails with an IP whitelist error, confirm all five IPs are saved in PalmPay, then retry.
 
+## Payout notifyUrl and remark
+
+On every PalmPay payout Capisum sets:
+
+| Field | Value |
+| --- | --- |
+| `notifyUrl` | Capisum webhook URL (`https://capisum.com/webhooks/palmpay`) — not merchant-overridable |
+| `remark` | `metadata.remark` when provided, otherwise `Capisum payout` |
+
 ## Connect in Capisum
 
 Open [Providers](https://app.capisum.com/providers) and connect PalmPay. The page sections match this order:
 
-1. **Credentials** — Merchant ID, App ID, RSA private key, and PalmPay platform public key
+1. **Credentials** — Merchant ID, App ID, RSA private key instructions, private key, and PalmPay platform public key
 2. **Outbound IPs** — copy each Capisum IP (or copy all) into PalmPay
-3. **Webhooks** — Capisum webhook URL:
 
-```txt
-https://capisum.com/webhooks/palmpay
-```
-
-Then confirm the checkboxes and click **Connect**.
+Confirm the IP whitelist checkbox and click **Connect**.
 
 ## API hosts
 
