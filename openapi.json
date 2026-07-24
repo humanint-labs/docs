@@ -740,7 +740,8 @@
             "required": [
               "payin",
               "payout",
-              "balance"
+              "balance",
+              "account_resolution"
             ],
             "properties": {
               "payin": {
@@ -753,7 +754,11 @@
               },
               "balance": {
                 "type": "boolean",
-                "example": false
+                "example": true
+              },
+              "account_resolution": {
+                "type": "boolean",
+                "example": true
               }
             }
           },
