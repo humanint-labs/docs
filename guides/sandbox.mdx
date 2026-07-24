@@ -66,6 +66,8 @@ curl -s -X POST "$CAPISUM_BASE_URL/v1/transactions/payout" \
 
 Watch the transaction in [Transactions](https://app.capisum.com/transactions) and confirm outgoing webhook deliveries under [Webhooks → Outgoing](https://app.capisum.com/webhooks/outgoing).
 
+For Flutterwave sandbox payouts, Capisum sends `X-Scenario-Key: scenario:successful` by default so transfers complete like Flutterwave card test scenarios. Override with `metadata.flutterwave_scenario` (for example `"failed"`). See [Flutterwave](/guides/flutterwave#sandbox-transfer-scenarios).
+
 ## Test webhooks
 
 After a payout progresses, Capisum delivers events such as `payout.initiated` and `payout.completed` to your sandbox endpoint. Verify the `X-Capisum-Signature` header before trusting the payload. See [Webhooks](/guides/webhooks) for the event catalog and verification examples.

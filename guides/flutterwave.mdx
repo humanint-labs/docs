@@ -52,4 +52,31 @@ https://capisum.com/webhooks/flutterwave
 | Pay-in | Not available |
 | Refunds | Not available |
 
+## Sandbox transfer scenarios
+
+Flutterwave sandbox transfers need an `X-Scenario-Key` header (same pattern as card test scenarios). Capisum sets this automatically for sandbox credentials:
+
+- Default: `scenario:successful`
+- Override with payout metadata: `flutterwave_scenario` or `scenario`
+
+```json
+{
+  "amount": 10000,
+  "currency": "NGN",
+  "provider": "flutterwave",
+  "destination": {
+    "type": "bank_account",
+    "bank_id": "ng.access",
+    "account_number": "0690000031"
+  },
+  "metadata": {
+    "flutterwave_scenario": "failed"
+  }
+}
+```
+
+Allowed values: `successful`, `reversed`, `failed`, `account_verification_failed`, `transfer_amount_below_limit`, `transfer_amount_exceeds_limit`, `daily_transfer_limit_exceeded`, `monthly_transfer_limit_exceeded`, `disabled_transfer`, `duplicate_reference`, `insufficient_balance`, `payout_creation_failed`.
+
+Live Flutterwave credentials never receive `X-Scenario-Key`.
+
 See [Providers](/guides/providers), [Payouts](/guides/payouts), and [Errors](/guides/errors).
