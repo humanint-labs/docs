@@ -124,7 +124,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns Capisum canonical bank identifiers for payouts. Use `bank_id` on payout recipients; Capisum resolves provider-specific codes at execution time. Filter with `provider` to see only banks mappable to that provider.",
+        "description": "Returns Capisum canonical bank identifiers for payouts. Use `bank_id` on payout recipients; Capisum resolves provider-specific codes at execution time. Filter with `provider` to see only banks mappable to that provider and include that provider's `bank_code`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1248,7 +1248,8 @@
           "id",
           "name",
           "currency",
-          "country"
+          "country",
+          "bank_code"
         ],
         "properties": {
           "id": {
@@ -1266,6 +1267,11 @@
           "country": {
             "type": "string",
             "example": "NG"
+          },
+          "bank_code": {
+            "type": "string",
+            "description": "Provider bank code when `provider` is set; otherwise the CBN code for NGN banks.",
+            "example": "100004"
           }
         }
       },
