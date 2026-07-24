@@ -1,7 +1,7 @@
 ---
 title: "PalmPay"
 sidebarTitle: "PalmPay"
-description: "Connect PalmPay to Capisum: generate an RSA key pair locally, upload the public key to PalmPay, store the private key in Capisum, and whitelist Capisum static outbound IPs."
+description: "Connect PalmPay to Capisum: generate an RSA key pair locally, upload the public key to PalmPay, store the private key in Capisum, and whitelist Capisum static outbound IPs for live."
 keywords: ["PalmPay", "RSA", "private key", "static IP", "IP allowlist", "webhook", "notifyUrl", "remark", "payout", "openssl"]
 icon: "wallet"
 ---
@@ -17,7 +17,7 @@ Connect PalmPay in the [dashboard](https://app.capisum.com/providers) to use Cap
 On the Capisum connect page you will:
 
 1. Enter Merchant ID, App ID, your RSA private key, and PalmPay’s platform public key
-2. Whitelist Capisum static outbound IPs in PalmPay
+2. For **live** only: whitelist Capisum static outbound IPs in PalmPay (not required for sandbox/test)
 3. Click **Connect** (Capisum validates credentials before saving)
 
 You do **not** configure a payout callback URL in PalmPay. Capisum automatically sends its webhook URL as `notifyUrl` on every [initiate merchant payment](https://docs.palmpay.com/#/en-us/pay-outs/initiate-merchant-payment) request. Merchants cannot override `notifyUrl`.
@@ -62,9 +62,11 @@ Separately, copy **PalmPay’s platform public key** from the PalmPay merchant p
 
 Capisum uses that key to verify incoming webhook signatures. It is **not** the `public.pem` you uploaded to PalmPay.
 
-## Whitelist Capisum static outbound IPs
+## Whitelist Capisum static outbound IPs (live only)
 
-Add every Capisum static outbound IP to your PalmPay IP allowlist before connecting. Capisum calls PalmPay from these addresses:
+PalmPay documents IP allowlisting for **live** authentication. Sandbox/test credentials normally do not need Capisum IPs whitelisted.
+
+Before going live, add every Capisum static outbound IP to your PalmPay **live** IP allowlist. Capisum calls PalmPay from these addresses:
 
 ```txt
 152.55.176.240
@@ -74,7 +76,7 @@ Add every Capisum static outbound IP to your PalmPay IP allowlist before connect
 162.220.232.252
 ```
 
-If connection fails with an IP whitelist error, confirm all five IPs are saved in PalmPay, then retry.
+If a **live** connection fails with an IP whitelist error, confirm all five IPs are saved in PalmPay live, then retry.
 
 ## Payout notifyUrl and remark
 
@@ -90,9 +92,9 @@ On every PalmPay payout Capisum sets:
 Open [Providers](https://app.capisum.com/providers) and connect PalmPay. The page sections match this order:
 
 1. **Credentials** — Merchant ID, App ID, RSA private key instructions, private key, and PalmPay platform public key
-2. **Outbound IPs** — copy each Capisum IP (or copy all) into PalmPay
+2. **Outbound IPs (live)** — copy each Capisum IP into PalmPay live allowlist when going live
 
-Confirm the IP whitelist checkbox and click **Connect**.
+For live, confirm the IP whitelist checkbox and click **Connect**. Sandbox/test can connect without whitelisting IPs.
 
 ## API hosts
 
