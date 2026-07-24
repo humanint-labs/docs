@@ -194,57 +194,72 @@ Connect payment gateways, digital banks, crypto platforms, and account infrastru
 
 [Show more providers](https://capisum.com/providers)
 
-## Simple pricing for every stage
+## Simple monthly pricing
 
-Pay per call, subscribe monthly for predictable volume, or talk to us when you need custom limits and SLAs.
+Start free with usage units, then subscribe monthly as you grow. No annual plans. Expensive provider operations like balance checks use weighted units; retries, polling, reconciliation, and webhooks are never billed.
 
-- Pay-as-you-go
- 
- Usage-based
- 
- For teams that want to scale without a monthly commitment
- 
+- Free
+
+ ₦0
+
+ Explore Capisum with no card required
+
+ - 1,000 usage units / month
+ - Up to 2 connected providers
  - Sandbox and production access
- - Connect any supported provider
- - Pay only for API calls you use
- - Pay-in and payout operations
  - Standardized responses
  - Email support
- 
+ - No card required
+
  [Get started](https://capisum.com/waitlist)
- 
+
 - Recommended
- 
- Monthly subscription
- 
- $20/mo
- 
- For teams shipping real fintech workflows with predictable volume
- 
- - 10 connected providers
- - 100,000 API calls/month included
+
+ Starter
+
+ ₦15,000/mo
+
+ For teams shipping real fintech workflows
+
+ - 150,000 usage units / month
+ - Up to 5 connected providers
  - Pay-in and payout operations
  - Provider status monitoring
- - Standardized responses
+ - Overage at ₦100 / 1,000 units
  - Email support
- 
+
  [Start building](https://capisum.com/waitlist)
- 
-- Custom
- 
- Custom
- 
- For companies with higher volume and custom needs
- 
- - Unlimited providers
- - Custom API limits
- - Dedicated support
- - SLA options
- - Compliance review support
- - Custom routing rules
- 
+
+- Growth
+
+ ₦45,000/mo
+
+ For higher volume and unlimited providers
+
+ - 750,000 usage units / month
+ - Unlimited connected providers
+ - Pay-in and payout operations
+ - Provider status monitoring
+ - Overage at ₦50 / 1,000 units
+ - Priority email support
+
+ [Choose Growth](https://capisum.com/waitlist)
+
+- Enterprise
+
+ From ₦250,000/mo
+
+ Custom limits, SLA, and reconciliation controls
+
+ - Custom usage limits
+ - Unlimited connected providers
+ - Higher rate limits
+ - Priority support
+ - SLA
+ - Custom reconciliation controls
+
  [Contact us](https://capisum.com/contact)
- 
+
 
 ## Questions, answered.
 
@@ -253,6 +268,10 @@ Everything you need to know about building with Capisum.
 ### What is Capisum?
 
 Capisum is a unified API layer that lets your app connect to payment gateways, digital banks, wallets, crypto platforms, and account infrastructure providers through one standard integration.
+
+### How does Capisum pricing work?
+
+Capisum uses monthly plans billed in NGN via Paystack Subscriptions: Free (₦0, 1,000 usage units, 2 providers), Starter (₦15,000/mo, 150,000 units, 5 providers), Growth (₦45,000/mo, 750,000 units, unlimited providers), and Enterprise (from ₦250,000/mo with custom limits). There is no annual billing. Standard API requests use 1 usage unit; balance checks and account resolution use weighted units. Internal retries, polling, reconciliation, and webhook processing are never billed.
 
 ### Does Capisum process payments directly?
 
