@@ -271,7 +271,7 @@ Capisum is a unified API layer that lets your app connect to payment gateways, d
 
 ### How does Capisum pricing work?
 
-Capisum uses monthly plans billed in NGN via Paystack Subscriptions: Free (₦0, 1,000 usage units, 2 providers), Starter (₦15,000/mo, 150,000 units, 5 providers), Growth (₦45,000/mo, 750,000 units, unlimited providers), and Enterprise (from ₦250,000/mo with custom limits). There is no annual billing. Standard API requests use 1 usage unit; balance checks and account resolution use weighted units. Internal retries, polling, reconciliation, and webhook processing are never billed.
+Capisum uses monthly subscription plans billed in NGN: Free (₦0, 1,000 usage units, 2 providers), Starter (₦15,000/mo, 150,000 units, 5 providers), Growth (₦45,000/mo, 750,000 units, unlimited providers), and Enterprise (from ₦250,000/mo with custom limits). There is no annual billing. Standard API requests use 1 usage unit; balance checks and account resolution use weighted units. Internal retries, polling, reconciliation, and webhook processing are never billed.
 
 ### Does Capisum process payments directly?
 
