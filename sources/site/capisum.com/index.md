@@ -206,8 +206,9 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
 
  - 1,000 usage units / month
  - Up to 2 connected providers
- - Sandbox and production access
- - Standardized responses
+ - 1 team member
+ - Basic analytics
+ - 7-day request logs
  - No card required
 
  [Get started](https://capisum.com/waitlist)
@@ -222,10 +223,11 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
 
  - 150,000 usage units / month
  - Up to 5 connected providers
+ - 3 team members
  - Pay-in, payout, and more
  - Balance checks and account resolution
- - Provider status monitoring
- - Overage at ₦100 / 1,000 units
+ - Exports and alerts
+ - 30-day request logs
  - Email support
 
  [Start building](https://capisum.com/waitlist)
@@ -234,13 +236,15 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
 
  ₦45,000/mo
 
- For higher volume and unlimited providers
+ For higher volume, routing, and advanced ops
 
  - 750,000 usage units / month
  - Unlimited connected providers
- - Pay-in, payout, and more
- - Provider status monitoring
- - Overage at ₦50 / 1,000 units
+ - 10 team members
+ - Advanced analytics
+ - Provider routing and failover
+ - Bulk operations
+ - 90-day request logs
  - Priority email support
 
  [Choose Growth](https://capisum.com/waitlist)
@@ -249,14 +253,15 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
 
  From ₦250,000/mo
 
- Custom limits, SLA, and reconciliation controls
+ Custom limits, SLA, and advanced controls
 
  - Custom usage limits
- - Unlimited connected providers
- - Higher rate limits
- - Priority support
- - SLA
- - Custom reconciliation controls
+ - Unlimited providers and seats
+ - SSO and advanced RBAC
+ - Approval workflows
+ - Custom log retention
+ - Private integrations
+ - SLA and dedicated support
 
  [Contact us](https://capisum.com/contact)
 
@@ -271,7 +276,7 @@ Capisum is a unified API layer that lets your app connect to payment gateways, d
 
 ### How does Capisum pricing work?
 
-Capisum uses monthly subscription plans billed in NGN: Free (₦0, 1,000 usage units, 2 providers), Starter (₦15,000/mo, 150,000 units, 5 providers), Growth (₦45,000/mo, 750,000 units, unlimited providers), and Enterprise (from ₦250,000/mo with custom limits). There is no annual billing. Standard API requests use 1 usage unit; balance checks and account resolution use weighted units. Internal retries, polling, reconciliation, and webhook processing are never billed.
+Capisum uses monthly subscription plans billed in NGN: Free (₦0, 1,000 usage units, 2 providers, 1 seat, 7-day logs), Starter (₦15,000/mo, 150,000 units, 5 providers, 3 seats, account resolution, exports, 30-day logs), Growth (₦45,000/mo, 750,000 units, unlimited providers, 10 seats, routing/failover, 90-day logs), and Enterprise (from ₦250,000/mo with custom limits, SSO, advanced RBAC, and SLA). There is no annual billing. Standard API requests use 1 usage unit; balance checks and account resolution use weighted units. Core transaction safety features—idempotency, webhooks, verification, polling, reconciliation, duplicate protection, and basic audit logs—are never plan-gated. Internal retries, polling, reconciliation, and webhook processing are never billed.
 
 ### Does Capisum process payments directly?
 
