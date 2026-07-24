@@ -208,7 +208,6 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
  - Up to 2 connected providers
  - Sandbox and production access
  - Standardized responses
- - Email support
  - No card required
 
  [Get started](https://capisum.com/waitlist)
@@ -223,7 +222,8 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
 
  - 150,000 usage units / month
  - Up to 5 connected providers
- - Pay-in and payout operations
+ - Pay-in, payout, and more
+ - Balance checks and account resolution
  - Provider status monitoring
  - Overage at ₦100 / 1,000 units
  - Email support
@@ -238,7 +238,7 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
 
  - 750,000 usage units / month
  - Unlimited connected providers
- - Pay-in and payout operations
+ - Pay-in, payout, and more
  - Provider status monitoring
  - Overage at ₦50 / 1,000 units
  - Priority email support
