@@ -200,12 +200,12 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
 
 - Free
 
- ₦0
+ $0
 
  Explore Capisum with no card required
 
  - 1,000 usage units / month
- - Up to 2 connected providers
+ - 1 connected provider
  - 1 team member
  - Basic analytics
  - 7-day request logs
@@ -215,9 +215,9 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
 
 - Recommended
 
- Starter
+ Pro
 
- ₦15,000/mo
+ $20/mo
 
  For teams shipping real fintech workflows
 
@@ -232,9 +232,9 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
 
  [Start building](https://capisum.com/waitlist)
 
-- Growth
+- Business
 
- ₦45,000/mo
+ $60/mo
 
  For higher volume, routing, and advanced ops
 
@@ -247,11 +247,11 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
  - 90-day request logs
  - Priority email support
 
- [Choose Growth](https://capisum.com/waitlist)
+ [Choose Business](https://capisum.com/waitlist)
 
 - Enterprise
 
- From ₦250,000/mo
+ Contact Sales
 
  Custom limits, SLA, and advanced controls
 
@@ -263,7 +263,7 @@ Start free with usage units, then subscribe monthly as you grow. No annual plans
  - Private integrations
  - SLA and dedicated support
 
- [Contact us](https://capisum.com/contact)
+ [Contact Sales](https://capisum.com/contact)
 
 
 ## Questions, answered.
@@ -276,7 +276,7 @@ Capisum is a unified API layer that lets your app connect to payment gateways, d
 
 ### How does Capisum pricing work?
 
-Capisum uses monthly subscription plans billed in NGN: Free (₦0, 1,000 usage units, 2 providers, 1 seat, 7-day logs), Starter (₦15,000/mo, 150,000 units, 5 providers, 3 seats, account resolution, exports, 30-day logs), Growth (₦45,000/mo, 750,000 units, unlimited providers, 10 seats, routing/failover, 90-day logs), and Enterprise (from ₦250,000/mo with custom limits, SSO, advanced RBAC, and SLA). There is no annual billing. Standard API requests use 1 usage unit; balance checks and account resolution use weighted units. Core transaction safety features—idempotency, webhooks, verification, polling, reconciliation, duplicate protection, and basic audit logs—are never plan-gated. Internal retries, polling, reconciliation, and webhook processing are never billed.
+Capisum uses monthly subscription plans billed in USD: Free ($0, 1,000 usage units, 1 provider, 1 seat, 7-day logs), Pro ($20/mo, 150,000 units, 5 providers, 3 seats, account resolution, exports, 30-day logs), Business ($60/mo, 750,000 units, unlimited providers, 10 seats, routing/failover, 90-day logs), and Enterprise (Contact Sales for custom limits, SSO, advanced RBAC, and SLA). There is no annual billing. Standard API requests use 1 usage unit; balance checks and account resolution use weighted units. Core transaction safety features—idempotency, webhooks, verification, polling, reconciliation, duplicate protection, and basic audit logs—are never plan-gated. Internal retries, polling, reconciliation, and webhook processing are never billed.
 
 ### Does Capisum process payments directly?
 
