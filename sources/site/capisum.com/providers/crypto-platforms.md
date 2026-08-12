@@ -2,9 +2,11 @@
 
 # Crypto platform integrations
 
-Connect crypto on-ramps, off-ramps, wallets, and settlement workflows through one API surface. Capisum standardizes requests and responses across Quidax, Binance, Luno, Yellow Card, and regional exchange adapters.
+Connect crypto on-ramps, off-ramps, wallets, and settlement workflows through one API surface. Capisum standardizes requests and responses across Binance, Luno, Yellow Card, and regional exchange adapters.
 
-Supported providers in this category include Quidax, Binance, Luno, Yellow Card, Busha, Bitnob, and Patricia. Capisum is an integration layer — it standardizes API requests and responses without replacing your provider accounts or holding funds.
+Supported providers in this category include Binance, Luno, Yellow Card, Busha, Bitnob, and Patricia. Capisum is an integration layer — it standardizes API requests and responses without replacing your provider accounts or holding funds.
+
+<!-- Quidax omitted pending formal Quidax Compliance approval
 
 - Live
  
@@ -15,7 +17,8 @@ Supported providers in this category include Quidax, Binance, Luno, Yellow Card,
  Crypto platform
  
  CryptoSettlement
- 
+ -->
+
 - Live
  
  ### Binance

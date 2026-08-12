@@ -108,7 +108,7 @@ transaction-logs
 | 14:02:11 | Paystack | settled | 142ms |
 | 14:01:58 | Flutterwave | pending | 89ms |
 | 14:01:42 | Kuda | failed | 210ms |
-| 14:01:19 | Quidax | settled | 118ms |
+| 14:01:19 | Fincra | settled | 118ms |
 
 Standardized Responses
 

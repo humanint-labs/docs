@@ -14,7 +14,7 @@ No. Capisum does not replace the underlying providers. It standardizes how your 
 
 ### Which providers can I connect to?
 
-Capisum is designed to support providers like Paystack, Flutterwave, Monnify, OPay, PalmPay, Kuda, Quidax, Binance, Luno, Bridge, Unit, Treasury Prime, and more.
+Capisum is designed to support providers like Paystack, Flutterwave, Monnify, OPay, PalmPay, Kuda, Binance, Luno, Bridge, Unit, Treasury Prime, and more.
 
 ### Can I choose which provider handles a transaction?
 
