@@ -4,7 +4,7 @@
 
 Every adapter Capisum supports today, plus integrations on the roadmap. One API surface across gateways, wallets, crypto, and account infrastructure.
 
-Search-friendly integrations for Paystack, Flutterwave, Monnify, Moniepoint, OPay, PalmPay, Kuda, Binance, Luno, Mono, Okra, Anchor, and more — one standardized payment API across Nigeria and Africa.
+Search-friendly integrations for Paystack, Flutterwave, Monnify, Moniepoint, OPay, PalmPay, Kuda, Quidax, Binance, Luno, Mono, Okra, Anchor, and more — one standardized payment API across Nigeria and Africa.
 
 - Live
  
@@ -178,8 +178,6 @@ Search-friendly integrations for Paystack, Flutterwave, Monnify, Moniepoint, OPa
  
 - Live
  
- <!-- Quidax omitted pending formal Quidax Compliance approval
- 
  ### Quidax
  
  Connect crypto buy, sell, and settlement workflows.
@@ -189,7 +187,6 @@ Search-friendly integrations for Paystack, Flutterwave, Monnify, Moniepoint, OPa
  CryptoSettlement
  
 - Live
- -->
  
  ### Binance
  
