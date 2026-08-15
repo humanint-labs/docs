@@ -1,8 +1,8 @@
 ---
 title: "Payout integration"
 sidebarTitle: "Payout integration"
-description: "Integrate payouts in NGN, GHS, and KES — from sandbox testing through production go-live."
-keywords: ["payout", "integration", "go-live", "NGN", "GHS", "KES", "mobile money", "bank transfer", "minor units"]
+description: "Integrate payouts in NGN, GHS, KES, and crypto — from sandbox testing through production go-live."
+keywords: ["payout", "integration", "go-live", "NGN", "GHS", "KES", "USDT", "BTC", "mobile money", "bank transfer", "crypto wallet", "minor units"]
 icon: "money-bill-transfer"
 ---
 
@@ -44,16 +44,18 @@ All amounts are in **minor units** (the smallest currency unit):
 | NGN | Kobo | `500000` = ₦5,000.00 |
 | GHS | Pesewa | `10000` = GH₵100.00 |
 | KES | Cent | `50000` = KSh500.00 |
+| USDT / BTC (Quidax) | 8 decimals | `500000000` = 5 USDT; `40000000` = 0.4 BTC |
 
 Pass `amount` as a string or integer. Capisum stores and returns amounts as integers.
 
 ## Supported currencies and rails
 
-| Currency | `bank_account` | `mobile_money` |
-| --- | --- | --- |
-| NGN | Yes (`bank_id` required) | No |
-| GHS | Yes (`bank_id` required) | Yes (`mobile_money_code` required) |
-| KES | Yes (`bank_id` required) | Yes (`mobile_money_code` required) |
+| Currency | `bank_account` | `mobile_money` | `crypto_wallet` |
+| --- | --- | --- | --- |
+| NGN | Yes (`bank_id` required) | No | No |
+| GHS | Yes (`bank_id` required) | Yes (`mobile_money_code` required) | No |
+| KES | Yes (`bank_id` required) | Yes (`mobile_money_code` required) | No |
+| USDT, BTC, ETH, … | No | No | Yes (`address` + `network`; Quidax) |
 
 Use [`GET /v1/reference/banks`](/api-reference) to list canonical `bank_id` values. Capisum resolves provider-specific institution codes internally at payout time.
 
@@ -63,13 +65,18 @@ Use `destination` on create requests. `recipient` is a deprecated alias.
 
 | Field | Required | Description |
 | --- | --- | --- |
-| `type` | Recommended | `bank_account` or `mobile_money` |
-| `account_number` | Yes | Bank account or mobile wallet number |
+| `type` | Recommended | `bank_account`, `mobile_money`, or `crypto_wallet` |
+| `account_number` | Bank / mobile money | Bank account or mobile wallet number |
+| `address` | Crypto wallet | Destination crypto wallet address |
+| `network` | Crypto wallet | Quidax chain (e.g. `trc20`, `erc20`, `bep20`, `bitcoin`) |
 | `bank_id` | For bank payouts | Capisum canonical bank id (e.g. `ng.opay` for OPay) |
 | `mobile_money_code` | For mobile money | GHS: `MTN`, `AIRTEL`. KES: `SAFARICOM`, `AIRTEL` |
 | `account_name` | Recommended | Display name for the recipient |
 | `country` | No | ISO 3166-1 alpha-2 code. Defaults from currency |
 | `phone` | No | Wallet phone. Defaults to `account_number` |
+| `destination_tag` | Some crypto networks | Memo/tag when the chain requires it |
+
+Send `asset` (for example `"btc"`) at the top level for crypto payouts. It is an alias for `currency`; if both are set they must match.
 
 <Warning>
   `bank_code` is a deprecated escape hatch and is not part of the supported contract. Use `bank_id` instead. `bank_code` cannot be combined with `bank_id`.
@@ -117,6 +124,20 @@ When omitted, Capisum selects a provider using your organization's routing rules
         "account_name": "Test Recipient"
       },
       "description": "Vendor payout"
+    }
+    ```
+  </Tab>
+  <Tab title="BTC wallet">
+    ```json
+    {
+      "amount": "40000000",
+      "asset": "btc",
+      "provider": "quidax",
+      "destination": {
+        "type": "crypto_wallet",
+        "address": "bc1qel75acv9tdwqdx86tla6yyxagp2fvq2tntxntp",
+        "network": "bitcoin"
+      }
     }
     ```
   </Tab>

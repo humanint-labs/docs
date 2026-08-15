@@ -2,7 +2,7 @@
 title: "Providers"
 sidebarTitle: "Providers"
 description: "Payment providers available through the Capisum API and what each supports today."
-keywords: ["providers", "Fincra", "Paystack", "Flutterwave", "PalmPay", "payout", "NGN", "GHS", "KES", "provider catalog"]
+keywords: ["providers", "Fincra", "Paystack", "Flutterwave", "PalmPay", "Quidax", "payout", "NGN", "GHS", "KES", "crypto", "provider catalog"]
 icon: "plug"
 ---
 
@@ -20,6 +20,7 @@ Use [`GET /v1/providers`](/api-reference) to list provider slugs Capisum can rou
 | Paystack | `paystack` | Payouts | Yes | Bank + mobile money | Mobile money only |
 | Flutterwave | `flutterwave` | Payouts | Yes | Bank + mobile money | Bank + mobile money |
 | PalmPay | `palmpay` | Payouts | Yes | — | — |
+| Quidax | `quidax` | Payouts + balance | Crypto wallets | — | — |
 
 All providers share the same Capisum payout state machine: queued submission, per-attempt provider transfer references, webhook matching, and verify-before-retry. Each adapter handles its own request format, status mapping, and webhook parsing.
 
@@ -103,6 +104,20 @@ Before using PalmPay through Capisum:
 
 Full key and IP steps: [PalmPay setup](/guides/palmpay).
 
+### Quidax (`quidax`)
+
+Crypto exchange withdrawals to external wallet addresses.
+
+| Operation | Status |
+| --- | --- |
+| Payouts | Available (`crypto_wallet`) |
+| Account verification | Not available |
+| Balance lookup | Available |
+| Pay-in | Not available |
+| Refunds | Not available |
+
+Use `asset` (for example `btc`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. Amounts use 8 decimal minor units. Fetch wallet balances with [`GET /v1/providers/quidax/balance`](/api-reference) and an optional `currency` query (`USDT`, `BTC`, …).
+
 Set `"provider": "<slug>"` on [`POST /v1/transactions/payout`](/api-reference) to route explicitly, or omit it to use your organization's routing rules. See [Payout integration](/guides/payouts) for destination fields and examples.
 
 **Check provider health**
@@ -131,7 +146,8 @@ curl "$CAPISUM_BASE_URL/v1/providers" \
     { "slug": "fincra", "name": "Fincra", "configurable": true },
     { "slug": "paystack", "name": "Paystack", "configurable": true },
     { "slug": "flutterwave", "name": "Flutterwave", "configurable": true },
-    { "slug": "palmpay", "name": "PalmPay", "configurable": true }
+    { "slug": "palmpay", "name": "PalmPay", "configurable": true },
+    { "slug": "quidax", "name": "Quidax", "configurable": true }
   ]
 }
 ```

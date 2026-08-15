@@ -221,7 +221,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Returns the available balance for a connected provider in the API key's environment. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN). Supported for `fincra`, `paystack`, `flutterwave`, and `palmpay`.",
+        "description": "Returns the available balance for a connected provider in the API key's environment. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals). Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, and `quidax`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -243,9 +243,9 @@
             "schema": {
               "type": "string",
               "minLength": 3,
-              "maxLength": 3
+              "maxLength": 10
             },
-            "description": "Optional currency filter. Paystack may return multiple wallet balances."
+            "description": "Optional currency or asset filter (e.g. NGN, USDT, BTC)."
           }
         ]
       }
@@ -330,7 +330,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported providers and rails. NGN bank payouts use `GET /v1/reference/banks` for canonical `bank_id` values. Quidax crypto payouts use `destination.type = crypto_wallet` with a wallet address and `network`. When `provider` is set, the destination must be valid for that provider.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported providers and rails. NGN bank payouts use `GET /v1/reference/banks` for canonical `bank_id` values. Quidax crypto payouts use `asset` (e.g. `btc`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. When `provider` is set, the destination must be valid for that provider.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -396,6 +396,19 @@
                       "mobile_money_code": "SAFARICOM",
                       "account_number": "254803456789",
                       "account_name": "John Kamau"
+                    }
+                  }
+                },
+                "btc_wallet": {
+                  "summary": "BTC crypto wallet payout",
+                  "value": {
+                    "amount": "40000000",
+                    "asset": "btc",
+                    "provider": "quidax",
+                    "destination": {
+                      "type": "crypto_wallet",
+                      "address": "bc1qel75acv9tdwqdx86tla6yyxagp2fvq2tntxntp",
+                      "network": "bitcoin"
                     }
                   }
                 }
@@ -1032,7 +1045,7 @@
         "type": "object",
         "required": [
           "type",
-          "account_number",
+          "address",
           "network"
         ],
         "properties": {
@@ -1042,7 +1055,7 @@
               "crypto_wallet"
             ]
           },
-          "account_number": {
+          "address": {
             "type": "string",
             "description": "Destination crypto wallet address."
           },
@@ -1123,6 +1136,13 @@
             "minLength": 3,
             "maxLength": 10,
             "default": "NGN"
+          },
+          "asset": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 10,
+            "description": "Crypto asset ticker (e.g. btc, usdt). Alias for currency on crypto_wallet payouts.",
+            "example": "btc"
           },
           "destination": {
             "oneOf": [
@@ -1504,8 +1524,7 @@
       "TransactionDestination": {
         "type": "object",
         "required": [
-          "type",
-          "account_number"
+          "type"
         ],
         "properties": {
           "type": {
@@ -1522,6 +1541,13 @@
           },
           "account_number": {
             "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "asset": {
+            "type": "string",
+            "example": "BTC"
           },
           "account_name": {
             "type": "string"
