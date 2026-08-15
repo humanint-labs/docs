@@ -281,7 +281,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Resolve a bank account name through a connected provider that supports account resolution. Use `bank_id` from `GET /v1/reference/banks` when possible. Supported for `fincra`, `paystack`, `flutterwave`, and `palmpay`.",
+        "description": "Resolve a bank account name through a connected provider that supports account resolution. Use `bank_id` from `GET /v1/reference/banks` when possible. Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, and `quidax`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -433,6 +433,67 @@
             "source": "import requests\n\nresponse = requests.post(\n    'https://api.capisum.com/v1/transactions/payout',\n    headers={\n        'Authorization': 'Bearer cps_your_key',\n        'X-Idempotency-Key': 'payout-order-123',\n    },\n    json={\n        'amount': '500000',\n        'currency': 'NGN',\n        'provider': 'fincra',\n        'destination': {\n            'type': 'bank_account',\n            'bank_id': 'ng.opay',\n            'account_number': '7068270185',\n            'account_name': 'Test Recipient',\n        },\n    },\n)\nprint(response.json()['data'])"
           }
         ]
+      }
+    },
+    "/v1/transactions/pay-in": {
+      "post": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Create pay-in",
+        "operationId": "post_v1_transactions_pay-in",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Create a crypto deposit pay-in through Quidax. Amounts are in 8-decimal minor units (for example, `500000000` = 5 USDT).\n\nSend `asset` (e.g. `usdt`) and `network` (e.g. `trc20`). Capisum generates a deposit address and returns it on `deposit`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries. Reusing a key returns the original transaction."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayInRequest"
+              }
+            }
+          }
+        }
       }
     },
     "/v1/transactions": {
@@ -1121,6 +1182,73 @@
           }
         }
       },
+      "PayInRequest": {
+        "type": "object",
+        "required": [
+          "amount",
+          "network"
+        ],
+        "properties": {
+          "amount": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "description": "Amount in 8-decimal minor units for crypto (500000000 = 5 USDT)."
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 10
+          },
+          "asset": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 10,
+            "description": "Crypto asset ticker (e.g. btc, usdt). Alias for currency.",
+            "example": "usdt"
+          },
+          "network": {
+            "type": "string",
+            "description": "Quidax blockchain network (e.g. trc20, erc20, bep20, bitcoin).",
+            "example": "trc20"
+          },
+          "customer": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "callback_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "provider": {
+            "type": "string",
+            "example": "quidax"
+          }
+        },
+        "example": {
+          "amount": "500000000",
+          "asset": "usdt",
+          "network": "trc20",
+          "provider": "quidax"
+        }
+      },
       "PayoutRequest": {
         "type": "object",
         "required": [
@@ -1474,6 +1602,15 @@
               }
             ]
           },
+          "deposit": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TransactionDeposit"
+              }
+            ],
+            "description": "Crypto deposit address details for Quidax pay-ins."
+          },
           "failure": {
             "nullable": true,
             "allOf": [
@@ -1519,6 +1656,28 @@
             "type": "string",
             "format": "uri",
             "description": "Present on pay-in create responses when the provider returns a checkout URL."
+          }
+        }
+      },
+      "TransactionDeposit": {
+        "type": "object",
+        "properties": {
+          "address_id": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "asset": {
+            "type": "string",
+            "example": "USDT"
+          },
+          "network": {
+            "type": "string",
+            "example": "trc20"
+          },
+          "destination_tag": {
+            "type": "string"
           }
         }
       },
