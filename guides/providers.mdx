@@ -116,7 +116,7 @@ Crypto exchange withdrawals to external wallet addresses.
 | Pay-in | Not available |
 | Refunds | Not available |
 
-Use `asset` (for example `btc`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. Amounts use 8 decimal minor units. Fetch wallet balances with [`GET /v1/providers/quidax/balance`](/api-reference) and an optional `currency` query (`USDT`, `BTC`, …).
+Use `destination.asset` (for example `btc`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. Amounts use 8 decimal minor units. Fetch wallet balances with [`GET /v1/providers/quidax/balance`](/api-reference) and an optional `currency` query (`USDT`, `BTC`, …).
 
 Set `"provider": "<slug>"` on [`POST /v1/transactions/payout`](/api-reference) to route explicitly, or omit it to use your organization's routing rules. See [Payout integration](/guides/payouts) for destination fields and examples.
 

@@ -68,6 +68,7 @@ Use `destination` on create requests. `recipient` is a deprecated alias.
 | `type` | Recommended | `bank_account`, `mobile_money`, or `crypto_wallet` |
 | `account_number` | Bank / mobile money | Bank account or mobile wallet number |
 | `address` | Crypto wallet | Destination crypto wallet address |
+| `asset` | Crypto wallet | Ticker (e.g. `btc`, `usdt`). Sets the payout currency |
 | `network` | Crypto wallet | Quidax chain (e.g. `trc20`, `erc20`, `bep20`, `bitcoin`) |
 | `bank_id` | For bank payouts | Capisum canonical bank id (e.g. `ng.opay` for OPay) |
 | `mobile_money_code` | For mobile money | GHS: `MTN`, `AIRTEL`. KES: `SAFARICOM`, `AIRTEL` |
@@ -76,7 +77,7 @@ Use `destination` on create requests. `recipient` is a deprecated alias.
 | `phone` | No | Wallet phone. Defaults to `account_number` |
 | `destination_tag` | Some crypto networks | Memo/tag when the chain requires it |
 
-Send `asset` (for example `"btc"`) at the top level for crypto payouts. It is an alias for `currency`; if both are set they must match.
+`destination.asset` is the crypto ticker. You can still send top-level `currency` instead; if both are set they must match.
 
 <Warning>
   `bank_code` is a deprecated escape hatch and is not part of the supported contract. Use `bank_id` instead. `bank_code` cannot be combined with `bank_id`.
@@ -131,10 +132,10 @@ When omitted, Capisum selects a provider using your organization's routing rules
     ```json
     {
       "amount": "40000000",
-      "asset": "btc",
       "provider": "quidax",
       "destination": {
         "type": "crypto_wallet",
+        "asset": "btc",
         "address": "bc1qel75acv9tdwqdx86tla6yyxagp2fvq2tntxntp",
         "network": "bitcoin"
       }
