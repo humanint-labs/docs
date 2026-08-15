@@ -26,6 +26,15 @@
   ],
   "tags": [
     {
+      "name": "Conversion"
+    },
+    {
+      "name": "Off-ramp"
+    },
+    {
+      "name": "On-ramp"
+    },
+    {
       "name": "Payouts"
     },
     {
@@ -559,7 +568,10 @@
               "enum": [
                 "pay_in",
                 "payout",
-                "refund"
+                "refund",
+                "onramp",
+                "offramp",
+                "conversion"
               ]
             }
           },
@@ -762,6 +774,657 @@
           }
         ]
       }
+    },
+    "/v1/onramp/quote": {
+      "post": {
+        "tags": [
+          "On-ramp"
+        ],
+        "summary": "Create on-ramp quote",
+        "operationId": "post_v1_onramp_quote",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Price a fiat-to-crypto on-ramp. Amounts are source-asset minor units (NGN/GHS use 2 decimals; crypto uses 8). Requires `X-Idempotency-Key`. Reuse the same key to refresh an expired quote without creating a duplicate.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries. Reusing a key returns or refreshes the original quote."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RampQuoteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/onramp": {
+      "post": {
+        "tags": [
+          "On-ramp"
+        ],
+        "summary": "Initiate on-ramp",
+        "operationId": "post_v1_onramp",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Start a fiat-to-crypto on-ramp from a quote. Returns payment instructions (bank account or mobile money). Settlement happens asynchronously via webhooks. Requires `X-Idempotency-Key`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries. Reusing a key returns the original transaction."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnrampInitiateRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/onramp/{id}": {
+      "get": {
+        "tags": [
+          "On-ramp"
+        ],
+        "summary": "Get on-ramp",
+        "operationId": "get_v1_onramp_id",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/onramp/{id}/status": {
+      "get": {
+        "tags": [
+          "On-ramp"
+        ],
+        "summary": "Get on-ramp status",
+        "operationId": "get_v1_onramp_id_status",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Poll the provider and return the latest Capisum status. Does not mark completion from provider acceptance alone.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/onramp/{id}/otp": {
+      "post": {
+        "tags": [
+          "On-ramp"
+        ],
+        "summary": "Confirm on-ramp mobile money OTP",
+        "operationId": "post_v1_onramp_id_otp",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Confirm a GHS mobile-money OTP after initiating an on-ramp with payment.type = mobile_money.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnrampOtpRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/offramp/quote": {
+      "post": {
+        "tags": [
+          "Off-ramp"
+        ],
+        "summary": "Create off-ramp quote",
+        "operationId": "post_v1_offramp_quote",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Price a crypto-to-fiat off-ramp. Amounts are source-asset minor units. Requires `X-Idempotency-Key`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RampQuoteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/offramp": {
+      "post": {
+        "tags": [
+          "Off-ramp"
+        ],
+        "summary": "Initiate off-ramp",
+        "operationId": "post_v1_offramp",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Start a crypto-to-fiat off-ramp from a quote. Returns a crypto deposit address. Fiat payout completes asynchronously. Requires `X-Idempotency-Key`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfframpInitiateRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/offramp/{id}": {
+      "get": {
+        "tags": [
+          "Off-ramp"
+        ],
+        "summary": "Get off-ramp",
+        "operationId": "get_v1_offramp_id",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/offramp/{id}/status": {
+      "get": {
+        "tags": [
+          "Off-ramp"
+        ],
+        "summary": "Get off-ramp status",
+        "operationId": "get_v1_offramp_id_status",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/conversion/quote": {
+      "post": {
+        "tags": [
+          "Conversion"
+        ],
+        "summary": "Create conversion quote",
+        "operationId": "post_v1_conversion_quote",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Price an asset-to-asset conversion with no bank collection or payout. Requires `X-Idempotency-Key`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RampQuoteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/conversion/execute": {
+      "post": {
+        "tags": [
+          "Conversion"
+        ],
+        "summary": "Execute conversion",
+        "operationId": "post_v1_conversion_execute",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Execute a conversion quote. Status remains processing until the provider settles. Requires `X-Idempotency-Key`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversionExecuteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/conversion/{id}/status": {
+      "get": {
+        "tags": [
+          "Conversion"
+        ],
+        "summary": "Get conversion status",
+        "operationId": "get_v1_conversion_id_status",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -815,7 +1478,10 @@
               "payin",
               "payout",
               "balance",
-              "account_resolution"
+              "account_resolution",
+              "onramp",
+              "offramp",
+              "conversion"
             ],
             "properties": {
               "payin": {
@@ -833,6 +1499,18 @@
               "account_resolution": {
                 "type": "boolean",
                 "example": true
+              },
+              "onramp": {
+                "type": "boolean",
+                "example": false
+              },
+              "offramp": {
+                "type": "boolean",
+                "example": false
+              },
+              "conversion": {
+                "type": "boolean",
+                "example": false
               }
             }
           },
@@ -1560,7 +2238,10 @@
             "enum": [
               "pay_in",
               "payout",
-              "refund"
+              "refund",
+              "onramp",
+              "offramp",
+              "conversion"
             ]
           },
           "status": {
@@ -1916,6 +2597,311 @@
                 }
               }
             ]
+          }
+        }
+      },
+      "RampQuoteRequest": {
+        "type": "object",
+        "required": [
+          "source_asset",
+          "destination_asset",
+          "amount"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "quidax"
+          },
+          "source_asset": {
+            "type": "string",
+            "example": "NGN"
+          },
+          "destination_asset": {
+            "type": "string",
+            "example": "USDT"
+          },
+          "amount": {
+            "type": "string",
+            "example": "2000000",
+            "description": "Source amount in minor units."
+          },
+          "network": {
+            "type": "string",
+            "example": "trc20",
+            "description": "Required for on-ramp and off-ramp."
+          }
+        }
+      },
+      "Quote": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "provider",
+          "source",
+          "destination",
+          "rate",
+          "expires_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "onramp",
+              "offramp",
+              "conversion"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "consumed",
+              "expired"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "example": "quidax"
+          },
+          "source": {
+            "type": "object",
+            "required": [
+              "asset",
+              "amount"
+            ],
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            }
+          },
+          "destination": {
+            "type": "object",
+            "required": [
+              "asset",
+              "amount"
+            ],
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            }
+          },
+          "rate": {
+            "type": "string"
+          },
+          "fee": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            }
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "QuoteResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Quote"
+          }
+        }
+      },
+      "OnrampInitiateRequest": {
+        "type": "object",
+        "required": [
+          "quote_id",
+          "customer",
+          "destination"
+        ],
+        "properties": {
+          "quote_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "example": "quidax"
+          },
+          "customer": {
+            "type": "object",
+            "required": [
+              "email",
+              "first_name",
+              "last_name"
+            ],
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "first_name": {
+                "type": "string"
+              },
+              "last_name": {
+                "type": "string"
+              }
+            }
+          },
+          "destination": {
+            "type": "object",
+            "required": [
+              "address",
+              "network"
+            ],
+            "properties": {
+              "address": {
+                "type": "string"
+              },
+              "network": {
+                "type": "string",
+                "example": "trc20"
+              }
+            }
+          },
+          "payment": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "bank_account",
+                  "mobile_money"
+                ]
+              },
+              "phone": {
+                "type": "string"
+              },
+              "network_provider": {
+                "type": "string",
+                "example": "MTN"
+              }
+            }
+          }
+        }
+      },
+      "OfframpInitiateRequest": {
+        "type": "object",
+        "required": [
+          "quote_id",
+          "customer",
+          "destination"
+        ],
+        "properties": {
+          "quote_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "example": "quidax"
+          },
+          "customer": {
+            "type": "object",
+            "required": [
+              "email",
+              "first_name",
+              "last_name"
+            ],
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "first_name": {
+                "type": "string"
+              },
+              "last_name": {
+                "type": "string"
+              }
+            }
+          },
+          "destination": {
+            "type": "object",
+            "required": [
+              "account_number"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "bank_account"
+                ]
+              },
+              "bank_id": {
+                "type": "string",
+                "example": "ng.opay"
+              },
+              "bank_code": {
+                "type": "string"
+              },
+              "account_number": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ConversionExecuteRequest": {
+        "type": "object",
+        "required": [
+          "quote_id"
+        ],
+        "properties": {
+          "quote_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "example": "quidax"
+          }
+        }
+      },
+      "OnrampOtpRequest": {
+        "type": "object",
+        "required": [
+          "otp"
+        ],
+        "properties": {
+          "otp": {
+            "type": "string",
+            "example": "123456"
+          }
+        }
+      },
+      "RampTransactionResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Transaction"
           }
         }
       },
