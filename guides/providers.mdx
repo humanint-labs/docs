@@ -20,7 +20,7 @@ Use [`GET /v1/providers`](/api-reference) to list provider slugs Capisum can rou
 | Paystack | `paystack` | Payouts | Yes | Bank + mobile money | Mobile money only |
 | Flutterwave | `flutterwave` | Payouts | Yes | Bank + mobile money | Bank + mobile money |
 | PalmPay | `palmpay` | Payouts | Yes | — | — |
-| Quidax | `quidax` | Pay-in, payouts, balance | Crypto wallets | — | — |
+| Quidax | `quidax` | Pay-in, payouts, balance, account resolution | Crypto wallets | — | — |
 
 All providers share the same Capisum payout state machine: queued submission, per-attempt provider transfer references, webhook matching, and verify-before-retry. Each adapter handles its own request format, status mapping, and webhook parsing.
 
@@ -116,7 +116,7 @@ Crypto deposits, withdrawals, wallet balances, and NGN account name enquiry.
 | Pay-in | Available (crypto deposit addresses) |
 | Refunds | Not available |
 
-Payouts use `destination.asset` (for example `btc`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. Pay-ins use `asset` plus `network`; the response `deposit` object has the address to fund. Amounts use 8 decimal minor units. Fetch wallet balances with [`GET /v1/providers/quidax/balance`](/api-reference). Quidax does not support NGN bank account resolution.
+Payouts use `destination.asset` (for example `btc`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. Pay-ins use `asset` plus `network`; the response `deposit` object has the address to fund. Amounts use 8 decimal minor units. Fetch wallet balances with [`GET /v1/providers/quidax/balance`](/api-reference). Verify NGN accounts with [`POST /v1/verify/account`](/guides/account-verification) and `provider: "quidax"`.
 
 Set `"provider": "<slug>"` on [`POST /v1/transactions/payout`](/api-reference) to route explicitly, or omit it to use your organization's routing rules. See [Payout integration](/guides/payouts) for destination fields and examples.
 

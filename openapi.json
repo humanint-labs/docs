@@ -281,7 +281,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Resolve a bank account name through a connected provider that supports account resolution. Use `bank_id` from `GET /v1/reference/banks` when possible. Supported for `fincra`, `paystack`, `flutterwave`, and `palmpay`.",
+        "description": "Resolve a bank account name through a connected provider that supports account resolution. Use `bank_id` from `GET /v1/reference/banks` when possible. Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, and `quidax`.",
         "security": [
           {
             "apiKeyAuth": []
