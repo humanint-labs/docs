@@ -64,7 +64,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Lists configurable payout providers that support NGN bank transfers.",
+        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Includes NGN bank payout providers and Quidax crypto wallet payouts.",
         "security": [
           {
             "apiKeyAuth": []
@@ -94,7 +94,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns supported payout providers, currencies, and destination types for the current contract version. The capabilities payload is NGN bank-focused; GHS and KES bank/mobile-money payouts are also accepted on POST /v1/transactions/payout when your routing rules and provider credentials support them.",
+        "description": "Returns supported payout providers, currencies, and destination types for the current contract version. Includes NGN bank payouts and Quidax crypto_wallet payouts. GHS and KES bank/mobile-money payouts are also accepted on POST /v1/transactions/payout when your routing rules and provider credentials support them.",
         "security": [
           {
             "apiKeyAuth": []
@@ -330,7 +330,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported NGN providers and `GET /v1/reference/banks` for canonical `bank_id` values. When `provider` is set, the destination must be valid for that provider.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported providers and rails. NGN bank payouts use `GET /v1/reference/banks` for canonical `bank_id` values. Quidax crypto payouts use `destination.type = crypto_wallet` with a wallet address and `network`. When `provider` is set, the destination must be valid for that provider.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1028,6 +1028,43 @@
           }
         }
       },
+      "PayoutCryptoWalletDestination": {
+        "type": "object",
+        "required": [
+          "type",
+          "account_number",
+          "network"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "crypto_wallet"
+            ]
+          },
+          "account_number": {
+            "type": "string",
+            "description": "Destination crypto wallet address."
+          },
+          "network": {
+            "type": "string",
+            "description": "Quidax blockchain network (for example, trc20, erc20, bep20, bitcoin).",
+            "example": "trc20"
+          },
+          "destination_tag": {
+            "type": "string",
+            "description": "Optional memo/tag for networks that require it."
+          },
+          "account_name": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2
+          }
+        }
+      },
       "PayoutMobileMoneyDestination": {
         "type": "object",
         "required": [
@@ -1079,18 +1116,13 @@
                 "type": "integer"
               }
             ],
-            "description": "Amount in minor units."
+            "description": "Amount in minor units. Quidax crypto uses 8 decimal places (500000000 = 5 USDT)."
           },
           "currency": {
             "type": "string",
             "minLength": 3,
-            "maxLength": 3,
-            "default": "NGN",
-            "enum": [
-              "NGN",
-              "GHS",
-              "KES"
-            ]
+            "maxLength": 10,
+            "default": "NGN"
           },
           "destination": {
             "oneOf": [
@@ -1099,6 +1131,9 @@
               },
               {
                 "$ref": "#/components/schemas/PayoutMobileMoneyDestination"
+              },
+              {
+                "$ref": "#/components/schemas/PayoutCryptoWalletDestination"
               }
             ]
           },
@@ -1118,7 +1153,7 @@
           },
           "provider": {
             "type": "string",
-            "description": "Optional explicit provider slug (for example, `fincra`, `paystack`, `flutterwave`, `palmpay`)."
+            "description": "Optional explicit provider slug (for example, `fincra`, `paystack`, `flutterwave`, `palmpay`, `quidax`)."
           },
           "recipient": {
             "deprecated": true,
@@ -1129,6 +1164,9 @@
               },
               {
                 "$ref": "#/components/schemas/PayoutMobileMoneyDestination"
+              },
+              {
+                "$ref": "#/components/schemas/PayoutCryptoWalletDestination"
               }
             ]
           }
@@ -1170,9 +1208,14 @@
                   "items": {
                     "type": "string",
                     "enum": [
-                      "bank_account"
+                      "bank_account",
+                      "crypto_wallet"
                     ]
                   }
+                },
+                "amount_decimals": {
+                  "type": "integer",
+                  "example": 8
                 }
               }
             }
@@ -1182,11 +1225,13 @@
             "items": {
               "type": "string",
               "enum": [
-                "bank_account"
+                "bank_account",
+                "crypto_wallet"
               ]
             },
             "example": [
-              "bank_account"
+              "bank_account",
+              "crypto_wallet"
             ]
           },
           "providers": {
@@ -1211,10 +1256,7 @@
                 "currencies": {
                   "type": "array",
                   "items": {
-                    "type": "string",
-                    "enum": [
-                      "NGN"
-                    ]
+                    "type": "string"
                   }
                 },
                 "destinations": {
@@ -1222,7 +1264,8 @@
                   "items": {
                     "type": "string",
                     "enum": [
-                      "bank_account"
+                      "bank_account",
+                      "crypto_wallet"
                     ]
                   }
                 }
@@ -1469,7 +1512,8 @@
             "type": "string",
             "enum": [
               "bank_account",
-              "mobile_money"
+              "mobile_money",
+              "crypto_wallet"
             ]
           },
           "bank_id": {
@@ -1490,6 +1534,12 @@
             "type": "string"
           },
           "mobile_money_code": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string"
+          },
+          "destination_tag": {
             "type": "string"
           }
         }
