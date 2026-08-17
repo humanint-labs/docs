@@ -475,7 +475,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a crypto deposit pay-in through Quidax. Amounts are in 8-decimal minor units (for example, `500000000` = 5 USDT).\n\nSend `asset` (e.g. `usdt`) and `network` (e.g. `trc20`). Capisum generates a deposit address and returns it on `deposit`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Create a crypto deposit pay-in through Quidax. Amounts are in 8-decimal minor units (for example, `500000000` = 5 USDT).\n\nSend `asset` (e.g. `usdt`), `network` (e.g. `trc20`), and `customer.email`. Capisum attaches the deposit to a Quidax sub-account (email is unique and immutable; `customer.name` is optional and mapped to first/last name), then returns the address on `deposit`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1864,7 +1864,8 @@
         "type": "object",
         "required": [
           "amount",
-          "network"
+          "network",
+          "customer"
         ],
         "properties": {
           "amount": {
@@ -1897,6 +1898,10 @@
           },
           "customer": {
             "type": "object",
+            "required": [
+              "email"
+            ],
+            "description": "Quidax does not accept email or name on the payment-address request. Capisum creates or reuses a sub-account with this email, then generates the deposit address under that user. Name is optional.",
             "properties": {
               "email": {
                 "type": "string",
@@ -1924,7 +1929,11 @@
           "amount": "500000000",
           "asset": "usdt",
           "network": "trc20",
-          "provider": "quidax"
+          "provider": "quidax",
+          "customer": {
+            "email": "ada@example.com",
+            "name": "Ada Okafor"
+          }
         }
       },
       "PayoutRequest": {
