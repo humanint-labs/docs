@@ -444,13 +444,13 @@
         ]
       }
     },
-    "/v1/transactions/pay-in": {
+    "/v1/transactions/pay-in/merchant-wallet": {
       "post": {
         "tags": [
           "Transactions"
         ],
-        "summary": "Create pay-in",
-        "operationId": "post_v1_transactions_pay-in",
+        "summary": "Create merchant wallet pay-in",
+        "operationId": "post_v1_transactions_pay-in_merchant-wallet",
         "responses": {
           "200": {
             "description": "Success",
@@ -475,7 +475,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a crypto deposit pay-in through Quidax. Amounts are in 8-decimal minor units (for example, `500000000` = 5 USDT).\n\nSend `asset` (e.g. `usdt`), `network` (e.g. `trc20`), and `customer.email`. Capisum attaches the deposit to a Quidax sub-account (email is unique and immutable; `customer.name` is optional and mapped to first/last name), then returns the address on `deposit`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Generate a crypto deposit address on the merchant Quidax account (`me`). Funds settle to the merchant wallet. Customer is optional Capisum metadata and is not sent to Quidax.\n\nSend `asset` (e.g. `usdt`) and `network` (e.g. `trc20`). Amounts are 8-decimal minor units (for example, `500000000` = 5 USDT). The address is returned on `deposit`, with `deposit.wallet` = `merchant_wallet`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -498,11 +498,86 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PayInRequest"
+                "$ref": "#/components/schemas/MerchantWalletPayInRequest"
               }
             }
           }
-        }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "label": "cURL",
+            "source": "curl -X POST https://api.capisum.com/v1/transactions/pay-in/merchant-wallet \\\n  -H \"Authorization: Bearer cps_your_key\" \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-Idempotency-Key: payin-merchant-123\" \\\n  -d '{\n    \"amount\": \"500000000\",\n    \"asset\": \"usdt\",\n    \"network\": \"trc20\",\n    \"provider\": \"quidax\"\n  }'"
+          }
+        ]
+      }
+    },
+    "/v1/transactions/pay-in/customer-wallet": {
+      "post": {
+        "tags": [
+          "Transactions"
+        ],
+        "summary": "Create customer wallet pay-in",
+        "operationId": "post_v1_transactions_pay-in_customer-wallet",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Generate a crypto deposit address on a Quidax sub-account attached to `customer.email`. Funds settle to that customer's wallet. Email is unique and immutable on Quidax; `customer.name` is optional and mapped to first/last name.\n\nSend `asset` (e.g. `usdt`), `network` (e.g. `trc20`), and `customer.email`. Amounts are 8-decimal minor units (for example, `500000000` = 5 USDT). The address is returned on `deposit`, with `deposit.wallet` = `customer_wallet`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries. Reusing a key returns the original transaction."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerWalletPayInRequest"
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "label": "cURL",
+            "source": "curl -X POST https://api.capisum.com/v1/transactions/pay-in/customer-wallet \\\n  -H \"Authorization: Bearer cps_your_key\" \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-Idempotency-Key: payin-customer-123\" \\\n  -d '{\n    \"amount\": \"500000000\",\n    \"asset\": \"usdt\",\n    \"network\": \"trc20\",\n    \"provider\": \"quidax\",\n    \"customer\": {\n      \"email\": \"ada@example.com\",\n      \"name\": \"Ada Okafor\"\n    }\n  }'"
+          }
+        ]
       }
     },
     "/v1/transactions": {
@@ -1860,13 +1935,83 @@
           }
         }
       },
-      "PayInRequest": {
+      "MerchantWalletPayInRequest": {
+        "type": "object",
+        "required": [
+          "amount",
+          "network"
+        ],
+        "description": "Merchant wallet pay-in. The deposit address is created on the merchant Quidax account.",
+        "properties": {
+          "amount": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "description": "Amount in 8-decimal minor units for crypto (500000000 = 5 USDT)."
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 10
+          },
+          "asset": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 10,
+            "description": "Crypto asset ticker (e.g. btc, usdt). Alias for currency.",
+            "example": "usdt"
+          },
+          "network": {
+            "type": "string",
+            "description": "Quidax blockchain network (e.g. trc20, erc20, bep20, bitcoin).",
+            "example": "trc20"
+          },
+          "customer": {
+            "type": "object",
+            "description": "Optional Capisum customer record. Not sent to Quidax for merchant-wallet pay-ins.",
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "callback_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "provider": {
+            "type": "string",
+            "example": "quidax"
+          }
+        },
+        "example": {
+          "amount": "500000000",
+          "asset": "usdt",
+          "network": "trc20",
+          "provider": "quidax"
+        }
+      },
+      "CustomerWalletPayInRequest": {
         "type": "object",
         "required": [
           "amount",
           "network",
           "customer"
         ],
+        "description": "Customer wallet pay-in. The deposit address is created on a Quidax sub-account identified by customer.email.",
         "properties": {
           "amount": {
             "oneOf": [
@@ -1901,7 +2046,7 @@
             "required": [
               "email"
             ],
-            "description": "Quidax does not accept email or name on the payment-address request. Capisum creates or reuses a sub-account with this email, then generates the deposit address under that user. Name is optional.",
+            "description": "Identifies the Quidax sub-account. Email is unique and immutable; name is optional and mapped to first/last name.",
             "properties": {
               "email": {
                 "type": "string",
@@ -2374,6 +2519,14 @@
           },
           "destination_tag": {
             "type": "string"
+          },
+          "wallet": {
+            "type": "string",
+            "enum": [
+              "merchant_wallet",
+              "customer_wallet"
+            ],
+            "description": "merchant_wallet settles to the merchant Quidax account. customer_wallet settles to a per-customer sub-account."
           }
         }
       },

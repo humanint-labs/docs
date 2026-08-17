@@ -116,7 +116,12 @@ Crypto deposits, withdrawals, wallet balances, and NGN account name enquiry.
 | Pay-in | Available (crypto deposit addresses) |
 | Refunds | Not available |
 
-Payouts use `destination.asset` (for example `btc`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. Pay-ins use `asset`, `network`, and `customer.email` (required). Capisum creates or reuses a Quidax sub-account for that email, then returns the deposit address. `customer.name` is optional and maps to first/last name. Amounts use 8 decimal minor units. Fetch wallet balances with [`GET /v1/providers/quidax/balance`](/api-reference). Verify NGN accounts with [`POST /v1/verify/account`](/guides/account-verification) and `provider: "quidax"`.
+Payouts use `destination.asset` (for example `btc`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. Pay-ins have two named endpoints:
+
+- **Merchant wallet pay-in** — [`POST /v1/transactions/pay-in/merchant-wallet`](/api-reference). Deposit address on the merchant Quidax account. Customer is optional Capisum metadata.
+- **Customer wallet pay-in** — [`POST /v1/transactions/pay-in/customer-wallet`](/api-reference). Deposit address on a Quidax sub-account. Requires `customer.email`. `customer.name` is optional.
+
+The response `deposit` object includes the address to fund and `deposit.wallet` (`merchant_wallet` or `customer_wallet`). Amounts use 8 decimal minor units. Fetch wallet balances with [`GET /v1/providers/quidax/balance`](/api-reference). Verify NGN accounts with [`POST /v1/verify/account`](/guides/account-verification) and `provider: "quidax"`.
 
 Set `"provider": "<slug>"` on [`POST /v1/transactions/payout`](/api-reference) to route explicitly, or omit it to use your organization's routing rules. See [Payout integration](/guides/payouts) for destination fields and examples.
 
