@@ -116,7 +116,7 @@ Crypto deposits, withdrawals, wallet balances, and NGN account name enquiry.
 | Pay-in | Available (crypto deposit addresses) |
 | Refunds | Not available |
 
-Payouts use `destination.asset` (for example `btc`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. Pay-ins have two named endpoints:
+Payouts use top-level `currency` (for example `BTC`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. Pay-ins have two named endpoints:
 
 - **Merchant wallet pay-in** — [`POST /v1/transactions/pay-in/merchant-wallet`](/api-reference). Deposit address on the merchant Quidax account. Customer is optional Capisum metadata.
 - **Customer wallet pay-in** — [`POST /v1/transactions/pay-in/customer-wallet`](/api-reference). Deposit address on a Quidax sub-account. Requires `customer.email`. `customer.name` is optional.

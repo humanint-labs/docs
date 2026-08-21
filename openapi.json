@@ -339,7 +339,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported providers and rails. NGN bank payouts use `GET /v1/reference/banks` for canonical `bank_id` values. Quidax crypto payouts use `destination.type = crypto_wallet` with `destination.asset` (e.g. `btc`), `destination.address`, and `destination.network`. When `provider` is set, the destination must be valid for that provider.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported providers and rails. NGN bank payouts use `GET /v1/reference/banks` for canonical `bank_id` values. Quidax crypto payouts use top-level `currency` (e.g. `BTC`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. When `provider` is set, the destination must be valid for that provider.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -412,10 +412,10 @@
                   "summary": "BTC crypto wallet payout",
                   "value": {
                     "amount": "40000000",
+                    "currency": "BTC",
                     "provider": "quidax",
                     "destination": {
                       "type": "crypto_wallet",
-                      "asset": "btc",
                       "address": "bc1qel75acv9tdwqdx86tla6yyxagp2fvq2tntxntp",
                       "network": "bitcoin"
                     }
@@ -1860,8 +1860,7 @@
         "required": [
           "type",
           "address",
-          "network",
-          "asset"
+          "network"
         ],
         "properties": {
           "type": {
@@ -1873,13 +1872,6 @@
           "address": {
             "type": "string",
             "description": "Destination crypto wallet address."
-          },
-          "asset": {
-            "type": "string",
-            "minLength": 3,
-            "maxLength": 10,
-            "description": "Crypto asset ticker (e.g. btc, usdt).",
-            "example": "btc"
           },
           "network": {
             "type": "string",
