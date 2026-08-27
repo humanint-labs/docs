@@ -128,15 +128,20 @@ The response `deposit` object includes the address to fund and `deposit.wallet` 
 
 ### Bitnob (`bitnob`)
 
-Crypto-funded fiat bank payouts (wallet-funded / offchain) and on-chain crypto withdrawals.
+Crypto-funded fiat bank payouts (wallet-funded / offchain), on-chain crypto withdrawals, and crypto pay-in addresses.
 
 | Operation | Status |
 | --- | --- |
 | Payouts | Available (`bank_account` for NGN, GHS, KES; `crypto_wallet` for BTC, USDT, USDC) |
 | Account verification | Available (NGN bank; GHS mobile money lookup) |
 | Balance lookup | Available (defaults to the configured fiat funding wallet) |
-| Pay-in | Available (crypto deposit addresses) |
+| Pay-in | Available (BTC / USDT / USDC deposit addresses) |
 | Refunds | Not available |
+
+Pay-ins use the same Capisum endpoints as Quidax:
+
+- **Merchant wallet** — [`POST /v1/transactions/pay-in/merchant-wallet`](/api-reference). Company Bitnob deposit address (no customer link).
+- **Customer wallet** — [`POST /v1/transactions/pay-in/customer-wallet`](/api-reference). Capisum creates or reuses a Bitnob customer for `customer.email`, then generates an address with that email for attribution. Deposits still credit the company Bitnob balance — this is attribution, not an isolated sub-wallet.
 
 Fiat payouts debit your Bitnob crypto wallet (USDT by default, or the `payoutFromAsset` you configure). Crypto payouts debit the matching asset wallet. Keep the relevant wallet funded before sending.
 

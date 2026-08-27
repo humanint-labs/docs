@@ -472,7 +472,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Generate a crypto deposit address on the merchant Quidax account (`me`). Funds settle to the merchant wallet. Customer is optional Capisum metadata and is not sent to Quidax.\n\nSend `asset` (e.g. `usdt`) and `network` (e.g. `trc20`). Amounts are 8-decimal minor units (for example, `500000000` = 5 USDT). The address is returned on `deposit`, with `deposit.wallet` = `merchant_wallet`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Generate a crypto deposit address on the merchant provider account (Quidax `me`, or the Bitnob company wallet). Funds settle to the merchant wallet. Customer is optional Capisum metadata and is not sent to the provider.\n\nSend `asset` (e.g. `usdt`) and `network` (e.g. `trc20`). Amounts are 8-decimal minor units (for example, `500000000` = 5 USDT). The address is returned on `deposit`, with `deposit.wallet` = `merchant_wallet`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -540,7 +540,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Generate a crypto deposit address on a Quidax sub-account attached to `customer.email`. Funds settle to that customer's wallet. Email is unique and immutable on Quidax; `customer.name` is optional and mapped to first/last name.\n\nSend `asset` (e.g. `usdt`), `network` (e.g. `trc20`), and `customer.email`. Amounts are 8-decimal minor units (for example, `500000000` = 5 USDT). The address is returned on `deposit`, with `deposit.wallet` = `customer_wallet`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Generate a crypto deposit address attributed to `customer.email`.\n\n- **Quidax**: creates (or reuses) a sub-account; funds settle to that customer's wallet.\n- **Bitnob**: creates (or reuses) a Bitnob customer and passes `customer_email` when generating the address. Deposits still credit the company Bitnob balance and are attributed to that customer for reporting \u2014 not an isolated sub-wallet.\n\nEmail identifies the customer; `customer.name` is optional and mapped to first/last name.\n\nSend `asset` (e.g. `usdt`), `network` (e.g. `trc20`), and `customer.email`. Amounts are 8-decimal minor units (for example, `500000000` = 5 USDT). The address is returned on `deposit`, with `deposit.wallet` = `customer_wallet`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1763,7 +1763,7 @@
           "amount",
           "network"
         ],
-        "description": "Merchant wallet pay-in. The deposit address is created on the merchant Quidax account.",
+        "description": "Merchant wallet pay-in. Deposit address on the merchant provider account (Quidax or Bitnob).",
         "properties": {
           "amount": {
             "oneOf": [
@@ -1790,12 +1790,12 @@
           },
           "network": {
             "type": "string",
-            "description": "Quidax blockchain network (e.g. trc20, erc20, bep20, bitcoin).",
+            "description": "Blockchain network (e.g. trc20, erc20, bep20, bitcoin).",
             "example": "trc20"
           },
           "customer": {
             "type": "object",
-            "description": "Optional Capisum customer record. Not sent to Quidax for merchant-wallet pay-ins.",
+            "description": "Optional Capisum customer record. Not sent to the provider for merchant-wallet pay-ins.",
             "properties": {
               "email": {
                 "type": "string",
@@ -1833,7 +1833,7 @@
           "network",
           "customer"
         ],
-        "description": "Customer wallet pay-in. The deposit address is created on a Quidax sub-account identified by customer.email.",
+        "description": "Customer wallet pay-in. Quidax: deposit on a sub-account. Bitnob: address attributed to a registered Bitnob customer (company balance with attribution).",
         "properties": {
           "amount": {
             "oneOf": [
@@ -1860,7 +1860,7 @@
           },
           "network": {
             "type": "string",
-            "description": "Quidax blockchain network (e.g. trc20, erc20, bep20, bitcoin).",
+            "description": "Blockchain network (e.g. trc20, erc20, bep20, bitcoin).",
             "example": "trc20"
           },
           "customer": {
@@ -1868,7 +1868,7 @@
             "required": [
               "email"
             ],
-            "description": "Identifies the Quidax sub-account. Email is unique and immutable; name is optional and mapped to first/last name.",
+            "description": "Identifies the customer. Email is unique; name is optional and mapped to first/last name.",
             "properties": {
               "email": {
                 "type": "string",
@@ -2348,7 +2348,7 @@
               "merchant_wallet",
               "customer_wallet"
             ],
-            "description": "merchant_wallet settles to the merchant Quidax account. customer_wallet settles to a per-customer sub-account."
+            "description": "merchant_wallet settles to the merchant provider account. customer_wallet is per-customer attribution (Quidax sub-account / Bitnob customer)."
           }
         }
       },
