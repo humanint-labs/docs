@@ -70,4 +70,4 @@ curl -X POST "$CAPISUM_BASE_URL/v1/transactions/payout" \
 
 Idempotency keys are scoped to your **organization**. Two organizations can use the same key string without conflict.
 
-Pay-in creation also requires idempotency when that endpoint becomes available.
+Pay-in creation (`POST /v1/transactions/pay-in/merchant-wallet` and `.../customer-wallet`) also requires `X-Idempotency-Key`.

@@ -14,14 +14,16 @@ Use [`GET /v1/providers`](/api-reference) to list provider slugs Capisum can rou
 
 ## Available providers
 
-| Provider | Slug | API today | NGN bank | GHS | KES |
-| --- | --- | --- | --- | --- | --- |
-| Fincra | `fincra` | Payouts | Yes | Bank + mobile money | Bank + mobile money |
-| Paystack | `paystack` | Payouts | Yes | Bank + mobile money | Mobile money only |
-| Flutterwave | `flutterwave` | Payouts | Yes | Bank + mobile money | Bank + mobile money |
-| PalmPay | `palmpay` | Payouts | Yes | — | — |
-| Quidax | `quidax` | Pay-in, payouts, balance, account resolution, on-ramp, off-ramp | Yes + crypto wallets | — | — |
-| Bitnob | `bitnob` | Pay-in, payouts, balance, account resolution | Yes (wallet-funded) | Bank (wallet-funded) | Bank (wallet-funded) |
+Six providers are integrated and configurable in Capisum today. Refunds are not shipped for any provider. Quidax conversion exists in code but is not on `availableOperations` yet.
+
+| Provider | Slug | Pay-in | Payout | Balance | Account verify | On-ramp / Off-ramp | Corridor notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Fincra | `fincra` | — | Yes | Yes | Yes (NGN) | — | NGN bank; GHS/KES bank + mobile money |
+| Paystack | `paystack` | — | Yes | Yes | Yes (NGN) | — | NGN bank; GHS bank + MoMo; KES MoMo only |
+| Flutterwave | `flutterwave` | — | Yes | Yes | Yes (NGN) | — | NGN / GHS / KES bank + mobile money |
+| PalmPay | `palmpay` | — | Yes | Yes (NGN) | Yes (NGN) | — | NGN bank only |
+| Quidax | `quidax` | Yes (crypto) | Yes | Yes | Yes (NGN) | Yes | Crypto USDT, USDC, BTC, ETH, SOL, XLM; NGN bank payouts; merchant + customer wallet pay-in |
+| Bitnob | `bitnob` | Yes (crypto) | Yes | Yes | Yes (NGN bank; GHS MoMo) | — | Fiat NGN/GHS/KES (wallet-funded); crypto payout BTC/USDT/USDC; merchant + customer-attributed pay-in |
 
 All providers share the same Capisum payout state machine: queued submission, per-attempt provider transfer references, webhook matching, and verify-before-retry. Each adapter handles its own request format, status mapping, and webhook parsing.
 

@@ -16,11 +16,13 @@ Capisum does not hold your funds or replace your providers. It removes provider-
 
 ## Available capabilities
 
-The API is available at `https://api.capisum.com/v1`. Payouts are the primary transaction type.
+The API is available at `https://api.capisum.com/v1`. Supported transaction types today include payouts, crypto pay-in (Quidax and Bitnob), and Quidax on-ramp / off-ramp. See [Providers](/guides/providers) for the full capability matrix.
 
 | Capability | Endpoint |
 | --- | --- |
 | Create a payout | `POST /v1/transactions/payout` |
+| Create a merchant wallet pay-in | `POST /v1/transactions/pay-in/merchant-wallet` |
+| Create a customer wallet pay-in | `POST /v1/transactions/pay-in/customer-wallet` |
 | List and query transactions | `GET /v1/transactions` |
 | Verify account names | `POST /v1/verify/account` |
 | Check provider health and balance | `GET /v1/providers/{slug}/status`, `GET /v1/providers/{slug}/balance` |
