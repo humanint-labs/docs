@@ -44,7 +44,7 @@ All amounts are in **minor units** (the smallest currency unit):
 | NGN | Kobo | `500000` = ₦5,000.00 |
 | GHS | Pesewa | `10000` = GH₵100.00 |
 | KES | Cent | `50000` = KSh500.00 |
-| USDT / BTC (Quidax) | 8 decimals | `500000000` = 5 USDT; `40000000` = 0.4 BTC |
+| USDT / BTC / ETH / SOL / XLM | 8 decimals | `500000000` = 5 USDT; `40000000` = 0.4 BTC |
 
 Pass `amount` as a string or integer. Capisum stores and returns amounts as integers.
 
@@ -53,9 +53,10 @@ Pass `amount` as a string or integer. Capisum stores and returns amounts as inte
 | Currency | `bank_account` | `mobile_money` | `crypto_wallet` |
 | --- | --- | --- | --- |
 | NGN | Yes (`bank_id` required) | No | No |
-| GHS | Yes (`bank_id` required) | Yes (`mobile_money_code` required) | No |
-| KES | Yes (`bank_id` required) | Yes (`mobile_money_code` required) | No |
-| USDT, BTC, ETH, … | No | No | Yes (`address` + `network`; Quidax) |
+| GHS | Yes (`bank_id` / Bitnob `bank_code`) | Yes (`mobile_money_code` required) | No |
+| KES | Yes (`bank_id` / Bitnob `bank_code`) | Yes (`mobile_money_code` required) | No |
+| USDT, USDC, BTC | No | No | Yes (Quidax + Bitnob) |
+| ETH, SOL, XLM | No | No | Yes (Quidax) |
 
 Use [`GET /v1/reference/banks`](/api-reference) to list canonical `bank_id` values. Capisum resolves provider-specific institution codes internally at payout time.
 
@@ -68,7 +69,7 @@ Use `destination` on create requests. `recipient` is a deprecated alias.
 | `type` | Recommended | `bank_account`, `mobile_money`, or `crypto_wallet` |
 | `account_number` | Bank / mobile money | Bank account or mobile wallet number |
 | `address` | Crypto wallet | Destination crypto wallet address |
-| `network` | Crypto wallet | Quidax chain (e.g. `trc20`, `erc20`, `bep20`, `bitcoin`) |
+| `network` | Crypto wallet | Chain label (e.g. `trc20`, `erc20`, `bep20`, `solana`, `stellar`, `bitcoin`) |
 | `bank_id` | For bank payouts | Capisum canonical bank id (e.g. `ng.opay` for OPay) |
 | `mobile_money_code` | For mobile money | GHS: `MTN`, `AIRTEL`. KES: `SAFARICOM`, `AIRTEL` |
 | `account_name` | Recommended | Display name for the recipient |

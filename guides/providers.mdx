@@ -2,7 +2,7 @@
 title: "Providers"
 sidebarTitle: "Providers"
 description: "Payment providers available through the Capisum API and what each supports today."
-keywords: ["providers", "Fincra", "Paystack", "Flutterwave", "PalmPay", "Quidax", "payout", "NGN", "GHS", "KES", "crypto", "provider catalog"]
+keywords: ["providers", "Fincra", "Paystack", "Flutterwave", "PalmPay", "Quidax", "Bitnob", "payout", "NGN", "GHS", "KES", "crypto", "provider catalog"]
 icon: "plug"
 ---
 
@@ -20,7 +20,8 @@ Use [`GET /v1/providers`](/api-reference) to list provider slugs Capisum can rou
 | Paystack | `paystack` | Payouts | Yes | Bank + mobile money | Mobile money only |
 | Flutterwave | `flutterwave` | Payouts | Yes | Bank + mobile money | Bank + mobile money |
 | PalmPay | `palmpay` | Payouts | Yes | — | — |
-| Quidax | `quidax` | Pay-in, payouts, balance, account resolution | Crypto wallets | — | — |
+| Quidax | `quidax` | Pay-in, payouts, balance, account resolution, on-ramp, off-ramp | Yes + crypto wallets | — | — |
+| Bitnob | `bitnob` | Pay-in, payouts, balance, account resolution | Yes (wallet-funded) | Bank (wallet-funded) | Bank (wallet-funded) |
 
 All providers share the same Capisum payout state machine: queued submission, per-attempt provider transfer references, webhook matching, and verify-before-retry. Each adapter handles its own request format, status mapping, and webhook parsing.
 
@@ -106,22 +107,38 @@ Full key and IP steps: [PalmPay setup](/guides/palmpay).
 
 ### Quidax (`quidax`)
 
-Crypto deposits, withdrawals, wallet balances, and NGN account name enquiry.
+Crypto deposits and withdrawals, NGN bank payouts, wallet balances, NGN account name enquiry, on-ramp, and off-ramp.
 
 | Operation | Status |
 | --- | --- |
-| Payouts | Available (`crypto_wallet`) |
+| Payouts | Available (`bank_account` for NGN; `crypto_wallet` for USDT, USDC, BTC, ETH, SOL, XLM) |
 | Account verification | Available (NGN) |
 | Balance lookup | Available |
 | Pay-in | Available (crypto deposit addresses) |
+| On-ramp / off-ramp | Available |
+| Conversion | Not shipped yet |
 | Refunds | Not available |
 
-Payouts use top-level `currency` (for example `BTC`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. Pay-ins have two named endpoints:
+Crypto payouts use top-level `currency` (for example `BTC`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. NGN bank payouts use `destination.bank_id` from [`GET /v1/reference/banks`](/api-reference). Pay-ins have two named endpoints:
 
 - **Merchant wallet pay-in** — [`POST /v1/transactions/pay-in/merchant-wallet`](/api-reference). Deposit address on the merchant Quidax account. Customer is optional Capisum metadata.
 - **Customer wallet pay-in** — [`POST /v1/transactions/pay-in/customer-wallet`](/api-reference). Deposit address on a Quidax sub-account. Requires `customer.email`. `customer.name` is optional.
 
-The response `deposit` object includes the address to fund and `deposit.wallet` (`merchant_wallet` or `customer_wallet`). Amounts use 8 decimal minor units. Fetch wallet balances with [`GET /v1/providers/quidax/balance`](/api-reference). Verify NGN accounts with [`POST /v1/verify/account`](/guides/account-verification) and `provider: "quidax"`.
+The response `deposit` object includes the address to fund and `deposit.wallet` (`merchant_wallet` or `customer_wallet`). Crypto amounts use 8 decimal minor units; NGN uses 2. Fetch wallet balances with [`GET /v1/providers/quidax/balance`](/api-reference). Verify NGN accounts with [`POST /v1/verify/account`](/guides/account-verification) and `provider: "quidax"`.
+
+### Bitnob (`bitnob`)
+
+Crypto-funded fiat bank payouts (wallet-funded / offchain) and on-chain crypto withdrawals.
+
+| Operation | Status |
+| --- | --- |
+| Payouts | Available (`bank_account` for NGN, GHS, KES; `crypto_wallet` for BTC, USDT, USDC) |
+| Account verification | Available (NGN bank; GHS mobile money lookup) |
+| Balance lookup | Available (defaults to the configured fiat funding wallet) |
+| Pay-in | Available (crypto deposit addresses) |
+| Refunds | Not available |
+
+Fiat payouts debit your Bitnob crypto wallet (USDT by default, or the `payoutFromAsset` you configure). Crypto payouts debit the matching asset wallet. Keep the relevant wallet funded before sending.
 
 Set `"provider": "<slug>"` on [`POST /v1/transactions/payout`](/api-reference) to route explicitly, or omit it to use your organization's routing rules. See [Payout integration](/guides/payouts) for destination fields and examples.
 
@@ -152,7 +169,8 @@ curl "$CAPISUM_BASE_URL/v1/providers" \
     { "slug": "paystack", "name": "Paystack", "configurable": true },
     { "slug": "flutterwave", "name": "Flutterwave", "configurable": true },
     { "slug": "palmpay", "name": "PalmPay", "configurable": true },
-    { "slug": "quidax", "name": "Quidax", "configurable": true }
+    { "slug": "quidax", "name": "Quidax", "configurable": true },
+    { "slug": "bitnob", "name": "Bitnob", "configurable": true }
   ]
 }
 ```

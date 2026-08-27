@@ -26,9 +26,6 @@
   ],
   "tags": [
     {
-      "name": "Conversion"
-    },
-    {
       "name": "Off-ramp"
     },
     {
@@ -73,7 +70,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Includes NGN bank payout providers and Quidax crypto wallet payouts.",
+        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Includes bank payout providers (including Bitnob crypto-funded fiat payouts) and crypto wallet payouts (Quidax).",
         "security": [
           {
             "apiKeyAuth": []
@@ -103,7 +100,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns supported payout providers, currencies, and destination types for the current contract version. Includes NGN bank payouts and Quidax crypto_wallet payouts. GHS and KES bank/mobile-money payouts are also accepted on POST /v1/transactions/payout when your routing rules and provider credentials support them.",
+        "description": "Returns supported payout providers, currencies, and destination types for the current contract version. Includes NGN bank payouts (Fincra, Paystack, Flutterwave, PalmPay, Quidax, Bitnob), Bitnob GHS/KES bank corridors, and crypto_wallet payouts (Quidax: USDT/USDC/BTC/ETH/SOL/XLM; Bitnob: BTC/USDT/USDC on-chain). Bitnob fiat entries include settlement metadata (wallet-funded / offchain) so you know which Bitnob crypto wallet funds those payouts.",
         "security": [
           {
             "apiKeyAuth": []
@@ -230,7 +227,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Returns the available balance for a connected provider in the API key's environment. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals). Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, and `quidax`.",
+        "description": "Returns the available balance for a connected provider in the API key's environment. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; crypto uses 8 decimals). Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, `quidax`, and `bitnob`. For Bitnob without a currency filter, Capisum returns the configured payout funding wallet (USDT by default) so you know which wallet to fund for offchain fiat payouts.",
         "security": [
           {
             "apiKeyAuth": []
@@ -290,7 +287,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Resolve a bank account name through a connected provider that supports account resolution. Use `bank_id` from `GET /v1/reference/banks` when possible. Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, and `quidax`.",
+        "description": "Resolve a bank account name through a connected provider that supports account resolution. Use `bank_id` from `GET /v1/reference/banks` when possible. Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, `quidax`, and `bitnob`. For Bitnob, currency selects the corridor: NGN resolves bank accounts by bank code; GHS resolves mobile money (network such as MTN as bank_code, phone with country code as account_number).",
         "security": [
           {
             "apiKeyAuth": []
@@ -339,7 +336,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported providers and rails. NGN bank payouts use `GET /v1/reference/banks` for canonical `bank_id` values. Quidax crypto payouts use top-level `currency` (e.g. `BTC`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. When `provider` is set, the destination must be valid for that provider.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported providers and rails. NGN bank payouts use `GET /v1/reference/banks` for canonical `bank_id` values. Crypto payouts (Quidax) use top-level `currency` (e.g. `BTC`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. When `provider` is set, the destination must be valid for that provider.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1332,174 +1329,6 @@
           }
         ]
       }
-    },
-    "/v1/conversion/quote": {
-      "post": {
-        "tags": [
-          "Conversion"
-        ],
-        "summary": "Create conversion quote",
-        "operationId": "post_v1_conversion_quote",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/QuoteResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/ValidationError"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "502": {
-            "$ref": "#/components/responses/ProviderError"
-          }
-        },
-        "description": "Price an asset-to-asset conversion with no bank collection or payout. Requires `X-Idempotency-Key`.",
-        "security": [
-          {
-            "apiKeyAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "header",
-            "name": "X-Idempotency-Key",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
-            },
-            "description": "Unique key for safe retries."
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RampQuoteRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/conversion/execute": {
-      "post": {
-        "tags": [
-          "Conversion"
-        ],
-        "summary": "Execute conversion",
-        "operationId": "post_v1_conversion_execute",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RampTransactionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/ValidationError"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "502": {
-            "$ref": "#/components/responses/ProviderError"
-          }
-        },
-        "description": "Execute a conversion quote. Status remains processing until the provider settles. Requires `X-Idempotency-Key`.",
-        "security": [
-          {
-            "apiKeyAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "header",
-            "name": "X-Idempotency-Key",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
-            },
-            "description": "Unique key for safe retries."
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ConversionExecuteRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/conversion/{id}/status": {
-      "get": {
-        "tags": [
-          "Conversion"
-        ],
-        "summary": "Get conversion status",
-        "operationId": "get_v1_conversion_id_status",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RampTransactionResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "502": {
-            "$ref": "#/components/responses/ProviderError"
-          }
-        },
-        "security": [
-          {
-            "apiKeyAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ]
-      }
     }
   },
   "components": {
@@ -1585,25 +1414,26 @@
               },
               "conversion": {
                 "type": "boolean",
-                "example": false
+                "example": false,
+                "description": "Reserved. Asset conversion is not shipped yet."
               }
             }
           },
           "supported_currencies": {
             "type": "array",
             "items": {
-              "type": "string",
-              "enum": [
-                "NGN"
-              ]
-            }
+              "type": "string"
+            },
+            "description": "Provider payout currencies (fiat and/or crypto)."
           },
           "supported_destinations": {
             "type": "array",
             "items": {
               "type": "string",
               "enum": [
-                "bank_account"
+                "bank_account",
+                "crypto_wallet",
+                "mobile_money"
               ]
             }
           }
@@ -2126,7 +1956,7 @@
           },
           "provider": {
             "type": "string",
-            "description": "Optional explicit provider slug (for example, `fincra`, `paystack`, `flutterwave`, `palmpay`, `quidax`)."
+            "description": "Optional explicit provider slug (for example, `fincra`, `paystack`, `flutterwave`, `palmpay`, `quidax`, `bitnob`)."
           },
           "recipient": {
             "deprecated": true,
@@ -3017,22 +2847,6 @@
                 "type": "string"
               }
             }
-          }
-        }
-      },
-      "ConversionExecuteRequest": {
-        "type": "object",
-        "required": [
-          "quote_id"
-        ],
-        "properties": {
-          "quote_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "provider": {
-            "type": "string",
-            "example": "quidax"
           }
         }
       },
