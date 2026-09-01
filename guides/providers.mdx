@@ -12,6 +12,8 @@ Use [`GET /v1/providers`](/api-reference) to list provider slugs Capisum can rou
   The API returns the provider **catalog**, not your connected providers. Use [`GET /v1/providers/{slug}/status`](/api-reference) or the dashboard to confirm a provider is connected and healthy.
 </Note>
 
+After you connect a provider, Capisum shows a unique incoming webhook URL for that connection (`/webhooks/{provider}/{credentialId}`). Paste that URL in the provider dashboard. PalmPay is the exception: Capisum sets `notifyUrl` on every payout automatically.
+
 ## Available providers
 
 Six providers are integrated and configurable in Capisum today. Refunds are not shipped for any provider. Quidax conversion exists in code but is not on `availableOperations` yet.

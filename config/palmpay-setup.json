@@ -9,7 +9,7 @@
     "162.220.232.251",
     "162.220.232.252"
   ],
-  "webhookUrl": "https://capisum.com/webhooks/palmpay",
+  "webhookUrl": "https://capisum.com/webhooks/palmpay/{credentialId}",
   "pageSummary": "Connect PalmPay with your merchant credentials and RSA keys. Capisum sends its webhook URL as notifyUrl on every payout — you do not configure a callback in PalmPay.",
   "pageSummaryDocsLabel": "Full setup guide",
   "credentialsTitle": "Credentials",

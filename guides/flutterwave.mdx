@@ -32,15 +32,16 @@ Enable transfers on your Flutterwave account before payouts can work. Contact Fl
 
 ## Connect in Capisum
 
-1. Open [Providers](https://app.capisum.com/providers) and connect Flutterwave.
+1. Open [Providers](https://app.capisum.com/providers) and start connecting Flutterwave.
 2. Enter live Client ID, Client secret, Encryption key, and webhook secret hash.
-3. Add the Capisum webhook URL in Flutterwave **Settings → Webhooks**:
+3. Whitelist the Capisum IPs on the Review step.
+4. After Capisum saves the connection, copy the unique webhook URL from the setup screen and add it in Flutterwave **Settings → Webhooks**. It looks like:
 
 ```txt
-https://capisum.com/webhooks/flutterwave
+https://capisum.com/webhooks/flutterwave/{credentialId}
 ```
 
-4. Complete the final **Review** step and whitelist the Capisum IPs shown there.
+Each Flutterwave connection has its own URL. Do not reuse another organization's URL.
 
 ## API operations
 
