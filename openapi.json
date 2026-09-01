@@ -227,7 +227,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Returns the available balance for a connected provider in the API key's environment. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; crypto uses 8 decimals). Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, `quidax`, and `bitnob`. For Bitnob without a currency filter, Capisum returns the configured payout funding wallet (USDT by default) so you know which wallet to fund for offchain fiat payouts.",
+        "description": "Returns the available balance for a connected provider in the API key's environment. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; crypto uses 8 decimals). Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, `quidax`, and `bitnob`. For Bitnob without a currency filter, Capisum returns the default USDT wallet balance. Choose the funding wallet per payout with `metadata.from_asset` (USDT, USDC, or BTC).",
         "security": [
           {
             "apiKeyAuth": []
@@ -336,7 +336,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported providers and rails. NGN bank payouts use `GET /v1/reference/banks` for canonical `bank_id` values. Crypto payouts (Quidax) use top-level `currency` (e.g. `BTC`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. When `provider` is set, the destination must be valid for that provider.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported providers and rails. NGN bank payouts use `GET /v1/reference/banks` for canonical `bank_id` values. Crypto payouts (Quidax) use top-level `currency` (e.g. `BTC`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. When `provider` is set, the destination must be valid for that provider.\n\nFor Bitnob fiat payouts, set `metadata.from_asset` to choose the funding wallet (`USDT` default, or `USDC` / `BTC`).\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1948,11 +1948,27 @@
           },
           "description": {
             "type": "string",
-            "description": "Human-readable payout description."
+            "description": "Unified payout memo. Capisum maps this to each provider (Bitnob payment_reason, Quidax narration/transaction_note, PalmPay remark, Flutterwave narration, etc.)."
           },
           "metadata": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": true,
+            "description": "Optional payout metadata. For Bitnob wallet-funded fiat payouts, set `from_asset` to `USDT` (default), `USDC`, or `BTC` to choose which Bitnob wallet is debited. Do not send provider memo aliases here \u2014 use top-level `description`.",
+            "properties": {
+              "from_asset": {
+                "type": "string",
+                "enum": [
+                  "USDT",
+                  "USDC",
+                  "BTC"
+                ],
+                "description": "Bitnob funding wallet for offchain fiat payouts. Defaults to USDT when omitted.",
+                "example": "USDT"
+              }
+            },
+            "example": {
+              "from_asset": "USDT"
+            }
           },
           "provider": {
             "type": "string",
@@ -2116,8 +2132,23 @@
           },
           "bank_code": {
             "type": "string",
-            "description": "Provider bank code when `provider` is set; otherwise the CBN code for NGN banks.",
+            "description": "Provider bank code when `provider` is set; otherwise a display code (CBN when known, else the first available provider code).",
             "example": "100004"
+          },
+          "supported_providers": {
+            "type": "array",
+            "description": "Providers with a non-null code for this bank. Present only on unfiltered lists.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "paystack",
+              "flutterwave",
+              "fincra",
+              "quidax",
+              "bitnob",
+              "palmpay"
+            ]
           }
         }
       },
@@ -2135,7 +2166,7 @@
         "properties": {
           "contract_version": {
             "type": "string",
-            "example": "2026-03"
+            "example": "2026-09"
           },
           "description": {
             "type": "string"
