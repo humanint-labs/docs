@@ -69,14 +69,11 @@ PalmPay documents IP allowlisting for **live** authentication. Sandbox/test cred
 Before going live, add every Capisum static outbound IP to your PalmPay **live** IP allowlist. Capisum calls PalmPay from these addresses:
 
 ```txt
-152.55.176.240
-152.55.177.181
-162.220.232.250
-162.220.232.251
-162.220.232.252
+79.127.165.79
+79.127.165.66
 ```
 
-If a **live** connection fails with an IP whitelist error, confirm all five IPs are saved in PalmPay live, then retry.
+If a **live** connection fails with an IP whitelist error, confirm both IPs are saved in PalmPay live, then retry.
 
 ## Payout notifyUrl and remark
 

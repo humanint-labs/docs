@@ -3,11 +3,8 @@
   "docsPath": "/guides/palmpay",
   "docsUrl": "https://docs.capisum.com/guides/palmpay",
   "staticOutboundIps": [
-    "152.55.176.240",
-    "152.55.177.181",
-    "162.220.232.250",
-    "162.220.232.251",
-    "162.220.232.252"
+    "79.127.165.79",
+    "79.127.165.66"
   ],
   "webhookUrl": "https://capisum.com/webhooks/palmpay/{credentialId}",
   "pageSummary": "Connect PalmPay with your merchant credentials and RSA keys. Capisum sends its webhook URL as notifyUrl on every payout — you do not configure a callback in PalmPay.",
@@ -15,7 +12,7 @@
   "credentialsTitle": "Credentials",
   "credentialsDescription": "Enter your PalmPay account details, RSA private key, and platform public key.",
   "ipAllowlistTitle": "Whitelist Capisum outbound IPs",
-  "ipAllowlistDescription": "PalmPay requires IP allowlisting for live authentication. Add every Capisum static IP in PalmPay before going live. Connection tests use the API service; payouts use the worker.",
+  "ipAllowlistDescription": "PalmPay requires IP allowlisting for live authentication. Add every Capisum static IP in PalmPay before going live. Connection tests and payouts share these two addresses.",
   "reviewConfirmation": "I've whitelisted these Capisum IPs in PalmPay live",
   "rsaSetupTitle": "Generate an RSA key pair locally",
   "rsaSetupDescription": "Generate keys locally, upload the public key to PalmPay as base64, and paste the private key into Capisum as base64.",
