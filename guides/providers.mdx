@@ -16,16 +16,16 @@ After you connect a provider, Capisum shows a unique incoming webhook URL for th
 
 ## Available providers
 
-Six providers are integrated and configurable in Capisum today. Refunds are not shipped for any provider. Quidax conversion exists in code but is not on `availableOperations` yet.
+Six providers are integrated and configurable in Capisum today. Refunds are not shipped for any provider. Quidax on-ramp, off-ramp, and conversion exist in code but are not on `availableOperations` yet.
 
-| Provider | Slug | Pay-in | Payout | Balance | Account verify | On-ramp / Off-ramp | Corridor notes |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Fincra | `fincra` | — | Yes | Yes | Yes (NGN) | — | NGN bank; GHS/KES bank + mobile money |
-| Paystack | `paystack` | — | Yes | Yes | Yes (NGN) | — | NGN bank; GHS bank + MoMo; KES MoMo only |
-| Flutterwave | `flutterwave` | — | Yes | Yes | Yes (NGN) | — | NGN / GHS / KES bank + mobile money |
-| PalmPay | `palmpay` | — | Yes | Yes (NGN) | Yes (NGN) | — | NGN bank only |
-| Quidax | `quidax` | Yes (crypto) | Yes | Yes | Yes (NGN) | Yes | Crypto USDT, USDC, BTC, ETH, SOL, XLM; NGN bank payouts; merchant + customer wallet pay-in |
-| Bitnob | `bitnob` | Yes (crypto) | Yes | Yes | Yes (NGN bank; GHS MoMo) | — | Fiat NGN/GHS/KES (wallet-funded); crypto payout BTC/USDT/USDC; merchant + customer-attributed pay-in |
+| Provider | Slug | Pay-in | Payout | Balance | Account verify | Corridor notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| Fincra | `fincra` | — | Yes | Yes | Yes (NGN) | NGN bank; GHS/KES bank + mobile money |
+| Paystack | `paystack` | — | Yes | Yes | Yes (NGN) | NGN bank; GHS bank + MoMo; KES MoMo only |
+| Flutterwave | `flutterwave` | — | Yes | Yes | Yes (NGN) | NGN / GHS / KES bank + mobile money |
+| PalmPay | `palmpay` | — | Yes | Yes (NGN) | Yes (NGN) | NGN bank only |
+| Quidax | `quidax` | Yes (crypto) | Yes | Yes | Yes (NGN) | Crypto USDT, USDC, BTC, ETH, SOL, XLM; NGN bank payouts; merchant + customer wallet pay-in |
+| Bitnob | `bitnob` | Yes (crypto) | Yes | Yes | Yes (NGN bank; GHS MoMo) | Fiat NGN/GHS/KES (wallet-funded); crypto payout BTC/USDT/USDC; merchant + customer-attributed pay-in |
 
 All providers share the same Capisum payout state machine: queued submission, per-attempt provider transfer references, webhook matching, and verify-before-retry. Each adapter handles its own request format, status mapping, and webhook parsing.
 
@@ -111,7 +111,7 @@ Full key and IP steps: [PalmPay setup](/guides/palmpay).
 
 ### Quidax (`quidax`)
 
-Crypto deposits and withdrawals, NGN bank payouts, wallet balances, NGN account name enquiry, on-ramp, and off-ramp.
+Crypto deposits and withdrawals, NGN bank payouts, wallet balances, and NGN account name enquiry.
 
 | Operation | Status |
 | --- | --- |
@@ -119,7 +119,7 @@ Crypto deposits and withdrawals, NGN bank payouts, wallet balances, NGN account 
 | Account verification | Available (NGN) |
 | Balance lookup | Available |
 | Pay-in | Available (crypto deposit addresses) |
-| On-ramp / off-ramp | Available |
+| On-ramp / off-ramp | Not shipped yet |
 | Conversion | Not shipped yet |
 | Refunds | Not available |
 
