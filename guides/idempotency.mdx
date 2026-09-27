@@ -1,12 +1,12 @@
 ---
 title: "Idempotency"
 sidebarTitle: "Idempotency"
-description: "Safely retry payout requests with X-Idempotency-Key without creating duplicate transactions."
-keywords: ["idempotency", "X-Idempotency-Key", "retry", "duplicate payout", "safe retries"]
+description: "Safely retry create requests with X-Idempotency-Key without creating duplicate transactions."
+keywords: ["idempotency", "X-Idempotency-Key", "retry", "duplicate payout", "pay-in", "safe retries"]
 icon: "rotate"
 ---
 
-`POST /v1/transactions/payout` requires an `X-Idempotency-Key` header. Capisum uses this key to deduplicate requests within your organization.
+`POST /v1/transactions/payout` and the crypto wallet pay-in endpoints require an `X-Idempotency-Key` header. Capisum uses this key to deduplicate requests within your organization.
 
 ## Header format
 
@@ -70,4 +70,4 @@ curl -X POST "$CAPISUM_BASE_URL/v1/transactions/payout" \
 
 Idempotency keys are scoped to your **organization**. Two organizations can use the same key string without conflict.
 
-Pay-in creation (`POST /v1/transactions/pay-in/merchant-wallet` and `.../customer-wallet`) also requires `X-Idempotency-Key`.
+Pay-in creation (`POST /v1/transactions/pay-in/merchant-wallet` and `.../customer-wallet`) also requires `X-Idempotency-Key`. Customer and pay-in destination creates are idempotent via Capisum customer `reference` and destination reuse rules — see [Pay-in integration](/guides/pay-ins).

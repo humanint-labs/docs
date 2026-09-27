@@ -1,15 +1,15 @@
 ---
 title: "Webhooks"
 sidebarTitle: "Webhooks"
-description: "Receive real-time payout status updates at your endpoint with signed outgoing webhooks."
-keywords: ["webhooks", "outgoing webhooks", "X-Capisum-Signature", "payout.initiated", "payout.completed", "event catalog"]
+description: "Receive real-time transaction status updates at your endpoint with signed outgoing webhooks."
+keywords: ["webhooks", "outgoing webhooks", "X-Capisum-Signature", "payout.initiated", "payout.completed", "transaction.settled", "pay-in", "event catalog"]
 icon: "webhook"
 ---
 
 Capisum sends **outgoing webhooks** to your server when a transaction status changes. Configure one endpoint per environment in the [dashboard](https://app.capisum.com/webhooks/config). Capisum signs every delivery so you can verify authenticity before updating your systems.
 
 <Info>
-  Outgoing webhooks are the recommended way to learn when a payout completes or fails. Polling `GET /v1/transactions/{id}` works as a fallback, but webhooks reduce latency and API load.
+  Outgoing webhooks are the recommended way to learn when a payout or pay-in completes or fails. Polling `GET /v1/transactions/{id}` works as a fallback, but webhooks reduce latency and API load.
 </Info>
 
 ## How it works
@@ -18,7 +18,7 @@ Capisum sends **outgoing webhooks** to your server when a transaction status cha
   <Step title="Configure your endpoint">
     Add an HTTPS URL in the dashboard for **sandbox** or **live**. Capisum generates a signing secret when the endpoint is first created.
   </Step>
-  <Step title="Create a payout">
+  <Step title="Create a payout or pay-in">
     When a provider reports a status change, Capisum maps it to a client event and queues a delivery.
   </Step>
   <Step title="Verify and respond">
@@ -142,6 +142,20 @@ Capisum emits events when a transaction **status changes** to a mapped terminal 
 | `transaction.refunded` | A completed payout is reversed by the provider | `refunded` |
 
 Status changes to `uncertain`, `manual_review`, or other intermediate states do **not** emit webhooks. Use polling or the dashboard for those cases.
+
+### Pay-in events
+
+Fiat virtual-account deposits and crypto wallet deposits both create `pay_in` transactions. Capisum emits:
+
+| Event | When it fires | Typical `status` in payload |
+| --- | --- | --- |
+| `transaction.settled` | Pay-in reaches `settled` or `completed` | `settled` |
+| `transaction.failed` | Pay-in reaches `failed` | `failed` |
+| `transaction.refunded` | A settled pay-in is reversed | `refunded` |
+
+Creating a crypto wallet address (`processing`) does not emit a webhook by itself — wait for the deposit settlement event. Virtual-account destinations also do not emit a webhook until money arrives.
+
+See [Pay-in integration](/guides/pay-ins) for how destinations and wallet endpoints map to these events.
 
 ### `payout.initiated`
 

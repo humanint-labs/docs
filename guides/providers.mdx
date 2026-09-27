@@ -2,7 +2,7 @@
 title: "Providers"
 sidebarTitle: "Providers"
 description: "Payment providers available through the Capisum API and what each supports today."
-keywords: ["providers", "Fincra", "Paystack", "Flutterwave", "PalmPay", "Quidax", "Bitnob", "payout", "NGN", "GHS", "KES", "crypto", "provider catalog"]
+keywords: ["providers", "Fincra", "Paystack", "Flutterwave", "PalmPay", "Quidax", "Bitnob", "Yativo", "payout", "pay-in", "virtual account", "NGN", "GHS", "KES", "crypto", "provider catalog"]
 icon: "plug"
 ---
 
@@ -16,30 +16,47 @@ After you connect a provider, Capisum shows a unique incoming webhook URL for th
 
 ## Available providers
 
-Six providers are integrated and configurable in Capisum today. Refunds are not shipped for any provider. Quidax on-ramp, off-ramp, and conversion exist in code but are not on `availableOperations` yet.
+Seven providers are integrated and configurable in Capisum today. Refunds are not shipped for any provider. Quidax on-ramp, off-ramp, and conversion exist in code but are not on `availableOperations` yet.
 
 | Provider | Slug | Pay-in | Payout | Balance | Account verify | Corridor notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| Fincra | `fincra` | — | Yes | Yes | Yes (NGN) | NGN bank; GHS/KES bank + mobile money |
+| Fincra | `fincra` | Yes (VA) | Yes | Yes | Yes (NGN) | NGN/GHS/KES permanent virtual accounts; NGN bank payouts; GHS/KES bank + mobile money |
+| Yativo | `yativo` | Yes (VA) | — | — | — | Fiat virtual accounts (BRL, MXN/MXNBASE, USD/USDBASE, EUR/EURBASE); pay-in only |
 | Paystack | `paystack` | — | Yes | Yes | Yes (NGN) | NGN bank; GHS bank + MoMo; KES MoMo only |
 | Flutterwave | `flutterwave` | — | Yes | Yes | Yes (NGN) | NGN / GHS / KES bank + mobile money |
 | PalmPay | `palmpay` | — | Yes | Yes (NGN) | Yes (NGN) | NGN bank only |
 | Quidax | `quidax` | Yes (crypto) | Yes | Yes | Yes (NGN) | Crypto USDT, USDC, BTC, ETH, SOL, XLM; NGN bank payouts; merchant + customer wallet pay-in |
 | Bitnob | `bitnob` | Yes (crypto) | Yes | Yes | Yes (NGN bank; GHS MoMo) | Fiat NGN/GHS/KES (wallet-funded); crypto payout BTC/USDT/USDC; merchant + customer-attributed pay-in |
 
-All providers share the same Capisum payout state machine: queued submission, per-attempt provider transfer references, webhook matching, and verify-before-retry. Each adapter handles its own request format, status mapping, and webhook parsing.
+All payout providers share the same Capisum payout state machine: queued submission, per-attempt provider transfer references, webhook matching, and verify-before-retry. Fiat virtual-account pay-in uses [Customers](/guides/pay-ins) and [pay-in destinations](/guides/pay-ins). Crypto pay-in uses the merchant/customer wallet endpoints. See [Pay-in integration](/guides/pay-ins).
 
 ### Fincra (`fincra`)
 
-Cross-border payment infrastructure for collections, payouts, and virtual accounts across Africa.
+Cross-border payment infrastructure for collections, payouts, and virtual accounts across Africa. Permanent VA overview: [Fincra virtual accounts](https://docs.fincra.com/docs/fincra-virtual-accounts).
 
 | Operation | Status |
 | --- | --- |
 | Payouts | Available |
 | Account verification | Available (NGN) |
 | Balance lookup | Available |
-| Pay-in | Not available |
+| Pay-in | Available (permanent VAs: NGN, GHS, KES via [`POST /v1/pay-in-destinations`](/guides/pay-ins)) |
 | Refunds | Not available |
+
+NGN destinations require `metadata.bvn`. Optional `metadata.channel` selects the issuing bank. USD/EUR/GBP FCY virtual accounts are not exposed on Capisum yet.
+
+### Yativo (`yativo`)
+
+Pay-in-only provider for fiat virtual accounts. Capisum creates a provider customer, gates on VA KYC approval, then issues a bank destination.
+
+| Operation | Status |
+| --- | --- |
+| Pay-in | Available (`bank_account` destinations) |
+| Payouts | Not available |
+| Balance lookup | Not available |
+| Account verification | Not available |
+| Refunds | Not available |
+
+Create a Capisum customer first, then [`POST /v1/pay-in-destinations`](/guides/pay-ins) with `provider: "yativo"`. Supported currencies include BRL, MXN/MXNBASE, USD/USDBASE, and EUR/EURBASE. When KYC is outstanding, Capisum returns `verification_required` with a `verification_url`.
 
 ### Paystack (`paystack`)
 
@@ -175,6 +192,7 @@ curl "$CAPISUM_BASE_URL/v1/providers" \
 {
   "data": [
     { "slug": "fincra", "name": "Fincra", "configurable": true },
+    { "slug": "yativo", "name": "Yativo", "configurable": true },
     { "slug": "paystack", "name": "Paystack", "configurable": true },
     { "slug": "flutterwave", "name": "Flutterwave", "configurable": true },
     { "slug": "palmpay", "name": "PalmPay", "configurable": true },
