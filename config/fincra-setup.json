@@ -6,7 +6,7 @@
     "79.127.165.66"
   ],
   "webhookUrl": "https://capisum.com/webhooks/fincra/{credentialId}",
-  "ipAllowlistTitle": "Whitelist Capisum IPs in Fincra first",
-  "ipAllowlistDescription": "Fincra requires IP whitelisting before you can create API keys, and only provides three IP fields. Paste each Capisum address below into a Fincra field (IP 1–3), then create your keys and continue here.",
-  "reviewConfirmation": "I've added these Capisum IPs in Fincra and can create API keys"
+  "ipAllowlistTitle": "Capisum IPs to whitelist",
+  "ipAllowlistDescription": "Fincra allows three IP fields. Add each address below before creating API keys.",
+  "reviewConfirmation": "I've added these Capisum IPs in Fincra"
 }

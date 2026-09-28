@@ -2,23 +2,20 @@
   "providerSlug": "palmpay",
   "docsPath": "/guides/palmpay",
   "docsUrl": "https://docs.capisum.com/guides/palmpay",
-  "staticOutboundIps": [
-    "79.127.165.79",
-    "79.127.165.66"
-  ],
+  "staticOutboundIps": ["79.127.165.79", "79.127.165.66"],
   "webhookUrl": "https://capisum.com/webhooks/palmpay/{credentialId}",
-  "pageSummary": "Connect PalmPay with your merchant credentials and RSA keys. Capisum sends its webhook URL as notifyUrl on every payout — you do not configure a callback in PalmPay.",
+  "pageSummary": "Connect PalmPay with your merchant credentials and RSA keys.",
   "pageSummaryDocsLabel": "Full setup guide",
   "credentialsTitle": "Credentials",
-  "credentialsDescription": "Enter your PalmPay account details, RSA private key, and platform public key.",
-  "ipAllowlistTitle": "Whitelist Capisum outbound IPs",
-  "ipAllowlistDescription": "PalmPay requires IP allowlisting for live authentication. Add every Capisum static IP in PalmPay before going live. Connection tests and payouts share these two addresses.",
+  "credentialsDescription": "",
+  "ipAllowlistTitle": "Capisum IPs to whitelist",
+  "ipAllowlistDescription": "Required for live. Add every address below in PalmPay.",
   "reviewConfirmation": "I've whitelisted these Capisum IPs in PalmPay live",
-  "rsaSetupTitle": "Generate an RSA key pair locally",
-  "rsaSetupDescription": "Generate keys locally, upload the public key to PalmPay as base64, and paste the private key into Capisum as base64.",
+  "rsaSetupTitle": "RSA key pair",
+  "rsaSetupDescription": "",
   "rsaGeneratePrivateCommand": "openssl genrsa -out private.pem 2048",
   "rsaExportPublicCommand": "openssl rsa -in private.pem -pubout -out public.pem",
   "rsaCopyPublicCommand": "openssl rsa -pubin -in public.pem -outform DER | base64 | pbcopy",
   "rsaCopyPrivateCommand": "openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in private.pem | base64 | pbcopy",
-  "platformPublicKeyNote": "Copy this from the PalmPay merchant portal "
+  "platformPublicKeyNote": ""
 }
