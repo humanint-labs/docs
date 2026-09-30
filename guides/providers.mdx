@@ -21,11 +21,11 @@ Seven providers are integrated and configurable in Capisum today. Refunds are no
 | Provider | Slug | Pay-in | Payout | Balance | Account verify | Corridor notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | Fincra | `fincra` | Yes (VA) | Yes | Yes | Yes (NGN) | NGN/GHS/KES permanent virtual accounts; NGN bank payouts; GHS/KES bank + mobile money |
-| Yativo | `yativo` | Yes (VA) | — | — | — | Fiat virtual accounts (BRL, MXN/MXNBASE, USD/USDBASE, EUR/EURBASE); pay-in only |
+| Yativo | `yativo` | Yes (VA) | Yes | — | — | Fiat VA pay-in; multi-corridor payouts (NGN, USD ACH, MXN SPEI, BRL PIX, EUR SEPA, and more) |
 | Paystack | `paystack` | — | Yes | Yes | Yes (NGN) | NGN bank; GHS bank + MoMo; KES MoMo only |
 | Flutterwave | `flutterwave` | — | Yes | Yes | Yes (NGN) | NGN / GHS / KES bank + mobile money |
 | PalmPay | `palmpay` | — | Yes | Yes (NGN) | Yes (NGN) | NGN bank only |
-| Quidax | `quidax` | Yes (crypto) | Yes | Yes | Yes (NGN) | Crypto USDT, USDC, BTC, ETH, SOL, XLM; NGN bank payouts; merchant + customer wallet pay-in |
+| Quidax | `quidax` | Yes (crypto) | Yes | Yes | Yes (NGN) | Crypto USDT, USDC, BTC, ETH, SOL, XLM; merchant + customer wallet pay-in |
 | Bitnob | `bitnob` | Yes (crypto) | Yes | Yes | Yes (NGN bank; GHS MoMo) | Fiat NGN/GHS/KES (wallet-funded); crypto payout BTC/USDT/USDC; merchant + customer-attributed pay-in |
 
 All payout providers share the same Capisum payout state machine: queued submission, per-attempt provider transfer references, webhook matching, and verify-before-retry. Fiat virtual-account pay-in uses [Customers](/guides/pay-ins) and [pay-in destinations](/guides/pay-ins). Crypto pay-in uses the merchant/customer wallet endpoints. See [Pay-in integration](/guides/pay-ins).
@@ -46,17 +46,19 @@ NGN destinations require `metadata.bvn`. Optional `metadata.channel` selects the
 
 ### Yativo (`yativo`)
 
-Pay-in-only provider for fiat virtual accounts. Capisum creates a provider customer, gates on VA KYC approval, then issues a bank destination.
+Fiat virtual-account pay-in and multi-corridor payouts. Capisum manages Yativo beneficiaries and payment methods internally — you only send Capisum `destination` fields.
 
 | Operation | Status |
 | --- | --- |
 | Pay-in | Available (`bank_account` destinations) |
-| Payouts | Not available |
+| Payouts | Available (NGN bank transfer, USD ACH, MXN SPEI, BRL PIX, EUR SEPA, CLP/COP/PEN/ARS bank rails) |
 | Balance lookup | Not available |
 | Account verification | Not available |
 | Refunds | Not available |
 
-Create a Capisum customer first, then [`POST /v1/pay-in-destinations`](/guides/pay-ins) with `provider: "yativo"`. Supported currencies include BRL, MXN/MXNBASE, USD/USDBASE, and EUR/EURBASE. When KYC is outstanding, Capisum returns `verification_required` with a `verification_url`.
+**Pay-in:** create a Capisum customer, then [`POST /v1/pay-in-destinations`](/guides/pay-ins) with `provider: "yativo"`. Supported VA currencies include BRL, MXN/MXNBASE, USD/USDBASE, and EUR/EURBASE. When KYC is outstanding, Capisum returns `verification_required` with a `verification_url`.
+
+**Payout:** use [`GET /v1/payouts/capabilities`](/api-reference) for Yativo rails and `required_fields`. USD ACH requires a nested `destination.recipient` profile plus `routing_number` / `account_type`. See [Payout integration](/guides/payouts).
 
 ### Paystack (`paystack`)
 

@@ -1,12 +1,12 @@
 ---
 title: "Payout integration"
 sidebarTitle: "Payout integration"
-description: "Integrate payouts in NGN, GHS, KES, and crypto — from sandbox testing through production go-live."
-keywords: ["payout", "integration", "go-live", "NGN", "GHS", "KES", "USDT", "BTC", "mobile money", "bank transfer", "crypto wallet", "minor units"]
+description: "Integrate Capisum payouts across bank, mobile money, and crypto rails — from capabilities discovery through production go-live."
+keywords: ["payout", "integration", "go-live", "rail", "ACH", "SEPA", "PIX", "SPEI", "NGN", "USD", "mobile money", "crypto wallet", "minor units", "capabilities"]
 icon: "money-bill-transfer"
 ---
 
-[`POST /v1/transactions/payout`](/api-reference) creates a payout routed through your connected providers. This guide covers request fields, the transaction lifecycle, and the steps to go live. For accepting money, see [Pay-in integration](/guides/pay-ins) (virtual accounts and crypto deposit addresses).
+[`POST /v1/transactions/payout`](/api-reference) creates a payout routed through your connected providers. Capisum uses one canonical `destination` shape; required fields depend on the resolved **provider + country + currency + rail**. For accepting money, see [Pay-in integration](/guides/pay-ins).
 
 ## Go-live checklist
 
@@ -15,6 +15,9 @@ Complete these steps before processing real payouts in production:
 <Steps>
   <Step title="Test in sandbox">
     Connect providers with sandbox credentials and run the [Quickstart](/quickstart). Confirm payouts reach `completed` and [webhooks](/guides/webhooks) verify correctly.
+  </Step>
+  <Step title="Discover usable rails">
+    Call [`GET /v1/payouts/capabilities`](/api-reference). The response includes only providers connected in your current environment, with per-rail `required_fields`.
   </Step>
   <Step title="Connect live providers">
     Switch the dashboard to **Live** and connect each provider with production API credentials. For Paystack, [disable Transfer OTP](/guides/providers#disable-transfer-otp) in the Paystack Dashboard (required for payouts; account-wide, including test).
@@ -26,14 +29,32 @@ Complete these steps before processing real payouts in production:
     Add a production endpoint at [Webhooks → Configuration](https://app.capisum.com/webhooks/config). Save the signing secret securely.
   </Step>
   <Step title="Verify beneficiary accounts">
-    Call [`POST /v1/verify/account`](/guides/account-verification) before your first live payout to confirm account names.
+    Call [`POST /v1/verify/account`](/guides/account-verification) before your first live payout when the corridor supports name resolution.
   </Step>
   <Step title="Start with a small payout">
     Send a low-value transfer to validate end-to-end routing, then scale volume gradually.
   </Step>
 </Steps>
 
-See [Providers](/guides/providers) for per-provider capabilities and currency support.
+See [Providers](/guides/providers) for per-provider capabilities.
+
+## Discover capabilities first
+
+```bash
+curl -s "$CAPISUM_BASE_URL/v1/payouts/capabilities" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY"
+```
+
+The response is scoped to **your connected providers** in the current environment. Each provider entry includes `rails[]` with:
+
+| Field | Meaning |
+| --- | --- |
+| `rail` | Network id (`bank_transfer`, `ach`, `sepa`, `pix`, `spei`, `mobile_money`, `crypto`) |
+| `currency` / `country` | Corridor |
+| `destinations` | Capisum channel types (`bank_account`, `mobile_money`, `crypto_wallet`) |
+| `required_fields` | Fields Capisum expects on `destination` (e.g. `recipient.name`, `routing_number`) |
+
+Do not hardcode a global currency list — capabilities are the source of truth.
 
 ## Amounts
 
@@ -42,72 +63,64 @@ All amounts are in **minor units** (the smallest currency unit):
 | Currency | Minor unit | Example |
 | --- | --- | --- |
 | NGN | Kobo | `500000` = ₦5,000.00 |
+| USD | Cent | `25000` = $250.00 |
 | GHS | Pesewa | `10000` = GH₵100.00 |
 | KES | Cent | `50000` = KSh500.00 |
 | USDT / BTC / ETH / SOL / XLM | 8 decimals | `500000000` = 5 USDT; `40000000` = 0.4 BTC |
 
 Pass `amount` as a string or integer. Capisum stores and returns amounts as integers.
 
-## Supported currencies and rails
+## Destination contract
 
-| Currency | `bank_account` | `mobile_money` | `crypto_wallet` |
-| --- | --- | --- | --- |
-| NGN | Yes (`bank_id` required) | No | No |
-| GHS | Yes (`bank_id` / Bitnob `bank_code`) | Yes (`mobile_money_code` required) | No |
-| KES | Yes (`bank_id` / Bitnob `bank_code`) | Yes (`mobile_money_code` required) | No |
-| USDT, USDC, BTC | No | No | Yes (Quidax + Bitnob) |
-| ETH, SOL, XLM | No | No | Yes (Quidax) |
+### Shape
 
-Use [`GET /v1/reference/banks`](/api-reference) to list canonical `bank_id` values. Capisum resolves provider-specific institution codes internally at payout time.
-
-### Destination object
-
-Use `destination` on create requests. `recipient` is a deprecated alias.
+```json
+{
+  "type": "bank_account",
+  "country": "US",
+  "rail": "ach",
+  "recipient": {
+    "type": "individual",
+    "name": "Alex Smith",
+    "email": "alex@example.com",
+    "physical_address": "123 Main Street, New York"
+  },
+  "account_number": "123456789",
+  "routing_number": "021000021",
+  "account_type": "checking",
+  "account_name": "Alex Smith"
+}
+```
 
 | Field | Required | Description |
 | --- | --- | --- |
 | `type` | Recommended | `bank_account`, `mobile_money`, or `crypto_wallet` |
-| `account_number` | Bank / mobile money | Bank account or mobile wallet number |
-| `address` | Crypto wallet | Destination crypto wallet address |
-| `network` | Crypto wallet | Chain label (e.g. `trc20`, `erc20`, `bep20`, `solana`, `stellar`, `bitcoin`) |
-| `bank_id` | For bank payouts | Capisum canonical bank id (e.g. `ng.opay` for OPay) |
-| `mobile_money_code` | For mobile money | GHS: `MTN`, `AIRTEL`. KES: `SAFARICOM`, `AIRTEL` |
-| `account_name` | Recommended | Display name for the recipient |
-| `country` | No | ISO 3166-1 alpha-2 code. Defaults from currency |
-| `phone` | No | Wallet phone. Defaults to `account_number` |
-| `destination_tag` | Some crypto networks | Memo/tag when the chain requires it |
+| `rail` | When ambiguous | Capisum payout rail. **Inferred** when only one rail matches the resolved provider + country + currency (+ type). If multiple match and none is supplied, Capisum returns `PAYOUT_RAIL_REQUIRED`. |
+| `country` | When multi-country | ISO 3166-1 alpha-2. Defaults from the currency corridor when unambiguous. |
+| `recipient` | When the rail requires it | Beneficiary profile: `type` (`individual` \| `business`), `name`, `email`, `physical_address`. Only required when `required_fields` lists `recipient.*`. |
+| `account_number` | Bank / mobile money | Account, CLABE, CCI, or wallet number |
+| `address` + `network` | Crypto | Wallet address and chain (`trc20`, `erc20`, …) |
+| `bank_id` | Many NGN rails | Capisum canonical id from [`GET /v1/reference/banks`](/api-reference) |
+| Bank / rail fields | Per rail | e.g. `routing_number`, `account_type`, `iban`, `bic`, `pix_key`, `mobile_money_code` |
 
-Crypto payouts use top-level `currency` (e.g. `BTC`, `USDT`) the same way bank and mobile-money payouts do.
+<Info>
+  Flat legacy profile fields (`name`, `email`, `physical_address`, `recipient_type` at the top level of `destination`) are still accepted and lifted into `destination.recipient`. Prefer the nested shape.
+</Info>
 
 <Warning>
-  `bank_code` is a deprecated escape hatch and is not part of the supported contract. Use `bank_id` instead. `bank_code` cannot be combined with `bank_id`.
+  Do not invent placeholder emails or addresses. If a rail lists `recipient.email` / `recipient.physical_address`, send real beneficiary data.
 </Warning>
 
-## References
+### Rails vs type
 
-| Field | Who sets it | Format |
-| --- | --- | --- |
-| `reference` (request body) | You (optional) | 16–50 chars; lowercase letters, digits, `_`, `-` |
-| `reference` (response) | Capisum | Your merchant-facing payout id (`pout_*` when auto-generated) |
-| `provider_reference` | Provider | Provider transfer id after submission |
+- **`type`** — Capisum channel (`bank_account` / `mobile_money` / `crypto_wallet`)
+- **`rail`** — payment network (`ach`, `sepa`, `pix`, `bank_transfer`, …)
 
-Capisum generates a provider-safe `pout_*` reference when you omit `reference`. On the first provider attempt, that merchant reference is used as the provider transfer idempotency key. Retries after a confirmed failure or reversal use fresh internal transfer references — you only track the merchant `reference` in your integration.
+Example: Yativo USD uses `type: bank_account` and `rail: ach`. Fincra GHS MoMo uses `type: mobile_money` and `rail: mobile_money` (usually inferred from `type`).
 
 ## Provider routing
 
-Set `provider` to route explicitly:
-
-```json
-{
-  "provider": "paystack"
-}
-```
-
-When omitted, Capisum selects a provider using your organization's routing rules configured in the dashboard.
-
-<Info>
-  Routing rule management is a dashboard operation. The public API only accepts an optional `provider` override on each request.
-</Info>
+Set `provider` to route explicitly, or omit it so Capisum applies your dashboard routing defaults/rules. Validation always runs against the **resolved** provider + country + currency + rail.
 
 ## Examples
 
@@ -120,11 +133,36 @@ When omitted, Capisum selects a provider using your organization's routing rules
       "provider": "paystack",
       "destination": {
         "type": "bank_account",
+        "rail": "bank_transfer",
         "bank_id": "ng.opay",
         "account_number": "7068270185",
         "account_name": "Test Recipient"
       },
       "description": "Vendor payout"
+    }
+    ```
+  </Tab>
+  <Tab title="USD ACH (Yativo)">
+    ```json
+    {
+      "amount": "25000",
+      "currency": "USD",
+      "provider": "yativo",
+      "destination": {
+        "type": "bank_account",
+        "country": "US",
+        "rail": "ach",
+        "recipient": {
+          "type": "individual",
+          "name": "Alex Smith",
+          "email": "alex@example.com",
+          "physical_address": "123 Main Street, New York"
+        },
+        "account_number": "123456789",
+        "routing_number": "021000021",
+        "account_type": "checking",
+        "account_name": "Alex Smith"
+      }
     }
     ```
   </Tab>
@@ -136,6 +174,7 @@ When omitted, Capisum selects a provider using your organization's routing rules
       "provider": "quidax",
       "destination": {
         "type": "crypto_wallet",
+        "rail": "crypto",
         "address": "bc1qel75acv9tdwqdx86tla6yyxagp2fvq2tntxntp",
         "network": "bitcoin"
       }
@@ -150,24 +189,10 @@ When omitted, Capisum selects a provider using your organization's routing rules
       "provider": "fincra",
       "destination": {
         "type": "mobile_money",
+        "rail": "mobile_money",
         "mobile_money_code": "MTN",
         "account_number": "2330803443433",
         "account_name": "Ama Mensah"
-      }
-    }
-    ```
-  </Tab>
-  <Tab title="KES mobile money">
-    ```json
-    {
-      "amount": "50000",
-      "currency": "KES",
-      "provider": "flutterwave",
-      "destination": {
-        "type": "mobile_money",
-        "mobile_money_code": "SAFARICOM",
-        "account_number": "254803456789",
-        "account_name": "John Kamau"
       }
     }
     ```
@@ -176,7 +201,7 @@ When omitted, Capisum selects a provider using your organization's routing rules
 
 ## Transaction lifecycle
 
-Payout creation returns immediately with `status: queued`. Capisum submits the payout to the provider asynchronously in the background.
+Payout creation returns immediately with `status: queued`. Capisum submits the payout to the provider asynchronously.
 
 | Status | Meaning |
 | --- | --- |
@@ -190,14 +215,10 @@ Payout creation returns immediately with `status: queued`. Capisum submits the p
 | `refunded` | Provider reversed the transfer |
 | `cancelled` | Cancelled before settlement |
 
-Prefer [webhooks](/guides/webhooks) for terminal status updates. Capisum also polls the provider after a **1 minute** webhook grace period (plus early confirm polls at ~15s / 30s / 60s). Use verify as a fallback:
+Prefer [webhooks](/guides/webhooks) for terminal status updates. Use verify as a fallback:
 
 - `GET /v1/transactions/{id}` or `GET /v1/transactions/ref/{reference}` — read current status
 - `POST /v1/transactions/{id}/verify` — ask the provider for the latest status
-
-<Note>
-  Use `status_group=review` when listing transactions to find payouts in `uncertain` or `manual_review`.
-</Note>
 
 ## Idempotency
 

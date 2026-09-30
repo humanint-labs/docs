@@ -39,7 +39,7 @@ Response headers may also include:
 
 | Status | Typical codes |
 | --- | --- |
-| 400 | `VALIDATION_ERROR`, `INVALID_REQUEST`, `MISSING_IDEMPOTENCY_KEY` |
+| 400 | `VALIDATION_ERROR`, `INVALID_REQUEST`, `MISSING_IDEMPOTENCY_KEY`, `PAYOUT_RAIL_REQUIRED` |
 | 401 | `UNAUTHORIZED` |
 | 403 | `FORBIDDEN` |
 | 404 | `NOT_FOUND`, `TRANSACTION_NOT_FOUND`, `PROVIDER_NOT_CONNECTED` |
@@ -55,6 +55,7 @@ Response headers may also include:
 | --- | --- | --- |
 | `UNAUTHORIZED` | Missing or invalid API key | No — fix credentials |
 | `VALIDATION_ERROR` | Invalid request body or query | No — fix the payload |
+| `PAYOUT_RAIL_REQUIRED` | Multiple payout rails match and `destination.rail` was omitted | No — pick a rail from `GET /v1/payouts/capabilities` (or set `type` so only one rail remains) |
 | `INVALID_STATUS_TRANSITION` | Retry requested while payout is still in flight | No — poll or verify first |
 | `TRANSACTION_NOT_FOUND` | Unknown transaction ID or reference | No |
 | `PROVIDER_NOT_CONNECTED` | Provider not connected for this environment | No — connect in dashboard |
