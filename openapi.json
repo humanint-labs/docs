@@ -109,7 +109,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns supported payout providers, currencies, and destination types for the current contract version. Includes NGN bank payouts and Quidax crypto_wallet payouts. GHS and KES bank/mobile-money payouts are also accepted on POST /v1/transactions/payout when your routing rules and provider credentials support them.",
+        "description": "Returns supported payout providers, currencies, countries, destination types, and per-rail `required_fields` for the current contract version. Capabilities are derived from each provider's payout profile (not a hardcoded global currency list). Use each provider's `rails` array to see what Capisum can route for that provider.",
         "security": [
           {
             "apiKeyAuth": []
@@ -296,7 +296,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Resolve a bank account name through a connected provider that supports account resolution. Use `bank_id` from `GET /v1/reference/banks` when possible. Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, and `quidax`.",
+        "description": "Resolve a bank account name through a connected provider that supports account resolution. `provider` is optional: omit it to use the dashboard account default, or enable Override request provider to ignore a sent provider. Use `bank_id` from `GET /v1/reference/banks` when possible. Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, and `quidax`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -345,7 +345,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported providers and rails. NGN bank payouts use `GET /v1/reference/banks` for canonical `bank_id` values. Quidax crypto payouts use top-level `currency` (e.g. `BTC`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. When `provider` is set, the destination must be valid for that provider.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for provider-specific currencies, countries, rails, and `required_fields`. Validation depends on the resolved provider + country + currency + rail (USD ACH differs from NGN bank transfer). NGN catalog banks use `GET /v1/reference/banks` for `bank_id`. Crypto wallet payouts use top-level `currency` with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -384,6 +384,27 @@
                       "account_name": "Test Recipient"
                     },
                     "description": "NGN vendor payout"
+                  }
+                },
+                "usd_ach_yativo": {
+                  "summary": "USD ACH payout (Yativo)",
+                  "value": {
+                    "amount": "25000",
+                    "currency": "USD",
+                    "provider": "yativo",
+                    "destination": {
+                      "type": "bank_account",
+                      "country": "US",
+                      "account_number": "123456789",
+                      "routing_number": "021000021",
+                      "account_type": "checking",
+                      "account_name": "Alex Smith",
+                      "name": "Alex Smith",
+                      "email": "alex@example.com",
+                      "physical_address": "123 Main Street, New York",
+                      "recipient_type": "individual"
+                    },
+                    "description": "USD ACH payout via yativo"
                   }
                 },
                 "ghs_mobile_money": {
@@ -884,7 +905,7 @@
             "$ref": "#/components/responses/Conflict"
           }
         },
-        "description": "Create a customer to attach pay-in destinations to. Use the returned Capisum customer ID everywhere; Capisum links it to each provider's own customer record internally.\n\nSome pay-in providers require `email`, `phone` (E.164), and `country` before they will issue a destination. Supplying them up front avoids a second round trip.\n\n`reference` is your own identifier and is unique per environment \u2014 reusing it returns the existing customer instead of creating a duplicate.",
+        "description": "Create a Capisum customer, resolve the pay-in provider (dashboard configuration wins over request `provider` when both exist), immediately create the provider customer when the adapter requires one, and return the Capisum customer with selected provider and normalized verification status/requirements. Provider customer IDs stay internal.\n\nSome pay-in providers require `email`, `phone` (E.164), and `country` before they will issue a destination. Supplying them up front avoids a second round trip.\n\n`reference` is your own identifier and is unique per environment \u2014 reusing it returns the existing customer instead of creating a duplicate.",
         "security": [
           {
             "apiKeyAuth": []
@@ -987,9 +1008,9 @@
             "schema": {
               "type": "string",
               "enum": [
-                "unverified",
-                "pending",
-                "verified",
+                "requires_action",
+                "submitted",
+                "approved",
                 "rejected"
               ]
             }
@@ -1022,7 +1043,7 @@
             "$ref": "#/components/responses/NotFound"
           }
         },
-        "description": "Read a customer, including the current `verification_status` and `verification_url`. Poll this after sending a customer through hosted verification.",
+        "description": "Read a customer, including the current `verification_status`. While verification is still open, Capisum refreshes status from the provider. Poll this after `POST /v1/customers/{id}/kyc`. `verification_url` is only present as a hosted fallback when the provider exposes one.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1039,6 +1060,124 @@
             }
           }
         ]
+      }
+    },
+    "/v1/customers/{id}/kyc": {
+      "post": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Submit customer KYC",
+        "operationId": "post_v1_customers_id_kyc",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Submit identity verification for a customer through the pay-in provider's KYC API. Capisum loads the existing ProviderCustomer mapping, translates the provider-neutral payload, submits it to the provider KYC API, and normalizes status to `submitted`, `approved`, `rejected`, or `requires_action`. `provider` / `currency` are optional when the customer was already bound at create time; when both request and dashboard routing exist, dashboard wins.\n\nPay-in destinations that require provider KYC stay blocked until the provider reports approval (`verification_status: approved` and destination creation allowed).",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cus_5f2c1a9b7e4d0c3a8b6f2e"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerKycRequest"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Update customer KYC",
+        "operationId": "put_v1_customers_id_kyc",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Correct or complete a KYC submission after a rejection. Send only the fields that need updating, plus `provider` or `currency` for routing.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cus_5f2c1a9b7e4d0c3a8b6f2e"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerKycUpdateRequest"
+              }
+            }
+          }
+        }
       }
     },
     "/v1/pay-in-destinations": {
@@ -1072,7 +1211,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a virtual account where a customer can send fiat. Capisum resolves the provider, creates or reuses the provider's customer record, checks verification, then returns normalized bank account details you can display directly.\n\n`type: bank_account` is the only destination type on this endpoint today. Yativo covers BRL, MXN/MXNBASE, USD/USDBASE, and EUR/EURBASE. Fincra covers NGN (requires `metadata.bvn`), GHS, and KES. Crypto deposit addresses use POST /v1/transactions/pay-in/merchant-wallet or POST /v1/transactions/pay-in/customer-wallet.\n\nWhen the provider still needs the customer to finish verification, the response returns `status: verification_required` with a `verification_url` instead of a destination. Send the customer there and retry.\n\nDestinations are reusable: repeating the same request for the same customer, provider, type, and currency returns the existing active destination rather than creating another.",
+        "description": "Create a virtual account where a customer can send fiat. Capisum resolves the provider, creates or reuses the provider's customer record, checks verification, then returns normalized bank account details you can display directly.\n\n`type: bank_account` is the only destination type on this endpoint today. Yativo covers BRL, MXN/MXNBASE, USD/USDBASE, and EUR/EURBASE. Fincra covers NGN (requires `metadata.bvn`), GHS, and KES. Crypto deposit addresses use POST /v1/transactions/pay-in/merchant-wallet or POST /v1/transactions/pay-in/customer-wallet.\n\nWhen the provider still needs the customer to finish verification, the response returns `status: verification_required`. Submit KYC with `POST /v1/customers/{id}/kyc` (primary), or use `verification_url` only when the provider exposes a hosted fallback, then retry.\n\nDestinations are reusable: repeating the same request for the same customer, provider, type, and currency returns the existing active destination rather than creating another.",
         "security": [
           {
             "apiKeyAuth": []
@@ -2077,13 +2216,12 @@
       "VerifyAccountRequest": {
         "type": "object",
         "required": [
-          "provider",
           "account_number"
         ],
         "properties": {
           "provider": {
             "type": "string",
-            "description": "Connected provider slug to use for resolution (for example, `palmpay` or `paystack`).",
+            "description": "Connected provider slug (for example, `palmpay` or `paystack`). Optional: when omitted, Capisum uses the dashboard account default. When Override request provider is enabled, this field is ignored.",
             "example": "palmpay"
           },
           "account_number": {
@@ -2207,10 +2345,9 @@
       "PayoutBankDestination": {
         "type": "object",
         "required": [
-          "type",
-          "account_number",
-          "bank_id"
+          "type"
         ],
+        "description": "Bank / local rail destination. Required fields depend on the resolved provider rail (see GET /v1/payouts/capabilities \u2192 providers[].rails[].required_fields).",
         "properties": {
           "type": {
             "type": "string",
@@ -2219,14 +2356,80 @@
             ]
           },
           "account_number": {
-            "type": "string"
+            "type": "string",
+            "description": "Bank account number, CLABE, CCI, or similar local account identifier."
           },
           "bank_id": {
             "type": "string",
-            "description": "Capisum canonical bank id from GET /v1/reference/banks (e.g. ng.opay).",
+            "description": "Capisum canonical bank id from GET /v1/reference/banks (e.g. ng.opay). Required for many NGN rails.",
             "example": "ng.opay"
           },
+          "bank_code": {
+            "type": "string",
+            "description": "Corridor bank code when Capisum bank_id is not used."
+          },
           "account_name": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "Beneficiary legal / full name. Falls back to account_name when omitted."
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "physical_address": {
+            "type": "string",
+            "description": "Beneficiary street address for provider beneficiary APIs."
+          },
+          "recipient_type": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "business"
+            ]
+          },
+          "routing_number": {
+            "type": "string",
+            "description": "US ACH routing number."
+          },
+          "account_type": {
+            "type": "string",
+            "enum": [
+              "checking",
+              "savings"
+            ]
+          },
+          "iban": {
+            "type": "string"
+          },
+          "bic": {
+            "type": "string"
+          },
+          "pix_key": {
+            "type": "string"
+          },
+          "pix_key_type": {
+            "type": "string",
+            "enum": [
+              "cpf",
+              "cnpj",
+              "phone",
+              "email",
+              "evp"
+            ]
+          },
+          "rut": {
+            "type": "string"
+          },
+          "document_type": {
+            "type": "string"
+          },
+          "document_number": {
+            "type": "string"
+          },
+          "cbu_cvu": {
             "type": "string"
           },
           "country": {
@@ -2510,7 +2713,7 @@
           },
           "provider": {
             "type": "string",
-            "description": "Optional explicit provider slug (for example, `fincra`, `paystack`, `flutterwave`, `palmpay`, `quidax`)."
+            "description": "Optional explicit provider slug (for example, `fincra`, `paystack`, `flutterwave`, `palmpay`, `yativo`, `quidax`, `bitnob`)."
           },
           "recipient": {
             "deprecated": true,
@@ -2560,12 +2763,20 @@
                   "type": "string",
                   "example": "NG"
                 },
+                "countries": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Present when more than one country appears across provider rails for this currency."
+                },
                 "destinations": {
                   "type": "array",
                   "items": {
                     "type": "string",
                     "enum": [
                       "bank_account",
+                      "mobile_money",
                       "crypto_wallet"
                     ]
                   }
@@ -2583,12 +2794,14 @@
               "type": "string",
               "enum": [
                 "bank_account",
+                "mobile_money",
                 "crypto_wallet"
               ]
             },
             "example": [
               "bank_account",
-              "crypto_wallet"
+              "crypto_wallet",
+              "mobile_money"
             ]
           },
           "providers": {
@@ -2599,16 +2812,17 @@
                 "slug",
                 "name",
                 "currencies",
-                "destinations"
+                "destinations",
+                "rails"
               ],
               "properties": {
                 "slug": {
                   "type": "string",
-                  "example": "fincra"
+                  "example": "yativo"
                 },
                 "name": {
                   "type": "string",
-                  "example": "Fincra"
+                  "example": "Yativo"
                 },
                 "currencies": {
                   "type": "array",
@@ -2622,8 +2836,51 @@
                     "type": "string",
                     "enum": [
                       "bank_account",
+                      "mobile_money",
                       "crypto_wallet"
                     ]
+                  }
+                },
+                "rails": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "currency",
+                      "country",
+                      "destinations"
+                    ],
+                    "properties": {
+                      "currency": {
+                        "type": "string",
+                        "example": "USD"
+                      },
+                      "country": {
+                        "type": "string",
+                        "example": "US"
+                      },
+                      "destinations": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "bank_account",
+                            "mobile_money",
+                            "crypto_wallet"
+                          ]
+                        }
+                      },
+                      "required_fields": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Capisum destination fields required for this rail."
+                      },
+                      "notes": {
+                        "type": "string"
+                      }
+                    }
                   }
                 }
               }
@@ -3183,6 +3440,16 @@
             "example": "BR",
             "description": "ISO 3166-1 alpha-2 or alpha-3. Required by some pay-in providers."
           },
+          "provider": {
+            "type": "string",
+            "example": "yativo",
+            "description": "Preferred pay-in provider. Ignored when the dashboard already has a matching pay_in route for `currency` (dashboard configuration wins)."
+          },
+          "currency": {
+            "type": "string",
+            "example": "MXN",
+            "description": "Used with dashboard routing defaults to resolve the pay-in provider."
+          },
           "reference": {
             "type": "string",
             "example": "merchant-customer-1",
@@ -3201,6 +3468,7 @@
           "type",
           "name",
           "verification_status",
+          "requirements",
           "environment",
           "created_at",
           "updated_at"
@@ -3238,19 +3506,28 @@
             "type": "string",
             "nullable": true
           },
+          "provider": {
+            "type": "string",
+            "nullable": true,
+            "example": "yativo",
+            "description": "Selected pay-in provider slug. Never a provider customer ID."
+          },
           "verification_status": {
             "type": "string",
             "enum": [
-              "unverified",
-              "pending",
-              "verified",
+              "requires_action",
+              "submitted",
+              "approved",
               "rejected"
             ]
           },
           "verification_url": {
             "type": "string",
             "nullable": true,
-            "description": "Hosted verification page to send the customer to when verification is outstanding."
+            "description": "Optional hosted verification fallback. Direct KYC via POST /v1/customers/{id}/kyc is the primary flow."
+          },
+          "requirements": {
+            "$ref": "#/components/schemas/CustomerVerificationRequirements"
           },
           "metadata": {
             "type": "object",
@@ -3272,6 +3549,305 @@
             "format": "date-time"
           }
         }
+      },
+      "CustomerVerificationRequirements": {
+        "type": "object",
+        "required": [
+          "can_create_destination",
+          "due",
+          "next_action"
+        ],
+        "properties": {
+          "can_create_destination": {
+            "type": "boolean"
+          },
+          "due": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Provider-reported outstanding verification items, when available."
+          },
+          "next_action": {
+            "type": "string",
+            "enum": [
+              "submit_kyc",
+              "wait_for_review",
+              "complete_hosted_verification",
+              "none"
+            ]
+          }
+        }
+      },
+      "CustomerKycRequest": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CustomerIndividualKycRequest"
+          },
+          {
+            "$ref": "#/components/schemas/CustomerBusinessKycRequest"
+          }
+        ],
+        "description": "Provider-neutral KYC/KYB payload. Capisum maps fields onto the selected provider's documented API. `provider` / `currency` are optional when the customer already has a ProviderCustomer binding from create; dashboard routing wins when both exist."
+      },
+      "CustomerIndividualKycRequest": {
+        "type": "object",
+        "required": [
+          "type",
+          "first_name",
+          "last_name",
+          "email",
+          "calling_code",
+          "phone",
+          "birth_date",
+          "nationality",
+          "gender",
+          "tax_id",
+          "selfie_image",
+          "residential_address",
+          "identifying_information",
+          "employment_status",
+          "occupation_code",
+          "expected_monthly_payments_usd",
+          "source_of_funds",
+          "account_purpose",
+          "uploaded_documents"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "yativo"
+          },
+          "currency": {
+            "type": "string",
+            "example": "MXN"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "individual"
+            ]
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "middle_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "calling_code": {
+            "type": "string",
+            "example": "+1"
+          },
+          "phone": {
+            "type": "string",
+            "example": "5551234567",
+            "description": "Digits only, without calling code."
+          },
+          "birth_date": {
+            "type": "string",
+            "example": "1990-01-15"
+          },
+          "nationality": {
+            "type": "string",
+            "example": "US"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female"
+            ]
+          },
+          "tax_id": {
+            "type": "string"
+          },
+          "selfie_image": {
+            "type": "string",
+            "description": "Hosted file URL or base64."
+          },
+          "bvn": {
+            "type": "string",
+            "description": "Required when nationality is NG."
+          },
+          "nin": {
+            "type": "string",
+            "description": "Required when nationality is NG."
+          },
+          "residential_address": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "identifying_information": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "employment_status": {
+            "type": "string"
+          },
+          "occupation_code": {
+            "type": "string"
+          },
+          "expected_monthly_payments_usd": {
+            "type": "string"
+          },
+          "source_of_funds": {
+            "type": "string"
+          },
+          "account_purpose": {
+            "type": "string"
+          },
+          "account_purpose_other": {
+            "type": "string"
+          },
+          "acting_as_intermediary": {
+            "type": "boolean"
+          },
+          "uploaded_documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "CustomerBusinessKycRequest": {
+        "type": "object",
+        "required": [
+          "type",
+          "business_legal_name",
+          "business_trade_name",
+          "business_description",
+          "email",
+          "business_type",
+          "registration_number",
+          "incorporation_date",
+          "registered_address",
+          "physical_address",
+          "associated_persons",
+          "account_purpose",
+          "source_of_funds",
+          "high_risk_activities",
+          "documents"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "yativo"
+          },
+          "currency": {
+            "type": "string",
+            "example": "MXN"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "business"
+            ]
+          },
+          "business_legal_name": {
+            "type": "string"
+          },
+          "business_trade_name": {
+            "type": "string"
+          },
+          "business_description": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "business_type": {
+            "type": "string"
+          },
+          "registration_number": {
+            "type": "string"
+          },
+          "incorporation_date": {
+            "type": "string",
+            "example": "2018-03-12"
+          },
+          "tax_id": {
+            "type": "string"
+          },
+          "registered_address": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "physical_address": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "associated_persons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "account_purpose": {
+            "type": "string"
+          },
+          "source_of_funds": {
+            "type": "string"
+          },
+          "high_risk_activities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "CustomerKycUpdateRequest": {
+        "type": "object",
+        "description": "Partial KYC correction fields plus `provider` or `currency` for routing.",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "yativo"
+          },
+          "currency": {
+            "type": "string",
+            "example": "MXN"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "business"
+            ]
+          },
+          "selfie_image": {
+            "type": "string"
+          },
+          "identifying_information": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
       },
       "CustomerResponse": {
         "type": "object",
@@ -3489,9 +4065,11 @@
           "customer_id",
           "provider",
           "status",
-          "verification_status"
+          "verification_status",
+          "next_action",
+          "requirements"
         ],
-        "description": "Returned instead of a destination when the provider still needs the customer to complete verification. Send the customer to `verification_url`, then retry the request.",
+        "description": "Returned instead of a destination when the provider still needs the customer to complete verification. Submit KYC via POST /v1/customers/{id}/kyc. `verification_url` is only a hosted fallback when the provider exposes one.",
         "properties": {
           "customer_id": {
             "type": "string",
@@ -3510,15 +4088,26 @@
           "verification_status": {
             "type": "string",
             "enum": [
-              "unverified",
-              "pending",
-              "verified",
+              "requires_action",
+              "submitted",
+              "approved",
               "rejected"
             ]
           },
           "verification_url": {
             "type": "string",
             "nullable": true
+          },
+          "requirements": {
+            "$ref": "#/components/schemas/CustomerVerificationRequirements"
+          },
+          "next_action": {
+            "type": "string",
+            "enum": [
+              "submit_kyc",
+              "wait_for_review",
+              "complete_hosted_verification_or_submit_kyc"
+            ]
           }
         }
       },
