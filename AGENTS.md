@@ -21,7 +21,7 @@
 
 ## Content boundaries
 
-**Document:** authentication, providers, payouts, webhooks (outgoing), transactions, pagination, idempotency, errors, sandbox.
+**Document:** authentication, providers, payouts, pay-ins, off-ramp, webhooks (outgoing), transactions, pagination, idempotency, errors, sandbox.
 
 **Do not document:** dashboard session APIs, API key CRUD, provider credential management, routing CRUD, billing, audit, team, stats, incoming webhooks, Capisum admin `/api/v1/internal/*`.
 

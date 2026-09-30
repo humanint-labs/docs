@@ -78,6 +78,13 @@
             ]
           },
           {
+            "group": "Off-ramp",
+            "icon": "arrow-right-arrow-left",
+            "pages": [
+              "guides/off-ramp"
+            ]
+          },
+          {
             "group": "Providers",
             "icon": "plug",
             "pages": [
@@ -138,6 +145,15 @@
               "GET /v1/transactions/ref/{reference}",
               "GET /v1/transactions/{id}",
               "POST /v1/transactions/{id}/verify"
+            ]
+          },
+          {
+            "group": "Off-ramp",
+            "pages": [
+              "POST /v1/offramp/quote",
+              "POST /v1/offramp",
+              "GET /v1/offramp/{id}",
+              "GET /v1/offramp/{id}/status"
             ]
           }
         ]
