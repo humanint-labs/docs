@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Capisum API",
-    "description": "API for creating payouts, pay-ins, and off-ramps. Authenticate with an organization API key (`Authorization: Bearer cps_...`). The key's environment (staging or production) scopes provider credentials.\n\n**Shipped today:** Multi-corridor payouts, fiat/crypto pay-in, and OwlPay Harbor off-ramp.",
+    "description": "API for creating payouts, pay-ins, and off-ramps. Authenticate with an organization API key (`Authorization: Bearer cps_...`). The key's environment (staging or production) scopes provider credentials.\n\n**Shipped today:** Multi-corridor payouts, fiat/crypto pay-in, and crypto-to-fiat off-ramp.",
     "version": "1.0.0",
     "contact": {
       "name": "Capisum Support",
@@ -79,7 +79,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Includes bank payout providers, crypto wallet pay-in/payout providers, and Harbor off-ramp.",
+        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Includes bank payout providers, crypto wallet pay-in/payout providers, and off-ramp.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1679,7 +1679,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Price a crypto-to-fiat off-ramp on `POST /v1/offramp/quote`. Currently available for OwlPay Harbor (`provider: harbor` or routing). Amounts are source-asset minor units. Requires `X-Idempotency-Key`. Harbor requires `source_country`, `destination_country`, and `network`.",
+        "description": "Price a crypto-to-fiat off-ramp. Amounts are source-asset minor units. Requires `X-Idempotency-Key`. Current corridors require `network`, `source_country`, and `destination_country`. Supported provider today: `harbor` (OwlPay Harbor) via `provider` or routing.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1740,7 +1740,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Start a crypto-to-fiat off-ramp from a Capisum quote on `POST /v1/offramp`. Currently available for OwlPay Harbor. Returns a crypto deposit address; fiat settlement completes asynchronously. Requires `X-Idempotency-Key`. Harbor requires `customer_id`, `source.address`, and corridor bank/beneficiary fields.",
+        "description": "Start a crypto-to-fiat off-ramp from a Capisum quote. Returns crypto deposit instructions; fiat settlement completes asynchronously via Capisum webhooks. Requires `X-Idempotency-Key`. Current corridors require an approved Capisum `customer_id`, `source.address`, and bank/beneficiary destination fields. Supported provider today: `harbor`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -4265,12 +4265,12 @@
           "source_country": {
             "type": "string",
             "example": "US",
-            "description": "ISO 3166-1 alpha-2. Required for Harbor off-ramp quotes."
+            "description": "ISO 3166-1 alpha-2. Required for current off-ramp corridors."
           },
           "destination_country": {
             "type": "string",
             "example": "HK",
-            "description": "ISO 3166-1 alpha-2. Required for Harbor off-ramp quotes."
+            "description": "ISO 3166-1 alpha-2. Required for current off-ramp corridors."
           },
           "customer_type": {
             "type": "string",
@@ -4282,7 +4282,7 @@
           "payment_method": {
             "type": "string",
             "example": "WIRE",
-            "description": "Optional Harbor payment-method preference when multiple quotes are returned."
+            "description": "Optional payment-method preference when the provider returns multiple quote options."
           }
         }
       },
@@ -4476,7 +4476,7 @@
           },
           "customer_id": {
             "type": "string",
-            "description": "Capisum customer id. Required for Harbor (ProviderCustomer KYC binding)."
+            "description": "Capisum customer id. Required when the off-ramp provider binds a verified customer (current: harbor)."
           },
           "customer": {
             "type": "object",
@@ -4503,7 +4503,7 @@
             "properties": {
               "address": {
                 "type": "string",
-                "description": "Sender wallet address. Required for Harbor."
+                "description": "Sender wallet address. Required for current off-ramp corridors."
               }
             }
           },

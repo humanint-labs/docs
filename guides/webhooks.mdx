@@ -159,7 +159,7 @@ See [Pay-in integration](/guides/pay-ins) for how destinations and wallet endpoi
 
 ### Off-ramp events
 
-Crypto → fiat off-ramp transactions (currently Harbor) emit:
+Crypto → fiat off-ramp transactions emit:
 
 | Event | When it fires | Typical `status` in payload |
 | --- | --- | --- |
@@ -167,7 +167,7 @@ Crypto → fiat off-ramp transactions (currently Harbor) emit:
 | `transaction.failed` | Off-ramp reaches `failed` | `failed` |
 | `transaction.cancelled` | Off-ramp reaches `cancelled` | `cancelled` |
 
-Creating a quote or initiating an off-ramp does not emit a webhook by itself — wait for Harbor to settle or fail after the customer deposits crypto. See [Off-ramp integration](/guides/off-ramp).
+Creating a quote or initiating an off-ramp does not emit a webhook by itself — Capisum emits these after the crypto deposit is processed and the transfer settles or fails. See [Off-ramp integration](/guides/off-ramp).
 
 ### `payout.initiated`
 

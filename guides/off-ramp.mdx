@@ -1,52 +1,93 @@
 ---
 title: "Off-ramp integration"
 sidebarTitle: "Off-ramp integration"
-description: "Convert stablecoins to fiat through Capisum — quote, initiate, deposit crypto, and settle via webhooks."
-keywords: ["off-ramp", "Harbor", "OwlPay", "USDC", "stablecoin", "crypto to fiat", "WIRE", "quote"]
+description: "Convert crypto to fiat through Capisum — prepare a customer, quote, initiate, fund the deposit, and settle via webhooks."
+keywords: ["off-ramp", "crypto to fiat", "stablecoin", "USDC", "quote", "deposit", "Capisum"]
 icon: "arrow-right-arrow-left"
 ---
 
-Capisum off-ramp turns crypto into fiat bank settlement. Today the enabled provider is **OwlPay Harbor** (`provider: "harbor"`). Quidax ramp is not enabled on Capisum yet.
+Capisum **off-ramp** converts crypto to fiat bank settlement. You call Capisum only. Capisum selects the connected provider, generates deposit instructions, tracks status, and delivers [webhooks](/guides/webhooks) when the transfer settles or fails.
+
+Supported provider today: **OwlPay Harbor** (`provider: "harbor"`). Pass that slug (or rely on routing once configured). Do not call the provider’s APIs from your app.
 
 ```text
-Quote → Initiate → Customer sends USDC → Harbor pays fiat → Webhook
+Create + verify customer
+        ↓
+Create quote → Initiate off-ramp
+        ↓
+Fund the returned deposit address
+        ↓
+Capisum webhook (settled / failed / cancelled)
 ```
 
-Public paths are provider-agnostic:
+## Endpoints
 
-| Step | Endpoint |
+| Step | Capisum endpoint |
 | --- | --- |
 | Quote | [`POST /v1/offramp/quote`](/api-reference) |
 | Initiate | [`POST /v1/offramp`](/api-reference) |
+| Get | [`GET /v1/offramp/{id}`](/api-reference) |
 | Status | [`GET /v1/offramp/{id}/status`](/api-reference) |
 
-Do not call Harbor’s Transfer APIs directly from your app. Capisum maps quote → requirements → transfer inside the Harbor adapter.
+Quote and initiate require [`X-Idempotency-Key`](/guides/idempotency).
 
 ## Prerequisites
 
-1. Connect Harbor in the [dashboard](https://app.capisum.com) (sandbox or live API key + webhook secret).
-2. Create a Capisum [customer](/guides/pay-ins) and complete Harbor KYC so `ProviderCustomer` is verified. Use the Capisum `customer_id` (`cus_…`) on initiate — never Harbor’s internal customer id.
-3. Use an API key for the same environment as the Harbor credentials.
+1. Connect an off-ramp provider in the [dashboard](https://app.capisum.com) for the environment you will use (sandbox or live).
+2. Create a production or staging [API key](https://app.capisum.com/api-keys) in that same environment.
+3. Create a Capisum [customer](/api-reference) and finish provider verification until Capisum reports the customer as approved. Off-ramp initiate needs that Capisum `customer_id` (`cus_…`). Provider customer IDs stay internal.
 
-## Amounts and corridors
+When you create the customer for off-ramp, set `provider` to the connected off-ramp slug (today `harbor`). If Capisum returns `verification_url` or `verification_status: requires_action`, complete verification before initiating.
 
-Amounts are **source-asset minor units**. Harbor stablecoins (for example USDC) use **6 decimals**:
+## Amounts
+
+All amounts are **source-asset minor units** (the crypto side of the quote).
+
+For USDC (6 decimals):
 
 | Amount string | Meaning |
 | --- | --- |
 | `10000000` | 10.000000 USDC |
 | `1000000` | 1.000000 USDC |
 
-Harbor quotes also need:
+## Successful off-ramp checklist
 
-- `network` — chain for the deposit (for example `ethereum`, `polygon`, `arbitrum`)
-- `source_country` / `destination_country` — ISO 3166-1 alpha-2
-- optional `payment_method` (for example `WIRE`) when Harbor returns multiple quote options
-- optional `customer_type` (`individual` or `business`)
+Complete these Capisum steps in order:
+
+<Steps>
+  <Step title="Verify the customer">
+    Capisum customer exists and verification is `approved` for the off-ramp provider.
+  </Step>
+  <Step title="Lock a quote">
+    Call quote with corridor fields while the quote is still open (`expires_at`).
+  </Step>
+  <Step title="Initiate">
+    Pass `quote_id`, `customer_id`, sender wallet (`source.address`), and bank / beneficiary destination.
+  </Step>
+  <Step title="Fund the deposit">
+    Send the quoted crypto amount to `instructions.address` on `instructions.network`.
+  </Step>
+  <Step title="Wait for settlement">
+    Listen for Capisum webhooks (or poll status). Initiate alone does not mean fiat has settled.
+  </Step>
+</Steps>
 
 ## 1. Create a quote
 
-Requires `X-Idempotency-Key`. Reusing the key returns or refreshes the same Capisum quote.
+Price the corridor before collecting bank details for initiate.
+
+**Required fields (current corridors):**
+
+| Field | Purpose |
+| --- | --- |
+| `source_asset` | Crypto ticker (for example `USDC`) |
+| `destination_asset` | Fiat ticker (for example `USD`) |
+| `amount` | Source amount in minor units |
+| `network` | Chain the customer will deposit on (for example `ethereum`, `polygon`, `arbitrum`) |
+| `source_country` | ISO 3166-1 alpha-2 |
+| `destination_country` | ISO 3166-1 alpha-2 |
+
+**Optional:** `provider`, `customer_type` (`individual` \| `business`), `payment_method` (for example `WIRE` when multiple rails are offered).
 
 ```bash
 curl -X POST "$CAPISUM_BASE_URL/v1/offramp/quote" \
@@ -65,15 +106,32 @@ curl -X POST "$CAPISUM_BASE_URL/v1/offramp/quote" \
   }'
 ```
 
-Save `data.id` as `quote_id`. Quotes expire — check `expires_at` before initiating.
+Save `data.id` as `quote_id`. Reusing the same idempotency key returns or refreshes that Capisum quote. Check `expires_at` before initiating.
 
 ## 2. Initiate the off-ramp
 
-Requires `X-Idempotency-Key`, an open `quote_id`, and Harbor corridor fields:
+Turns an open quote into an `offramp` transaction and returns deposit instructions.
 
-- `customer_id` — Capisum customer with approved Harbor KYC
-- `source.address` — sender wallet address
-- Bank / beneficiary details (`bank_name`, `account_holder_name`, `account_number`, `swift_code` or local routing fields, `transfer_purpose`, `beneficiary`, …)
+**Required for a successful initiate today:**
+
+| Field | Purpose |
+| --- | --- |
+| `quote_id` | Capisum quote from step 1 |
+| `customer_id` | Approved Capisum customer (`cus_…`) |
+| `customer` | `email`, `first_name`, `last_name` |
+| `source.address` | Wallet that will send the crypto |
+| `destination` | Bank payout details for the fiat settlement |
+
+**Destination fields commonly required:**
+
+- `type`: `bank_account`
+- `bank_name`, `account_holder_name`, `account_number`
+- `swift_code` and/or `routing_number` / `iban` as the corridor requires
+- `transfer_purpose` (for example `SALARY`)
+- `is_self_transfer` when applicable
+- `beneficiary` — name, `dob` (`YYYY-MM-DD`), `id_doc_number`, and `address` (`street`, `city`, `country`, plus optional `state_province` / `postal_code`)
+
+Exact corridor requirements are enforced by Capisum at initiate time; missing fields return a validation or provider error.
 
 ```bash
 curl -X POST "$CAPISUM_BASE_URL/v1/offramp" \
@@ -116,24 +174,35 @@ curl -X POST "$CAPISUM_BASE_URL/v1/offramp" \
   }'
 ```
 
-The response includes crypto deposit instructions (address / network). Capisum keeps Harbor transfer and quote ids internal.
+On success Capisum returns a transaction with `status: processing` and `instructions` for the crypto deposit:
 
-## 3. Fund and wait for settlement
-
-Instruct the customer to send the quoted amount on the returned network. Status stays `processing` until Harbor completes or fails the transfer.
-
-Poll [`GET /v1/offramp/{id}/status`](/api-reference) or listen for [webhooks](/guides/webhooks):
-
-| Event | When |
+| Field | Meaning |
 | --- | --- |
-| `transaction.settled` | Off-ramp reaches `completed` / `settled` |
-| `transaction.failed` | Off-ramp reaches `failed` |
-| `transaction.cancelled` | Off-ramp reaches `cancelled` (expired / cancelled at Harbor) |
+| `instructions.type` | `crypto_deposit` |
+| `instructions.address` | Address to fund |
+| `instructions.network` | Network to use |
+| `instructions.amount_expected` | Amount Capisum expects (when provided) |
+| `instructions.next_step` | Typically `await_crypto_deposit` |
 
-Initiating alone does **not** mean fiat has settled.
+Save `id` / `reference` for status and webhook matching. Capisum does not expose provider transfer IDs on the public response.
+
+## 3. Fund the deposit and settle
+
+1. Instruct the end user to send the quoted crypto amount to `instructions.address` on `instructions.network`.
+2. Keep the Capisum transaction in `processing` until settlement.
+3. Prefer [outgoing webhooks](/guides/webhooks); optionally poll [`GET /v1/offramp/{id}/status`](/api-reference).
+
+| Capisum event | When |
+| --- | --- |
+| `transaction.settled` | Off-ramp reaches `completed` / `settled` — fiat path finished |
+| `transaction.failed` | Off-ramp reaches `failed` |
+| `transaction.cancelled` | Off-ramp reaches `cancelled` (expired or cancelled) |
+
+Quote creation and initiate do **not** emit these events. Funding and provider settlement drive them.
 
 ## Related
 
-- [Providers](/guides/providers#harbor-harbor) — Harbor capability matrix
+- [Providers](/guides/providers) — which providers expose off-ramp
+- [Customers](/api-reference) — create and verify before initiate
 - [Idempotency](/guides/idempotency) — quote and initiate keys
 - [Webhooks](/guides/webhooks) — signature verification and retries
