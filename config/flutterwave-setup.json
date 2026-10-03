@@ -6,8 +6,8 @@
     "79.127.165.66"
   ],
   "webhookUrl": "https://capisum.com/webhooks/flutterwave/{credentialId}",
-  "ipAllowlistTitle": "Whitelist Capisum static outbound IPs",
-  "ipAllowlistDescription": "Add every address below to your Flutterwave live IP allowlist. Capisum calls Flutterwave from these static outbound IPs.",
-  "transfersNote": "Enable transfers on your Flutterwave account before payouts can work. Contact Flutterwave support if API / direct transfers are not yet enabled for your business.",
+  "ipAllowlistTitle": "Capisum IPs to whitelist",
+  "ipAllowlistDescription": "Add every address below to your Flutterwave live IP allowlist.",
+  "transfersNote": "Enable API / direct transfers on your Flutterwave account before payouts will work.",
   "reviewConfirmation": "I've whitelisted these Capisum IPs in Flutterwave"
 }

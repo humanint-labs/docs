@@ -16,13 +16,17 @@ Capisum does not hold your funds or replace your providers. It removes provider-
 
 ## Available capabilities
 
-The API is available at `https://api.capisum.com/v1`. Supported transaction types today include payouts and crypto pay-in (Quidax and Bitnob). See [Providers](/guides/providers) for the full capability matrix.
+The API is available at `https://api.capisum.com/v1`. Supported transaction types today include payouts, fiat virtual-account pay-in (Yativo and Fincra), crypto pay-in (Quidax and Bitnob), and crypto→fiat off-ramp. See [Providers](/guides/providers) for the full capability matrix.
 
 | Capability | Endpoint |
 | --- | --- |
 | Create a payout | `POST /v1/transactions/payout` |
+| Create a customer | `POST /v1/customers` |
+| Create a virtual-account destination | `POST /v1/pay-in-destinations` |
 | Create a merchant wallet pay-in | `POST /v1/transactions/pay-in/merchant-wallet` |
 | Create a customer wallet pay-in | `POST /v1/transactions/pay-in/customer-wallet` |
+| Create an off-ramp quote | `POST /v1/offramp/quote` |
+| Initiate an off-ramp | `POST /v1/offramp` |
 | List and query transactions | `GET /v1/transactions` |
 | Verify account names | `POST /v1/verify/account` |
 | Check provider health and balance | `GET /v1/providers/{slug}/status`, `GET /v1/providers/{slug}/balance` |
@@ -39,6 +43,12 @@ The API is available at `https://api.capisum.com/v1`. Supported transaction type
   </Card>
   <Card title="Payout integration" icon="money-bill-transfer" href="/guides/payouts">
     Amounts, destinations, lifecycle, and go-live checklist.
+  </Card>
+  <Card title="Pay-in integration" icon="money-bill-wave" href="/guides/pay-ins">
+    Virtual accounts and crypto deposit addresses.
+  </Card>
+  <Card title="Off-ramp integration" icon="arrow-right-arrow-left" href="/guides/off-ramp">
+    Crypto to fiat — quote, deposit, settle.
   </Card>
   <Card title="Webhooks" icon="webhook" href="/guides/webhooks">
     Event catalog, signature verification, and retries.

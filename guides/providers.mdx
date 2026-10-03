@@ -2,7 +2,7 @@
 title: "Providers"
 sidebarTitle: "Providers"
 description: "Payment providers available through the Capisum API and what each supports today."
-keywords: ["providers", "Fincra", "Paystack", "Flutterwave", "PalmPay", "Quidax", "Bitnob", "payout", "NGN", "GHS", "KES", "crypto", "provider catalog"]
+keywords: ["providers", "Fincra", "Paystack", "Flutterwave", "PalmPay", "Quidax", "Bitnob", "Yativo", "Harbor", "OwlPay", "payout", "pay-in", "off-ramp", "virtual account", "NGN", "GHS", "KES", "crypto", "provider catalog"]
 icon: "plug"
 ---
 
@@ -16,30 +16,50 @@ After you connect a provider, Capisum shows a unique incoming webhook URL for th
 
 ## Available providers
 
-Six providers are integrated and configurable in Capisum today. Refunds are not shipped for any provider. Quidax on-ramp, off-ramp, and conversion exist in code but are not on `availableOperations` yet.
+Eight providers are integrated and configurable in Capisum today. Refunds are not shipped for any provider. Quidax on-ramp, off-ramp, and conversion exist in code but are not on `availableOperations` yet — use Capisum [off-ramp](/guides/off-ramp) (OwlPay Harbor) instead.
 
-| Provider | Slug | Pay-in | Payout | Balance | Account verify | Corridor notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| Fincra | `fincra` | — | Yes | Yes | Yes (NGN) | NGN bank; GHS/KES bank + mobile money |
-| Paystack | `paystack` | — | Yes | Yes | Yes (NGN) | NGN bank; GHS bank + MoMo; KES MoMo only |
-| Flutterwave | `flutterwave` | — | Yes | Yes | Yes (NGN) | NGN / GHS / KES bank + mobile money |
-| PalmPay | `palmpay` | — | Yes | Yes (NGN) | Yes (NGN) | NGN bank only |
-| Quidax | `quidax` | Yes (crypto) | Yes | Yes | Yes (NGN) | Crypto USDT, USDC, BTC, ETH, SOL, XLM; NGN bank payouts; merchant + customer wallet pay-in |
-| Bitnob | `bitnob` | Yes (crypto) | Yes | Yes | Yes (NGN bank; GHS MoMo) | Fiat NGN/GHS/KES (wallet-funded); crypto payout BTC/USDT/USDC; merchant + customer-attributed pay-in |
+| Provider | Slug | Pay-in | Payout | Off-ramp | Balance | Account verify | Corridor notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Fincra | `fincra` | Yes (VA) | Yes | — | Yes | Yes (NGN) | NGN/GHS/KES permanent virtual accounts; NGN bank payouts; GHS/KES bank + mobile money |
+| Yativo | `yativo` | Yes (VA) | Yes | — | — | — | Fiat VA pay-in; multi-corridor payouts (NGN, USD ACH, MXN SPEI, BRL PIX, EUR SEPA, and more) |
+| Paystack | `paystack` | — | Yes | — | Yes | Yes (NGN) | NGN bank; GHS bank + MoMo; KES MoMo only |
+| Flutterwave | `flutterwave` | — | Yes | — | Yes | Yes (NGN) | NGN / GHS / KES bank + mobile money |
+| PalmPay | `palmpay` | — | Yes | — | Yes (NGN) | Yes (NGN) | NGN bank only |
+| Quidax | `quidax` | Yes (crypto) | Yes | — | Yes | Yes (NGN) | Crypto USDT, USDC, BTC, ETH, SOL, XLM; merchant + customer wallet pay-in |
+| Bitnob | `bitnob` | Yes (crypto) | Yes | — | Yes | Yes (NGN bank; GHS MoMo) | Fiat NGN/GHS/KES (wallet-funded); crypto payout BTC/USDT/USDC; merchant + customer-attributed pay-in |
+| Harbor | `harbor` | — | — | Yes | — | — | Current off-ramp provider (stablecoin → fiat) |
 
-All providers share the same Capisum payout state machine: queued submission, per-attempt provider transfer references, webhook matching, and verify-before-retry. Each adapter handles its own request format, status mapping, and webhook parsing.
+All payout providers share the same Capisum payout state machine: queued submission, per-attempt provider transfer references, webhook matching, and verify-before-retry. Fiat virtual-account pay-in uses [Customers](/guides/pay-ins) and [pay-in destinations](/guides/pay-ins). Crypto pay-in uses the merchant/customer wallet endpoints. See [Pay-in integration](/guides/pay-ins).
 
 ### Fincra (`fincra`)
 
-Cross-border payment infrastructure for collections, payouts, and virtual accounts across Africa.
+Cross-border payment infrastructure for collections, payouts, and virtual accounts across Africa. Permanent VA overview: [Fincra virtual accounts](https://docs.fincra.com/docs/fincra-virtual-accounts).
 
 | Operation | Status |
 | --- | --- |
 | Payouts | Available |
 | Account verification | Available (NGN) |
 | Balance lookup | Available |
-| Pay-in | Not available |
+| Pay-in | Available (permanent VAs: NGN, GHS, KES via [`POST /v1/pay-in-destinations`](/guides/pay-ins)) |
 | Refunds | Not available |
+
+NGN destinations require `metadata.bvn`. Optional `metadata.channel` selects the issuing bank. USD/EUR/GBP FCY virtual accounts are not exposed on Capisum yet.
+
+### Yativo (`yativo`)
+
+Fiat virtual-account pay-in and multi-corridor payouts. Capisum manages Yativo beneficiaries and payment methods internally — you only send Capisum `destination` fields.
+
+| Operation | Status |
+| --- | --- |
+| Pay-in | Available (`bank_account` destinations) |
+| Payouts | Available (NGN bank transfer, USD ACH, MXN SPEI, BRL PIX, EUR SEPA, CLP/COP/PEN/ARS bank rails) |
+| Balance lookup | Not available |
+| Account verification | Not available |
+| Refunds | Not available |
+
+**Pay-in:** create a Capisum customer, then [`POST /v1/pay-in-destinations`](/guides/pay-ins) with `provider: "yativo"`. Supported VA currencies include BRL, MXN/MXNBASE, USD/USDBASE, and EUR/EURBASE. When KYC is outstanding, Capisum returns `verification_required` with a `verification_url`.
+
+**Payout:** use [`GET /v1/payouts/capabilities`](/api-reference) for Yativo rails and `required_fields`. USD ACH requires a nested `destination.recipient` profile plus `routing_number` / `account_type`. See [Payout integration](/guides/payouts).
 
 ### Paystack (`paystack`)
 
@@ -119,7 +139,7 @@ Crypto deposits and withdrawals, NGN bank payouts, wallet balances, and NGN acco
 | Account verification | Available (NGN) |
 | Balance lookup | Available |
 | Pay-in | Available (crypto deposit addresses) |
-| On-ramp / off-ramp | Not shipped yet |
+| On-ramp / off-ramp | Not shipped yet (use Capisum [off-ramp](/guides/off-ramp)) |
 | Conversion | Not shipped yet |
 | Refunds | Not available |
 
@@ -149,6 +169,21 @@ Pay-ins use the same Capisum endpoints as Quidax:
 
 Fiat payouts debit your Bitnob crypto wallet (USDT by default, or the `payoutFromAsset` you configure). Crypto payouts debit the matching asset wallet. Keep the relevant wallet funded before sending.
 
+### Harbor (`harbor`)
+
+Off-ramp provider on Capisum (OwlPay Harbor). Use the Capisum off-ramp API — not payouts.
+
+| Operation | Status |
+| --- | --- |
+| Off-ramp | Available — see [Off-ramp integration](/guides/off-ramp) |
+| Pay-in | Not available |
+| Payouts | Not available |
+| Balance lookup | Not available |
+| Account verification | Not available |
+| Refunds | Not available |
+
+Connect credentials in the dashboard, verify Capisum customers against this provider, then follow the Capisum quote → initiate → deposit → webhook flow.
+
 Set `"provider": "<slug>"` on [`POST /v1/transactions/payout`](/api-reference) to route explicitly, or omit it to use your organization's routing rules. See [Payout integration](/guides/payouts) for destination fields and examples.
 
 **Check provider health**
@@ -175,11 +210,13 @@ curl "$CAPISUM_BASE_URL/v1/providers" \
 {
   "data": [
     { "slug": "fincra", "name": "Fincra", "configurable": true },
+    { "slug": "yativo", "name": "Yativo", "configurable": true },
     { "slug": "paystack", "name": "Paystack", "configurable": true },
     { "slug": "flutterwave", "name": "Flutterwave", "configurable": true },
     { "slug": "palmpay", "name": "PalmPay", "configurable": true },
     { "slug": "quidax", "name": "Quidax", "configurable": true },
-    { "slug": "bitnob", "name": "Bitnob", "configurable": true }
+    { "slug": "bitnob", "name": "Bitnob", "configurable": true },
+    { "slug": "harbor", "name": "Harbor", "configurable": true }
   ]
 }
 ```

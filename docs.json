@@ -71,6 +71,20 @@
             ]
           },
           {
+            "group": "Pay-ins",
+            "icon": "money-bill-wave",
+            "pages": [
+              "guides/pay-ins"
+            ]
+          },
+          {
+            "group": "Off-ramp",
+            "icon": "arrow-right-arrow-left",
+            "pages": [
+              "guides/off-ramp"
+            ]
+          },
+          {
             "group": "Providers",
             "icon": "plug",
             "pages": [
@@ -106,13 +120,40 @@
             ]
           },
           {
+            "group": "Customers",
+            "pages": [
+              "POST /v1/customers",
+              "GET /v1/customers",
+              "GET /v1/customers/{id}"
+            ]
+          },
+          {
+            "group": "Pay-in destinations",
+            "pages": [
+              "POST /v1/pay-in-destinations",
+              "GET /v1/pay-in-destinations",
+              "GET /v1/pay-in-destinations/{id}"
+            ]
+          },
+          {
             "group": "Transactions",
             "pages": [
               "POST /v1/transactions/payout",
+              "POST /v1/transactions/pay-in/merchant-wallet",
+              "POST /v1/transactions/pay-in/customer-wallet",
               "GET /v1/transactions",
               "GET /v1/transactions/ref/{reference}",
               "GET /v1/transactions/{id}",
               "POST /v1/transactions/{id}/verify"
+            ]
+          },
+          {
+            "group": "Off-ramp",
+            "pages": [
+              "POST /v1/offramp/quote",
+              "POST /v1/offramp",
+              "GET /v1/offramp/{id}",
+              "GET /v1/offramp/{id}/status"
             ]
           }
         ]
