@@ -1,0 +1,160 @@
+---
+title: "Pay-in integration"
+sidebarTitle: "Pay-in integration"
+description: "Accept money through Capisum — fiat virtual accounts and crypto deposit addresses."
+keywords: ["pay-in", "virtual account", "deposit", "Yativo", "Fincra", "Quidax", "Bitnob", "customer", "pay-in destination"]
+icon: "money-bill-wave"
+---
+
+Capisum supports two pay-in shapes:
+
+| Shape | Use when | Endpoints |
+| --- | --- | --- |
+| **Virtual account** | Customer sends fiat via bank transfer | Customers + pay-in destinations |
+| **Crypto wallet** | Customer sends crypto on-chain | Merchant / customer wallet pay-in |
+
+Both create Capisum `pay_in` transactions when funds arrive. Listen for [webhooks](/guides/webhooks) (`transaction.settled` / `transaction.failed`).
+
+## Virtual accounts (fiat)
+
+Providers: **Yativo** and **Fincra**. Flow:
+
+```text
+Customer → Pay-in destination (bank details) → User pays in → Webhook → pay_in transaction
+```
+
+### 1. Create a customer
+
+[`POST /v1/customers`](/api-reference)
+
+```bash
+curl -X POST "$CAPISUM_BASE_URL/v1/customers" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "individual",
+    "name": "Ada Okafor",
+    "email": "ada@example.com",
+    "phone": "+2348012345678",
+    "country": "NG",
+    "reference": "merchant-customer-1"
+  }'
+```
+
+Use the returned Capisum `id` (`cus_…`) everywhere. Provider customer IDs stay internal.
+
+Yativo typically needs `email`, `phone` (E.164), and `country` before a destination can be issued. Supply them up front.
+
+### 2. Create a pay-in destination
+
+[`POST /v1/pay-in-destinations`](/api-reference)
+
+`type` is `bank_account` only on this endpoint. Crypto addresses use the wallet pay-in endpoints below.
+
+**Yativo** (BRL, MXN/MXNBASE, USD/USDBASE, EUR/EURBASE):
+
+```bash
+curl -X POST "$CAPISUM_BASE_URL/v1/pay-in-destinations" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer_id": "cus_…",
+    "provider": "yativo",
+    "type": "bank_account",
+    "currency": "MXN"
+  }'
+```
+
+If the provider still needs KYC, the response is `status: verification_required` with a `verification_url`. Send the customer there, then retry.
+
+**Fincra** (NGN, GHS, KES — permanent VAs per [Fincra docs](https://docs.fincra.com/docs/fincra-virtual-accounts)):
+
+```bash
+curl -X POST "$CAPISUM_BASE_URL/v1/pay-in-destinations" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer_id": "cus_…",
+    "provider": "fincra",
+    "type": "bank_account",
+    "currency": "NGN",
+    "metadata": {
+      "bvn": "12345678901",
+      "channel": "globus"
+    }
+  }'
+```
+
+NGN requires `metadata.bvn` (11 digits). Optional `metadata.channel` selects the issuing bank (for example `globus`, `wema`, `moniepoint`). GHS and KES do not require BVN. USD/EUR/GBP FCY accounts are not supported on Capisum yet.
+
+Successful responses return normalized `details` (`account_number`, `bank_name`, …) you can show the payer. Destinations are reusable for the same customer, provider, type, and currency.
+
+List or fetch destinations with [`GET /v1/pay-in-destinations`](/api-reference) and [`GET /v1/pay-in-destinations/{id}`](/api-reference).
+
+### 3. Wait for the deposit
+
+When the user pays into the virtual account, Capisum matches the provider webhook to the destination, creates a `pay_in` transaction, and sends you `transaction.settled` (or `transaction.failed`).
+
+## Crypto wallet deposit addresses
+
+Providers: **Quidax** and **Bitnob**. These endpoints mint a deposit address and return a Capisum transaction immediately. They do **not** go through pay-in destinations.
+
+| Endpoint | Who owns the funds |
+| --- | --- |
+| [`POST /v1/transactions/pay-in/merchant-wallet`](/api-reference) | Merchant wallet |
+| [`POST /v1/transactions/pay-in/customer-wallet`](/api-reference) | Customer-attributed wallet / sub-account |
+
+Both require `X-Idempotency-Key`, `amount` (8-decimal minor units for crypto), `network` (for example `trc20`), and usually `provider`.
+
+**Merchant wallet**
+
+```bash
+curl -X POST "$CAPISUM_BASE_URL/v1/transactions/pay-in/merchant-wallet" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "X-Idempotency-Key: payin-merchant-123" \
+  -d '{
+    "amount": "500000000",
+    "asset": "usdt",
+    "network": "trc20",
+    "provider": "quidax"
+  }'
+```
+
+**Customer wallet** (requires `customer.email`):
+
+```bash
+curl -X POST "$CAPISUM_BASE_URL/v1/transactions/pay-in/customer-wallet" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "X-Idempotency-Key: payin-customer-123" \
+  -d '{
+    "amount": "500000000",
+    "asset": "usdt",
+    "network": "trc20",
+    "provider": "bitnob",
+    "customer": {
+      "email": "ada@example.com",
+      "name": "Ada Okafor"
+    }
+  }'
+```
+
+The response includes `deposit` with the address to fund and `deposit.wallet` (`merchant_wallet` or `customer_wallet`). See [Providers](/guides/providers) for Quidax vs Bitnob differences.
+
+## Go-live checklist
+
+<Steps>
+  <Step title="Connect providers in staging">
+    Connect Yativo and/or Fincra for fiat VAs, and Quidax and/or Bitnob for crypto, with sandbox credentials. Paste each provider’s Capisum webhook URL from the dashboard.
+  </Step>
+  <Step title="Exercise the flow">
+    Create a customer and destination (or a wallet pay-in), fund the test account or address, and confirm `transaction.settled` arrives at your webhook endpoint.
+  </Step>
+  <Step title="Verify signatures">
+    Validate `X-Capisum-Signature` as described in [Webhooks](/guides/webhooks).
+  </Step>
+  <Step title="Go live when ready">
+    Switch to live credentials and a production API key. Do not process real deposits until staging is green end-to-end.
+  </Step>
+</Steps>

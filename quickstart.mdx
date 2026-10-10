@@ -61,6 +61,15 @@ curl -s "$CAPISUM_BASE_URL/v1/providers" \
 
 ## 4. Create a payout
 
+First list usable rails for your connected providers:
+
+```bash
+curl -s "$CAPISUM_BASE_URL/v1/payouts/capabilities" \
+  -H "Authorization: Bearer $CAPISUM_API_KEY"
+```
+
+Then create a payout (NGN bank example):
+
 ```bash
 curl -s -X POST "$CAPISUM_BASE_URL/v1/transactions/payout" \
   -H "Authorization: Bearer $CAPISUM_API_KEY" \
@@ -72,6 +81,7 @@ curl -s -X POST "$CAPISUM_BASE_URL/v1/transactions/payout" \
     "provider": "paystack",
     "destination": {
       "type": "bank_account",
+      "rail": "bank_transfer",
       "bank_id": "ng.opay",
       "account_number": "7068270185",
       "account_name": "Test Recipient"
@@ -79,7 +89,7 @@ curl -s -X POST "$CAPISUM_BASE_URL/v1/transactions/payout" \
   }'
 ```
 
-The response returns `status: queued`. Capisum submits the payout to the provider asynchronously.
+For Yativo USD ACH and other corridors, see [Payout integration](/guides/payouts). The response returns `status: queued`. Capisum submits the payout to the provider asynchronously.
 
 ## 5. Check status
 

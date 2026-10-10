@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Capisum API",
-    "description": "API for creating payouts and querying transactions. Authenticate with an organization API key (`Authorization: Bearer cps_...`). The key's environment (staging or production) scopes provider credentials.\n\n**Shipped today:** Payouts in NGN, GHS, and KES.",
+    "description": "API for creating payouts, pay-ins, and off-ramps. Authenticate with an organization API key (`Authorization: Bearer cps_...`). The key's environment (staging or production) scopes provider credentials.\n\n**Shipped today:** Multi-corridor payouts, fiat/crypto pay-in, and crypto-to-fiat off-ramp.",
     "version": "1.0.0",
     "contact": {
       "name": "Capisum Support",
@@ -25,6 +25,21 @@
     }
   ],
   "tags": [
+    {
+      "name": "Conversion"
+    },
+    {
+      "name": "Customers"
+    },
+    {
+      "name": "Off-ramp"
+    },
+    {
+      "name": "On-ramp"
+    },
+    {
+      "name": "Pay-in destinations"
+    },
     {
       "name": "Payouts"
     },
@@ -64,7 +79,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Includes bank payout providers (including Bitnob crypto-funded fiat payouts) and crypto wallet payouts (Quidax).",
+        "description": "Returns provider slugs Capisum can route to when connected in your workspace. Includes bank payout providers, crypto wallet pay-in/payout providers, and off-ramp.",
         "security": [
           {
             "apiKeyAuth": []
@@ -94,7 +109,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns supported payout providers, currencies, and destination types for the current contract version. Includes NGN bank payouts (Fincra, Paystack, Flutterwave, PalmPay, Quidax, Bitnob), Bitnob GHS/KES bank corridors, and crypto_wallet payouts (Quidax: USDT/USDC/BTC/ETH/SOL/XLM; Bitnob: BTC/USDT/USDC on-chain). Bitnob fiat entries include settlement metadata (wallet-funded / offchain) so you know which Bitnob crypto wallet funds those payouts.",
+        "description": "Returns payout currencies, destination types, and per-rail `required_fields` that the authenticated organization can actually use in the current environment. Only connected/configured providers are included \u2014 theoretical unconnected routes are omitted. Use each provider's `rails` array for currency, country, rail id, and required fields.",
         "security": [
           {
             "apiKeyAuth": []
@@ -221,7 +236,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Returns the available balance for a connected provider in the API key's environment. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; crypto uses 8 decimals). Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, `quidax`, and `bitnob`. For Bitnob without a currency filter, Capisum returns the default USDT wallet balance. Choose the funding wallet per payout with `metadata.from_asset` (USDT, USDC, or BTC).",
+        "description": "Returns the available balance for a connected provider in the API key's environment. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals). Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, and `quidax`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -281,7 +296,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Resolve a bank account name through a connected provider that supports account resolution. Use `bank_id` from `GET /v1/reference/banks` when possible. Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, `quidax`, and `bitnob`. For Bitnob, currency selects the corridor: NGN resolves bank accounts by bank code; GHS resolves mobile money (network such as MTN as bank_code, phone with country code as account_number).",
+        "description": "Resolve a bank account name through a connected provider that supports account resolution. `provider` is optional: omit it to use the dashboard account default, or enable Override request provider to ignore a sent provider. Use `bank_id` from `GET /v1/reference/banks` when possible. Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, and `quidax`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -330,7 +345,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for supported providers and rails. NGN bank payouts use `GET /v1/reference/banks` for canonical `bank_id` values. Crypto payouts (Quidax) use top-level `currency` (e.g. `BTC`) with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`. When `provider` is set, the destination must be valid for that provider.\n\nFor Bitnob fiat payouts, set `metadata.from_asset` to choose the funding wallet (`USDT` default, or `USDC` / `BTC`).\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for provider-specific currencies, countries, rails, and `required_fields`. Validation depends on the resolved provider + country + currency + rail (USD ACH differs from NGN bank transfer). NGN catalog banks use `GET /v1/reference/banks` for `bank_id`. Crypto wallet payouts use top-level `currency` with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -369,6 +384,30 @@
                       "account_name": "Test Recipient"
                     },
                     "description": "NGN vendor payout"
+                  }
+                },
+                "usd_ach_yativo": {
+                  "summary": "USD ACH payout (Yativo)",
+                  "value": {
+                    "amount": "25000",
+                    "currency": "USD",
+                    "provider": "yativo",
+                    "destination": {
+                      "type": "bank_account",
+                      "country": "US",
+                      "rail": "ach",
+                      "recipient": {
+                        "type": "individual",
+                        "name": "Alex Smith",
+                        "email": "alex@example.com",
+                        "physical_address": "123 Main Street, New York"
+                      },
+                      "account_number": "123456789",
+                      "routing_number": "021000021",
+                      "account_type": "checking",
+                      "account_name": "Alex Smith"
+                    },
+                    "description": "USD ACH payout via yativo"
                   }
                 },
                 "ghs_mobile_money": {
@@ -466,7 +505,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Generate a crypto deposit address on the merchant provider account (Quidax `me`, or the Bitnob company wallet). Funds settle to the merchant wallet. Customer is optional Capisum metadata and is not sent to the provider.\n\nSend `asset` (e.g. `usdt`) and `network` (e.g. `trc20`). Amounts are 8-decimal minor units (for example, `500000000` = 5 USDT). The address is returned on `deposit`, with `deposit.wallet` = `merchant_wallet`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Generate a crypto deposit address on the merchant Quidax or Bitnob account. Funds settle to the merchant wallet. Customer is optional Capisum metadata.\n\nSend `asset` (e.g. `usdt`) and `network` (e.g. `trc20`). Amounts are 8-decimal minor units (for example, `500000000` = 5 USDT). The address is returned on `deposit`, with `deposit.wallet` = `merchant_wallet`. Listen for webhooks; `transaction.settled` confirms the deposit.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -534,7 +573,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Generate a crypto deposit address attributed to `customer.email`.\n\n- **Quidax**: creates (or reuses) a sub-account; funds settle to that customer's wallet.\n- **Bitnob**: creates (or reuses) a Bitnob customer and passes `customer_email` when generating the address. Deposits still credit the company Bitnob balance and are attributed to that customer for reporting \u2014 not an isolated sub-wallet.\n\nEmail identifies the customer; `customer.name` is optional and mapped to first/last name.\n\nSend `asset` (e.g. `usdt`), `network` (e.g. `trc20`), and `customer.email`. Amounts are 8-decimal minor units (for example, `500000000` = 5 USDT). The address is returned on `deposit`, with `deposit.wallet` = `customer_wallet`. Listen for webhooks; `deposit.successful` settles the pay-in.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Generate a crypto deposit address attributed to `customer.email` (Quidax sub-account or Bitnob customer-linked address). `customer.name` is optional.\n\nSend `asset` (e.g. `usdt`), `network` (e.g. `trc20`), and `customer.email`. Amounts are 8-decimal minor units (for example, `500000000` = 5 USDT). The address is returned on `deposit`, with `deposit.wallet` = `customer_wallet`. Listen for webhooks; `transaction.settled` confirms the deposit.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -635,6 +674,8 @@
                 "pay_in",
                 "payout",
                 "refund",
+                "onramp",
+                "offramp",
                 "conversion"
               ]
             }
@@ -838,6 +879,1153 @@
           }
         ]
       }
+    },
+    "/v1/customers": {
+      "post": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Create customer",
+        "operationId": "post_v1_customers",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "description": "Create a Capisum customer, resolve the pay-in provider (dashboard configuration wins over request `provider` when both exist), immediately create the provider customer when the adapter requires one, and return the Capisum customer with selected provider and normalized verification status/requirements. Provider customer IDs stay internal.\n\nSome pay-in providers require `email`, `phone` (E.164), and `country` before they will issue a destination. Supplying them up front avoids a second round trip.\n\n`reference` is your own identifier and is unique per environment \u2014 reusing it returns the existing customer instead of creating a duplicate.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerRequest"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "List customers",
+        "operationId": "get_v1_customers",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "description": "List customers in the API key's environment. Results are cursor-paginated.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "starting_after",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Customer ID cursor for the next page."
+          },
+          {
+            "name": "ending_before",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Customer ID cursor for the previous page."
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          {
+            "name": "reference",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "individual",
+                "business"
+              ]
+            }
+          },
+          {
+            "name": "verification_status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "requires_action",
+                "submitted",
+                "approved",
+                "rejected"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/v1/customers/{id}": {
+      "get": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Get customer by ID",
+        "operationId": "get_v1_customers_id",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "description": "Read a customer, including the current `verification_status`. While verification is still open, Capisum refreshes status from the provider. Poll this after `POST /v1/customers/{id}/kyc`. `verification_url` is only present as a hosted fallback when the provider exposes one.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cus_5f2c1a9b7e4d0c3a8b6f2e"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/customers/{id}/kyc": {
+      "post": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Submit customer KYC",
+        "operationId": "post_v1_customers_id_kyc",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Submit identity verification for a customer through the pay-in provider's KYC API. Capisum loads the existing ProviderCustomer mapping, translates the provider-neutral payload, submits it to the provider KYC API, and normalizes status to `submitted`, `approved`, `rejected`, or `requires_action`. `provider` / `currency` are optional when the customer was already bound at create time; when both request and dashboard routing exist, dashboard wins.\n\nPay-in destinations that require provider KYC stay blocked until the provider reports approval (`verification_status: approved` and destination creation allowed).",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cus_5f2c1a9b7e4d0c3a8b6f2e"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerKycRequest"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "Update customer KYC",
+        "operationId": "put_v1_customers_id_kyc",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Correct or complete a KYC submission after a rejection. Send only the fields that need updating, plus `provider` or `currency` for routing.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cus_5f2c1a9b7e4d0c3a8b6f2e"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerKycUpdateRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/pay-in-destinations": {
+      "post": {
+        "tags": [
+          "Pay-in destinations"
+        ],
+        "summary": "Create pay-in destination",
+        "operationId": "post_v1_pay-in-destinations",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayInDestinationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Create a virtual account where a customer can send fiat. Capisum resolves the provider, creates or reuses the provider's customer record, checks verification, then returns normalized bank account details you can display directly.\n\n`type: bank_account` is the only destination type on this endpoint today. Yativo covers BRL, MXN/MXNBASE, USD/USDBASE, and EUR/EURBASE. Fincra covers NGN (requires `metadata.bvn`), GHS, and KES. Crypto deposit addresses use POST /v1/transactions/pay-in/merchant-wallet or POST /v1/transactions/pay-in/customer-wallet.\n\nWhen the provider still needs the customer to finish verification, the response returns `status: verification_required`. Submit KYC with `POST /v1/customers/{id}/kyc` (primary), or use `verification_url` only when the provider exposes a hosted fallback, then retry.\n\nDestinations are reusable: repeating the same request for the same customer, provider, type, and currency returns the existing active destination rather than creating another.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayInDestinationRequest"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Pay-in destinations"
+        ],
+        "summary": "List pay-in destinations",
+        "operationId": "get_v1_pay-in-destinations",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayInDestinationListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "description": "List pay-in destinations, optionally filtered by customer. Results are cursor-paginated.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "starting_after",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Destination ID cursor for the next page."
+          },
+          {
+            "name": "ending_before",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Destination ID cursor for the previous page."
+          },
+          {
+            "name": "customer_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bank_account"
+              ]
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "active",
+                "inactive",
+                "expired"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/v1/pay-in-destinations/{id}": {
+      "get": {
+        "tags": [
+          "Pay-in destinations"
+        ],
+        "summary": "Get pay-in destination by ID",
+        "operationId": "get_v1_pay-in-destinations_id",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayInDestinationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "description": "Read a destination and its banking or crypto details. Deposits into this destination create `pay_in` transactions linked to both the destination and its customer.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "pid_9a4c2f7b1e8d0a3c5b6f2e"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/onramp/quote": {
+      "post": {
+        "tags": [
+          "On-ramp"
+        ],
+        "summary": "Create on-ramp quote",
+        "operationId": "post_v1_onramp_quote",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Price a fiat-to-crypto on-ramp. Amounts are source-asset minor units (NGN/GHS use 2 decimals; crypto uses 8). Requires `X-Idempotency-Key`. Reuse the same key to refresh an expired quote without creating a duplicate.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries. Reusing a key returns or refreshes the original quote."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RampQuoteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/onramp": {
+      "post": {
+        "tags": [
+          "On-ramp"
+        ],
+        "summary": "Initiate on-ramp",
+        "operationId": "post_v1_onramp",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Start a fiat-to-crypto on-ramp from a quote. Returns payment instructions (bank account or mobile money). Settlement happens asynchronously via webhooks. Requires `X-Idempotency-Key`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries. Reusing a key returns the original transaction."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnrampInitiateRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/onramp/{id}": {
+      "get": {
+        "tags": [
+          "On-ramp"
+        ],
+        "summary": "Get on-ramp",
+        "operationId": "get_v1_onramp_id",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/onramp/{id}/status": {
+      "get": {
+        "tags": [
+          "On-ramp"
+        ],
+        "summary": "Get on-ramp status",
+        "operationId": "get_v1_onramp_id_status",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Poll the provider and return the latest Capisum status. Does not mark completion from provider acceptance alone.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/onramp/{id}/otp": {
+      "post": {
+        "tags": [
+          "On-ramp"
+        ],
+        "summary": "Confirm on-ramp mobile money OTP",
+        "operationId": "post_v1_onramp_id_otp",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Confirm a GHS mobile-money OTP after initiating an on-ramp with payment.type = mobile_money.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnrampOtpRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/offramp/quote": {
+      "post": {
+        "tags": [
+          "Off-ramp"
+        ],
+        "summary": "Create off-ramp quote",
+        "operationId": "post_v1_offramp_quote",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Price a crypto-to-fiat off-ramp. Amounts are source-asset minor units. Requires `X-Idempotency-Key`. Current corridors require `network`, `source_country`, and `destination_country`. Supported provider today: `harbor` (OwlPay Harbor) via `provider` or routing.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RampQuoteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/offramp": {
+      "post": {
+        "tags": [
+          "Off-ramp"
+        ],
+        "summary": "Initiate off-ramp",
+        "operationId": "post_v1_offramp",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Start a crypto-to-fiat off-ramp from a Capisum quote. Returns crypto deposit instructions; fiat settlement completes asynchronously via Capisum webhooks. Requires `X-Idempotency-Key`. Current corridors require an approved Capisum `customer_id`, `source.address`, and bank/beneficiary destination fields. Supported provider today: `harbor`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfframpInitiateRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/offramp/{id}": {
+      "get": {
+        "tags": [
+          "Off-ramp"
+        ],
+        "summary": "Get off-ramp",
+        "operationId": "get_v1_offramp_id",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/offramp/{id}/status": {
+      "get": {
+        "tags": [
+          "Off-ramp"
+        ],
+        "summary": "Get off-ramp status",
+        "operationId": "get_v1_offramp_id_status",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/conversion/quote": {
+      "post": {
+        "tags": [
+          "Conversion"
+        ],
+        "summary": "Create conversion quote",
+        "operationId": "post_v1_conversion_quote",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Price an asset-to-asset conversion with no bank collection or payout. Requires `X-Idempotency-Key`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RampQuoteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/conversion/execute": {
+      "post": {
+        "tags": [
+          "Conversion"
+        ],
+        "summary": "Execute conversion",
+        "operationId": "post_v1_conversion_execute",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "description": "Execute a conversion quote. Status remains processing until the provider settles. Requires `X-Idempotency-Key`.",
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,128}$"
+            },
+            "description": "Unique key for safe retries."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversionExecuteRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/conversion/{id}/status": {
+      "get": {
+        "tags": [
+          "Conversion"
+        ],
+        "summary": "Get conversion status",
+        "operationId": "get_v1_conversion_id_status",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RampTransactionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "502": {
+            "$ref": "#/components/responses/ProviderError"
+          }
+        },
+        "security": [
+          {
+            "apiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -915,36 +2103,33 @@
               },
               "onramp": {
                 "type": "boolean",
-                "example": false,
-                "description": "Reserved. Fiat-to-crypto on-ramp is not shipped yet."
+                "example": false
               },
               "offramp": {
                 "type": "boolean",
-                "example": false,
-                "description": "Reserved. Crypto-to-fiat off-ramp is not shipped yet."
+                "example": false
               },
               "conversion": {
                 "type": "boolean",
-                "example": false,
-                "description": "Reserved. Asset conversion is not shipped yet."
+                "example": false
               }
             }
           },
           "supported_currencies": {
             "type": "array",
             "items": {
-              "type": "string"
-            },
-            "description": "Provider payout currencies (fiat and/or crypto)."
+              "type": "string",
+              "enum": [
+                "NGN"
+              ]
+            }
           },
           "supported_destinations": {
             "type": "array",
             "items": {
               "type": "string",
               "enum": [
-                "bank_account",
-                "crypto_wallet",
-                "mobile_money"
+                "bank_account"
               ]
             }
           }
@@ -1034,13 +2219,12 @@
       "VerifyAccountRequest": {
         "type": "object",
         "required": [
-          "provider",
           "account_number"
         ],
         "properties": {
           "provider": {
             "type": "string",
-            "description": "Connected provider slug to use for resolution (for example, `palmpay` or `paystack`).",
+            "description": "Connected provider slug (for example, `palmpay` or `paystack`). Optional: when omitted, Capisum uses the dashboard account default. When Override request provider is enabled, this field is ignored.",
             "example": "palmpay"
           },
           "account_number": {
@@ -1164,10 +2348,9 @@
       "PayoutBankDestination": {
         "type": "object",
         "required": [
-          "type",
-          "account_number",
-          "bank_id"
+          "type"
         ],
+        "description": "Bank / local rail destination. Required fields depend on the resolved provider rail (see GET /v1/payouts/capabilities \u2192 providers[].rails[].required_fields).",
         "properties": {
           "type": {
             "type": "string",
@@ -1175,15 +2358,118 @@
               "bank_account"
             ]
           },
+          "rail": {
+            "type": "string",
+            "enum": [
+              "bank_transfer",
+              "ach",
+              "spei",
+              "pix",
+              "sepa"
+            ],
+            "description": "Payout rail. Inferred when unambiguous; otherwise required (PAYOUT_RAIL_REQUIRED)."
+          },
+          "recipient": {
+            "type": "object",
+            "description": "Beneficiary profile when the provider rail requires it.",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "individual",
+                  "business"
+                ]
+              },
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "physical_address": {
+                "type": "string"
+              }
+            }
+          },
           "account_number": {
-            "type": "string"
+            "type": "string",
+            "description": "Bank account number, CLABE, CCI, or similar local account identifier."
           },
           "bank_id": {
             "type": "string",
-            "description": "Capisum canonical bank id from GET /v1/reference/banks (e.g. ng.opay).",
+            "description": "Capisum canonical bank id from GET /v1/reference/banks (e.g. ng.opay). Required for many NGN rails.",
             "example": "ng.opay"
           },
+          "bank_code": {
+            "type": "string",
+            "description": "Corridor bank code when Capisum bank_id is not used."
+          },
           "account_name": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "deprecated": true,
+            "description": "Deprecated. Prefer recipient.name."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "deprecated": true
+          },
+          "physical_address": {
+            "type": "string",
+            "deprecated": true
+          },
+          "recipient_type": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "business"
+            ],
+            "deprecated": true
+          },
+          "routing_number": {
+            "type": "string",
+            "description": "US ACH routing number."
+          },
+          "account_type": {
+            "type": "string",
+            "enum": [
+              "checking",
+              "savings"
+            ]
+          },
+          "iban": {
+            "type": "string"
+          },
+          "bic": {
+            "type": "string"
+          },
+          "pix_key": {
+            "type": "string"
+          },
+          "pix_key_type": {
+            "type": "string",
+            "enum": [
+              "cpf",
+              "cnpj",
+              "phone",
+              "email",
+              "evp"
+            ]
+          },
+          "rut": {
+            "type": "string"
+          },
+          "document_type": {
+            "type": "string"
+          },
+          "document_number": {
+            "type": "string"
+          },
+          "cbu_cvu": {
             "type": "string"
           },
           "country": {
@@ -1208,6 +2494,12 @@
             "type": "string",
             "enum": [
               "crypto_wallet"
+            ]
+          },
+          "rail": {
+            "type": "string",
+            "enum": [
+              "crypto"
             ]
           },
           "address": {
@@ -1247,6 +2539,12 @@
               "mobile_money"
             ]
           },
+          "rail": {
+            "type": "string",
+            "enum": [
+              "mobile_money"
+            ]
+          },
           "account_number": {
             "type": "string",
             "description": "Mobile wallet number."
@@ -1274,7 +2572,7 @@
           "amount",
           "network"
         ],
-        "description": "Merchant wallet pay-in. Deposit address on the merchant provider account (Quidax or Bitnob).",
+        "description": "Merchant wallet pay-in. The deposit address is created on the merchant Quidax or Bitnob account.",
         "properties": {
           "amount": {
             "oneOf": [
@@ -1301,12 +2599,12 @@
           },
           "network": {
             "type": "string",
-            "description": "Blockchain network (e.g. trc20, erc20, bep20, bitcoin).",
+            "description": "Quidax blockchain network (e.g. trc20, erc20, bep20, bitcoin).",
             "example": "trc20"
           },
           "customer": {
             "type": "object",
-            "description": "Optional Capisum customer record. Not sent to the provider for merchant-wallet pay-ins.",
+            "description": "Optional Capisum customer record. Not sent to Quidax for merchant-wallet pay-ins.",
             "properties": {
               "email": {
                 "type": "string",
@@ -1344,7 +2642,7 @@
           "network",
           "customer"
         ],
-        "description": "Customer wallet pay-in. Quidax: deposit on a sub-account. Bitnob: address attributed to a registered Bitnob customer (company balance with attribution).",
+        "description": "Customer wallet pay-in. The deposit address is attributed to customer.email (Quidax sub-account or Bitnob customer address).",
         "properties": {
           "amount": {
             "oneOf": [
@@ -1371,7 +2669,7 @@
           },
           "network": {
             "type": "string",
-            "description": "Blockchain network (e.g. trc20, erc20, bep20, bitcoin).",
+            "description": "Quidax blockchain network (e.g. trc20, erc20, bep20, bitcoin).",
             "example": "trc20"
           },
           "customer": {
@@ -1379,7 +2677,7 @@
             "required": [
               "email"
             ],
-            "description": "Identifies the customer. Email is unique; name is optional and mapped to first/last name.",
+            "description": "Identifies the Quidax sub-account. Email is unique and immutable; name is optional and mapped to first/last name.",
             "properties": {
               "email": {
                 "type": "string",
@@ -1459,31 +2757,15 @@
           },
           "description": {
             "type": "string",
-            "description": "Unified payout memo. Capisum maps this to each provider (Bitnob payment_reason, Quidax narration/transaction_note, PalmPay remark, Flutterwave narration, etc.)."
+            "description": "Human-readable payout description."
           },
           "metadata": {
             "type": "object",
-            "additionalProperties": true,
-            "description": "Optional payout metadata. For Bitnob wallet-funded fiat payouts, set `from_asset` to `USDT` (default), `USDC`, or `BTC` to choose which Bitnob wallet is debited. Do not send provider memo aliases here \u2014 use top-level `description`.",
-            "properties": {
-              "from_asset": {
-                "type": "string",
-                "enum": [
-                  "USDT",
-                  "USDC",
-                  "BTC"
-                ],
-                "description": "Bitnob funding wallet for offchain fiat payouts. Defaults to USDT when omitted.",
-                "example": "USDT"
-              }
-            },
-            "example": {
-              "from_asset": "USDT"
-            }
+            "additionalProperties": true
           },
           "provider": {
             "type": "string",
-            "description": "Optional explicit provider slug (for example, `fincra`, `paystack`, `flutterwave`, `palmpay`, `quidax`, `bitnob`)."
+            "description": "Optional explicit provider slug (for example, `fincra`, `paystack`, `flutterwave`, `palmpay`, `yativo`, `quidax`, `bitnob`)."
           },
           "recipient": {
             "deprecated": true,
@@ -1533,12 +2815,20 @@
                   "type": "string",
                   "example": "NG"
                 },
+                "countries": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Present when more than one country appears across provider rails for this currency."
+                },
                 "destinations": {
                   "type": "array",
                   "items": {
                     "type": "string",
                     "enum": [
                       "bank_account",
+                      "mobile_money",
                       "crypto_wallet"
                     ]
                   }
@@ -1556,12 +2846,14 @@
               "type": "string",
               "enum": [
                 "bank_account",
+                "mobile_money",
                 "crypto_wallet"
               ]
             },
             "example": [
               "bank_account",
-              "crypto_wallet"
+              "crypto_wallet",
+              "mobile_money"
             ]
           },
           "providers": {
@@ -1572,16 +2864,17 @@
                 "slug",
                 "name",
                 "currencies",
-                "destinations"
+                "destinations",
+                "rails"
               ],
               "properties": {
                 "slug": {
                   "type": "string",
-                  "example": "fincra"
+                  "example": "yativo"
                 },
                 "name": {
                   "type": "string",
-                  "example": "Fincra"
+                  "example": "Yativo"
                 },
                 "currencies": {
                   "type": "array",
@@ -1595,8 +2888,65 @@
                     "type": "string",
                     "enum": [
                       "bank_account",
+                      "mobile_money",
                       "crypto_wallet"
                     ]
+                  }
+                },
+                "rails": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "rail",
+                      "currency",
+                      "country",
+                      "destinations"
+                    ],
+                    "properties": {
+                      "rail": {
+                        "type": "string",
+                        "enum": [
+                          "bank_transfer",
+                          "ach",
+                          "spei",
+                          "pix",
+                          "sepa",
+                          "mobile_money",
+                          "crypto"
+                        ],
+                        "example": "ach"
+                      },
+                      "currency": {
+                        "type": "string",
+                        "example": "USD"
+                      },
+                      "country": {
+                        "type": "string",
+                        "example": "US"
+                      },
+                      "destinations": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "bank_account",
+                            "mobile_money",
+                            "crypto_wallet"
+                          ]
+                        }
+                      },
+                      "required_fields": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Capisum destination fields required for this rail (e.g. recipient.name, routing_number)."
+                      },
+                      "notes": {
+                        "type": "string"
+                      }
+                    }
                   }
                 }
               }
@@ -1643,23 +2993,8 @@
           },
           "bank_code": {
             "type": "string",
-            "description": "Provider bank code when `provider` is set; otherwise a display code (CBN when known, else the first available provider code).",
+            "description": "Provider bank code when `provider` is set; otherwise the CBN code for NGN banks.",
             "example": "100004"
-          },
-          "supported_providers": {
-            "type": "array",
-            "description": "Providers with a non-null code for this bank. Present only on unfiltered lists.",
-            "items": {
-              "type": "string"
-            },
-            "example": [
-              "paystack",
-              "flutterwave",
-              "fincra",
-              "quidax",
-              "bitnob",
-              "palmpay"
-            ]
           }
         }
       },
@@ -1677,7 +3012,7 @@
         "properties": {
           "contract_version": {
             "type": "string",
-            "example": "2026-09"
+            "example": "2026-03"
           },
           "description": {
             "type": "string"
@@ -1757,6 +3092,8 @@
               "pay_in",
               "payout",
               "refund",
+              "onramp",
+              "offramp",
               "conversion"
             ]
           },
@@ -1792,6 +3129,18 @@
           "provider_reference": {
             "type": "string",
             "nullable": true
+          },
+          "customer_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "cus_5f2c1a9b7e4d0c3a8b6f2e",
+            "description": "Customer this transaction belongs to, when one is known."
+          },
+          "pay_in_destination_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "pid_9a4c2f7b1e8d0a3c5b6f2e",
+            "description": "Pay-in destination the money arrived in, for `pay_in` transactions."
           },
           "description": {
             "type": "string",
@@ -1888,7 +3237,7 @@
               "merchant_wallet",
               "customer_wallet"
             ],
-            "description": "merchant_wallet settles to the merchant provider account. customer_wallet is per-customer attribution (Quidax sub-account / Bitnob customer)."
+            "description": "merchant_wallet settles to the merchant Quidax account. customer_wallet settles to a per-customer sub-account."
           }
         }
       },
@@ -2124,6 +3473,1170 @@
           }
         }
       },
+      "CustomerRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "business"
+            ],
+            "default": "individual"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ada Okafor"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "ada@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+2348012345678",
+            "description": "E.164 format. Required by some pay-in providers."
+          },
+          "country": {
+            "type": "string",
+            "example": "BR",
+            "description": "ISO 3166-1 alpha-2 or alpha-3. Required by some pay-in providers."
+          },
+          "provider": {
+            "type": "string",
+            "example": "yativo",
+            "description": "Preferred pay-in provider. Ignored when the dashboard already has a matching pay_in route for `currency` (dashboard configuration wins)."
+          },
+          "currency": {
+            "type": "string",
+            "example": "MXN",
+            "description": "Used with dashboard routing defaults to resolve the pay-in provider."
+          },
+          "reference": {
+            "type": "string",
+            "example": "merchant-customer-1",
+            "description": "Your own identifier. Unique per environment; reusing it returns the existing customer."
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "name",
+          "verification_status",
+          "requirements",
+          "environment",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cus_5f2c1a9b7e4d0c3a8b6f2e"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "business"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "example": "Ada Okafor"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "reference": {
+            "type": "string",
+            "nullable": true
+          },
+          "provider": {
+            "type": "string",
+            "nullable": true,
+            "example": "yativo",
+            "description": "Selected pay-in provider slug. Never a provider customer ID."
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "requires_action",
+              "submitted",
+              "approved",
+              "rejected"
+            ]
+          },
+          "verification_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Optional hosted verification fallback. Direct KYC via POST /v1/customers/{id}/kyc is the primary flow."
+          },
+          "requirements": {
+            "$ref": "#/components/schemas/CustomerVerificationRequirements"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "staging",
+              "production"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CustomerVerificationRequirements": {
+        "type": "object",
+        "required": [
+          "can_create_destination",
+          "due",
+          "next_action"
+        ],
+        "properties": {
+          "can_create_destination": {
+            "type": "boolean"
+          },
+          "due": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Provider-reported outstanding verification items, when available."
+          },
+          "next_action": {
+            "type": "string",
+            "enum": [
+              "submit_kyc",
+              "wait_for_review",
+              "complete_hosted_verification",
+              "none"
+            ]
+          }
+        }
+      },
+      "CustomerKycRequest": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CustomerIndividualKycRequest"
+          },
+          {
+            "$ref": "#/components/schemas/CustomerBusinessKycRequest"
+          }
+        ],
+        "description": "Provider-neutral KYC/KYB payload. Capisum maps fields onto the selected provider's documented API. `provider` / `currency` are optional when the customer already has a ProviderCustomer binding from create; dashboard routing wins when both exist."
+      },
+      "CustomerIndividualKycRequest": {
+        "type": "object",
+        "required": [
+          "type",
+          "first_name",
+          "last_name",
+          "email",
+          "calling_code",
+          "phone",
+          "birth_date",
+          "nationality",
+          "gender",
+          "tax_id",
+          "selfie_image",
+          "residential_address",
+          "identifying_information",
+          "employment_status",
+          "occupation_code",
+          "expected_monthly_payments_usd",
+          "source_of_funds",
+          "account_purpose",
+          "uploaded_documents"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "yativo"
+          },
+          "currency": {
+            "type": "string",
+            "example": "MXN"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "individual"
+            ]
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "middle_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "calling_code": {
+            "type": "string",
+            "example": "+1"
+          },
+          "phone": {
+            "type": "string",
+            "example": "5551234567",
+            "description": "Digits only, without calling code."
+          },
+          "birth_date": {
+            "type": "string",
+            "example": "1990-01-15"
+          },
+          "nationality": {
+            "type": "string",
+            "example": "US"
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female"
+            ]
+          },
+          "tax_id": {
+            "type": "string"
+          },
+          "selfie_image": {
+            "type": "string",
+            "description": "Hosted file URL or base64."
+          },
+          "bvn": {
+            "type": "string",
+            "description": "Required when nationality is NG."
+          },
+          "nin": {
+            "type": "string",
+            "description": "Required when nationality is NG."
+          },
+          "residential_address": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "identifying_information": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "employment_status": {
+            "type": "string"
+          },
+          "occupation_code": {
+            "type": "string"
+          },
+          "expected_monthly_payments_usd": {
+            "type": "string"
+          },
+          "source_of_funds": {
+            "type": "string"
+          },
+          "account_purpose": {
+            "type": "string"
+          },
+          "account_purpose_other": {
+            "type": "string"
+          },
+          "acting_as_intermediary": {
+            "type": "boolean"
+          },
+          "uploaded_documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "CustomerBusinessKycRequest": {
+        "type": "object",
+        "required": [
+          "type",
+          "business_legal_name",
+          "business_trade_name",
+          "business_description",
+          "email",
+          "business_type",
+          "registration_number",
+          "incorporation_date",
+          "registered_address",
+          "physical_address",
+          "associated_persons",
+          "account_purpose",
+          "source_of_funds",
+          "high_risk_activities",
+          "documents"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "yativo"
+          },
+          "currency": {
+            "type": "string",
+            "example": "MXN"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "business"
+            ]
+          },
+          "business_legal_name": {
+            "type": "string"
+          },
+          "business_trade_name": {
+            "type": "string"
+          },
+          "business_description": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "business_type": {
+            "type": "string"
+          },
+          "registration_number": {
+            "type": "string"
+          },
+          "incorporation_date": {
+            "type": "string",
+            "example": "2018-03-12"
+          },
+          "tax_id": {
+            "type": "string"
+          },
+          "registered_address": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "physical_address": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "associated_persons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "account_purpose": {
+            "type": "string"
+          },
+          "source_of_funds": {
+            "type": "string"
+          },
+          "high_risk_activities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "CustomerKycUpdateRequest": {
+        "type": "object",
+        "description": "Partial KYC correction fields plus `provider` or `currency` for routing.",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "yativo"
+          },
+          "currency": {
+            "type": "string",
+            "example": "MXN"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "business"
+            ]
+          },
+          "selfie_image": {
+            "type": "string"
+          },
+          "identifying_information": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "CustomerResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Customer"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        }
+      },
+      "CustomerListResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Customer"
+            }
+          },
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponseMeta"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "pagination"
+                ],
+                "properties": {
+                  "pagination": {
+                    "$ref": "#/components/schemas/PaginationMeta"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "PayInDestinationRequest": {
+        "type": "object",
+        "required": [
+          "customer_id",
+          "currency",
+          "type"
+        ],
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "example": "cus_5f2c1a9b7e4d0c3a8b6f2e"
+          },
+          "currency": {
+            "type": "string",
+            "example": "MXN"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "bank_account"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "example": "yativo",
+            "description": "Optional. Omit to let Capisum routing rules choose a pay-in provider."
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "PayInDestinationDetails": {
+        "type": "object",
+        "description": "Only the fields the provider returned are present.",
+        "properties": {
+          "account_name": {
+            "type": "string"
+          },
+          "account_number": {
+            "type": "string"
+          },
+          "bank_name": {
+            "type": "string"
+          },
+          "bank_code": {
+            "type": "string"
+          },
+          "routing_number": {
+            "type": "string"
+          },
+          "iban": {
+            "type": "string"
+          },
+          "swift_code": {
+            "type": "string"
+          },
+          "clabe": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "network": {
+            "type": "string"
+          },
+          "destination_tag": {
+            "type": "string"
+          },
+          "redirect_url": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "mobile_money_code": {
+            "type": "string"
+          }
+        }
+      },
+      "PayInDestination": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "currency",
+          "status",
+          "reusable",
+          "provider",
+          "details",
+          "rails"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "pid_9a4c2f7b1e8d0a3c5b6f2e"
+          },
+          "customer_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "cus_5f2c1a9b7e4d0c3a8b6f2e"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "bank_account"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "example": "MXN"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active",
+              "inactive",
+              "expired"
+            ]
+          },
+          "reusable": {
+            "type": "boolean"
+          },
+          "provider": {
+            "type": "string",
+            "example": "yativo"
+          },
+          "details": {
+            "$ref": "#/components/schemas/PayInDestinationDetails"
+          },
+          "rails": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "bank_transfer"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "staging",
+              "production"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PayInDestinationVerificationRequired": {
+        "type": "object",
+        "required": [
+          "customer_id",
+          "provider",
+          "status",
+          "verification_status",
+          "next_action",
+          "requirements"
+        ],
+        "description": "Returned instead of a destination when the provider still needs the customer to complete verification. Submit KYC via POST /v1/customers/{id}/kyc. `verification_url` is only a hosted fallback when the provider exposes one.",
+        "properties": {
+          "customer_id": {
+            "type": "string",
+            "example": "cus_5f2c1a9b7e4d0c3a8b6f2e"
+          },
+          "provider": {
+            "type": "string",
+            "example": "yativo"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verification_required"
+            ]
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "requires_action",
+              "submitted",
+              "approved",
+              "rejected"
+            ]
+          },
+          "verification_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "requirements": {
+            "$ref": "#/components/schemas/CustomerVerificationRequirements"
+          },
+          "next_action": {
+            "type": "string",
+            "enum": [
+              "submit_kyc",
+              "wait_for_review",
+              "complete_hosted_verification_or_submit_kyc"
+            ]
+          }
+        }
+      },
+      "PayInDestinationResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PayInDestination"
+              },
+              {
+                "$ref": "#/components/schemas/PayInDestinationVerificationRequired"
+              }
+            ]
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMeta"
+          }
+        }
+      },
+      "PayInDestinationListResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PayInDestination"
+            }
+          },
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponseMeta"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "pagination"
+                ],
+                "properties": {
+                  "pagination": {
+                    "$ref": "#/components/schemas/PaginationMeta"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "RampQuoteRequest": {
+        "type": "object",
+        "required": [
+          "source_asset",
+          "destination_asset",
+          "amount"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "quidax"
+          },
+          "source_asset": {
+            "type": "string",
+            "example": "NGN"
+          },
+          "destination_asset": {
+            "type": "string",
+            "example": "USDT"
+          },
+          "amount": {
+            "type": "string",
+            "example": "2000000",
+            "description": "Source amount in minor units."
+          },
+          "network": {
+            "type": "string",
+            "example": "trc20",
+            "description": "Required for on-ramp and off-ramp."
+          },
+          "source_country": {
+            "type": "string",
+            "example": "US",
+            "description": "ISO 3166-1 alpha-2. Required for current off-ramp corridors."
+          },
+          "destination_country": {
+            "type": "string",
+            "example": "HK",
+            "description": "ISO 3166-1 alpha-2. Required for current off-ramp corridors."
+          },
+          "customer_type": {
+            "type": "string",
+            "enum": [
+              "individual",
+              "business"
+            ]
+          },
+          "payment_method": {
+            "type": "string",
+            "example": "WIRE",
+            "description": "Optional payment-method preference when the provider returns multiple quote options."
+          }
+        }
+      },
+      "Quote": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "provider",
+          "source",
+          "destination",
+          "rate",
+          "expires_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "onramp",
+              "offramp",
+              "conversion"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "consumed",
+              "expired"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "example": "quidax"
+          },
+          "source": {
+            "type": "object",
+            "required": [
+              "asset",
+              "amount"
+            ],
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            }
+          },
+          "destination": {
+            "type": "object",
+            "required": [
+              "asset",
+              "amount"
+            ],
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            }
+          },
+          "rate": {
+            "type": "string"
+          },
+          "fee": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "asset": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            }
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "QuoteResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Quote"
+          }
+        }
+      },
+      "OnrampInitiateRequest": {
+        "type": "object",
+        "required": [
+          "quote_id",
+          "customer",
+          "destination"
+        ],
+        "properties": {
+          "quote_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "example": "quidax"
+          },
+          "customer": {
+            "type": "object",
+            "required": [
+              "email",
+              "first_name",
+              "last_name"
+            ],
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "first_name": {
+                "type": "string"
+              },
+              "last_name": {
+                "type": "string"
+              }
+            }
+          },
+          "destination": {
+            "type": "object",
+            "required": [
+              "address",
+              "network"
+            ],
+            "properties": {
+              "address": {
+                "type": "string"
+              },
+              "network": {
+                "type": "string",
+                "example": "trc20"
+              }
+            }
+          },
+          "payment": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "bank_account",
+                  "mobile_money"
+                ]
+              },
+              "phone": {
+                "type": "string"
+              },
+              "network_provider": {
+                "type": "string",
+                "example": "MTN"
+              }
+            }
+          }
+        }
+      },
+      "OfframpInitiateRequest": {
+        "type": "object",
+        "required": [
+          "quote_id",
+          "customer",
+          "destination"
+        ],
+        "properties": {
+          "quote_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "example": "harbor"
+          },
+          "customer_id": {
+            "type": "string",
+            "description": "Capisum customer id. Required when the off-ramp provider binds a verified customer (current: harbor)."
+          },
+          "customer": {
+            "type": "object",
+            "required": [
+              "email",
+              "first_name",
+              "last_name"
+            ],
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "first_name": {
+                "type": "string"
+              },
+              "last_name": {
+                "type": "string"
+              }
+            }
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string",
+                "description": "Sender wallet address. Required for current off-ramp corridors."
+              }
+            }
+          },
+          "destination": {
+            "type": "object",
+            "required": [
+              "account_number"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "bank_account"
+                ]
+              },
+              "bank_id": {
+                "type": "string",
+                "example": "ng.opay"
+              },
+              "bank_code": {
+                "type": "string"
+              },
+              "bank_name": {
+                "type": "string",
+                "example": "HSBC"
+              },
+              "account_holder_name": {
+                "type": "string"
+              },
+              "account_number": {
+                "type": "string"
+              },
+              "swift_code": {
+                "type": "string",
+                "example": "HSBCHKHH"
+              },
+              "routing_number": {
+                "type": "string"
+              },
+              "iban": {
+                "type": "string"
+              },
+              "transfer_purpose": {
+                "type": "string",
+                "example": "SALARY"
+              },
+              "is_self_transfer": {
+                "type": "boolean"
+              },
+              "beneficiary": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "dob": {
+                    "type": "string",
+                    "example": "1990-01-01"
+                  },
+                  "id_doc_number": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "object",
+                    "required": [
+                      "street",
+                      "city",
+                      "country"
+                    ],
+                    "properties": {
+                      "street": {
+                        "type": "string"
+                      },
+                      "city": {
+                        "type": "string"
+                      },
+                      "state_province": {
+                        "type": "string"
+                      },
+                      "postal_code": {
+                        "type": "string"
+                      },
+                      "country": {
+                        "type": "string",
+                        "example": "US"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ConversionExecuteRequest": {
+        "type": "object",
+        "required": [
+          "quote_id"
+        ],
+        "properties": {
+          "quote_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "example": "quidax"
+          }
+        }
+      },
+      "OnrampOtpRequest": {
+        "type": "object",
+        "required": [
+          "otp"
+        ],
+        "properties": {
+          "otp": {
+            "type": "string",
+            "example": "123456"
+          }
+        }
+      },
+      "RampTransactionResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Transaction"
+          }
+        }
+      },
       "ErrorBody": {
         "type": "object",
         "required": [
@@ -2153,6 +4666,16 @@
       },
       "NotFound": {
         "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorBody"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Resource already exists",
         "content": {
           "application/json": {
             "schema": {
