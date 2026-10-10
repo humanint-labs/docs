@@ -2,7 +2,9 @@
   "providerSlug": "palmpay",
   "docsPath": "/guides/palmpay",
   "docsUrl": "https://docs.capisum.com/guides/palmpay",
-  "staticOutboundIps": ["79.127.165.79", "79.127.165.66"],
+  "staticOutboundIps": [
+    "209.71.85.56"
+  ],
   "webhookUrl": "https://capisum.com/webhooks/palmpay/{credentialId}",
   "pageSummary": "Connect PalmPay with your merchant credentials and RSA keys.",
   "pageSummaryDocsLabel": "Full setup guide",

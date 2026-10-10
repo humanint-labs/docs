@@ -2,8 +2,7 @@
   "providerSlug": "flutterwave",
   "docsPath": "/guides/flutterwave",
   "staticOutboundIps": [
-    "79.127.165.79",
-    "79.127.165.66"
+    "209.71.85.56"
   ],
   "webhookUrl": "https://capisum.com/webhooks/flutterwave/{credentialId}",
   "ipAllowlistTitle": "Capisum IPs to whitelist",
