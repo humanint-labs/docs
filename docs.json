@@ -8,7 +8,10 @@
     "dark": "/logo/icon-dark.svg",
     "href": "/"
   },
-  "favicon": "/favicon.svg",
+  "favicon": {
+    "light": "/favicon-light.svg",
+    "dark": "/favicon-dark.svg"
+  },
   "colors": {
     "primary": "#D4A0FF",
     "light": "#FAFAFA",
