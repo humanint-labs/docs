@@ -2,11 +2,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="631.512 373.873 526.162 526.162" role="img" aria-label="Capisum">
   <defs>
     <style>
-      .bg { fill: #0a0a0a; }
-      .mark { fill: #ffffff; }
+      .bg { fill: #ffffff; }
+      .mark { fill: #0a0a0a; }
       @media (prefers-color-scheme: dark) {
-        .bg { fill: #ffffff; }
-        .mark { fill: #0a0a0a; }
+        .bg { fill: #0a0a0a; }
+        .mark { fill: #ffffff; }
       }
     </style>
   </defs>
