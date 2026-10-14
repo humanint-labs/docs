@@ -74,7 +74,7 @@
             ]
           },
           {
-            "group": "Pay-ins",
+            "group": "Virtual Accounts",
             "icon": "money-bill-wave",
             "pages": [
               "guides/pay-ins"
@@ -131,7 +131,7 @@
             ]
           },
           {
-            "group": "Pay-in destinations",
+            "group": "Virtual Accounts",
             "pages": [
               "POST /v1/pay-in-destinations",
               "GET /v1/pay-in-destinations",

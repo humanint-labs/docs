@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Capisum API",
-    "description": "API for creating payouts, pay-ins, and off-ramps. Authenticate with an organization API key (`Authorization: Bearer cps_...`). The key's environment (staging or production) scopes provider credentials.\n\n**Shipped today:** Multi-corridor payouts, fiat/crypto pay-in, and crypto-to-fiat off-ramp.",
+    "description": "API for creating payouts, pay-ins, and off-ramps. Authenticate with an organization API key (`Authorization: Bearer cps_...`). The key's environment (staging or production) scopes provider credentials.\n\n**Shipped today:** Multi-corridor payouts, Virtual Accounts (fiat pay-in) / crypto pay-in, and crypto-to-fiat off-ramp.",
     "version": "1.0.0",
     "contact": {
       "name": "Capisum Support",
@@ -38,7 +38,8 @@
       "name": "On-ramp"
     },
     {
-      "name": "Pay-in destinations"
+      "name": "Virtual Accounts",
+      "description": "Create and manage Virtual Account destinations (fiat pay-in via bank details). API paths remain /v1/pay-in-destinations."
     },
     {
       "name": "Payouts"
@@ -109,7 +110,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "Returns payout currencies, destination types, and per-rail `required_fields` that the authenticated organization can actually use in the current environment. Only connected/configured providers are included \u2014 theoretical unconnected routes are omitted. Use each provider's `rails` array for currency, country, rail id, and required fields.",
+        "description": "Returns payout currencies, destination types, and per-rail `required_fields` that the authenticated organization can actually use in the current environment. Only connected/configured providers are included — theoretical unconnected routes are omitted. Use each provider's `rails` array for currency, country, rail id, and required fields.",
         "security": [
           {
             "apiKeyAuth": []
@@ -236,7 +237,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Returns the available balance for a connected provider in the API key's environment. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals). Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, and `quidax`.",
+        "description": "Returns the available balance for a connected provider in the API key's environment. Amounts are in minor units (for example, `500000` = ₦5,000.00 in NGN; Quidax crypto uses 8 decimals). Supported for `fincra`, `paystack`, `flutterwave`, `palmpay`, and `quidax`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -345,7 +346,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = \u20a65,000.00 in NGN; Quidax crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for provider-specific currencies, countries, rails, and `required_fields`. Validation depends on the resolved provider + country + currency + rail (USD ACH differs from NGN bank transfer). NGN catalog banks use `GET /v1/reference/banks` for `bank_id`. Crypto wallet payouts use top-level `currency` with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
+        "description": "Create a payout through Capisum routing. Amounts are in minor units (for example, `500000` = ₦5,000.00 in NGN; Quidax crypto uses 8 decimals, so `500000000` = 5 USDT).\n\nCapisum accepts one canonical `destination` shape; each provider adapter translates it. Use `GET /v1/payouts/capabilities` for provider-specific currencies, countries, rails, and `required_fields`. Validation depends on the resolved provider + country + currency + rail (USD ACH differs from NGN bank transfer). NGN catalog banks use `GET /v1/reference/banks` for `bank_id`. Crypto wallet payouts use top-level `currency` with `destination.type = crypto_wallet`, `destination.address`, and `destination.network`.\n\nPayouts are queued for asynchronous provider submission. A successful response returns `status: queued` with your merchant `reference`. Capisum assigns per-attempt provider transfer references internally.\n\nRequires `X-Idempotency-Key`.",
         "security": [
           {
             "apiKeyAuth": []
@@ -908,7 +909,7 @@
             "$ref": "#/components/responses/Conflict"
           }
         },
-        "description": "Create a Capisum customer, resolve the pay-in provider (dashboard configuration wins over request `provider` when both exist), immediately create the provider customer when the adapter requires one, and return the Capisum customer with selected provider and normalized verification status/requirements. Provider customer IDs stay internal.\n\nSome pay-in providers require `email`, `phone` (E.164), and `country` before they will issue a destination. Supplying them up front avoids a second round trip.\n\n`reference` is your own identifier and is unique per environment \u2014 reusing it returns the existing customer instead of creating a duplicate.",
+        "description": "Create a Capisum customer, resolve the pay-in provider (dashboard configuration wins over request `provider` when both exist), immediately create the provider customer when the adapter requires one, and return the Capisum customer with selected provider and normalized verification status/requirements. Provider customer IDs stay internal.\n\nSome pay-in providers require `email`, `phone` (E.164), and `country` before they will issue a destination. Supplying them up front avoids a second round trip.\n\n`reference` is your own identifier and is unique per environment — reusing it returns the existing customer instead of creating a duplicate.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1096,7 +1097,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Submit identity verification for a customer through the pay-in provider's KYC API. Capisum loads the existing ProviderCustomer mapping, translates the provider-neutral payload, submits it to the provider KYC API, and normalizes status to `submitted`, `approved`, `rejected`, or `requires_action`. `provider` / `currency` are optional when the customer was already bound at create time; when both request and dashboard routing exist, dashboard wins.\n\nPay-in destinations that require provider KYC stay blocked until the provider reports approval (`verification_status: approved` and destination creation allowed).",
+        "description": "Submit identity verification for a customer through the pay-in provider's KYC API. Capisum loads the existing ProviderCustomer mapping, translates the provider-neutral payload, submits it to the provider KYC API, and normalizes status to `submitted`, `approved`, `rejected`, or `requires_action`. `provider` / `currency` are optional when the customer was already bound at create time; when both request and dashboard routing exist, dashboard wins.\n\nVirtual Account destinations that require provider KYC stay blocked until the provider reports approval (`verification_status: approved` and destination creation allowed).",
         "security": [
           {
             "apiKeyAuth": []
@@ -1186,9 +1187,9 @@
     "/v1/pay-in-destinations": {
       "post": {
         "tags": [
-          "Pay-in destinations"
+          "Virtual Accounts"
         ],
-        "summary": "Create pay-in destination",
+        "summary": "Create Virtual Account destination",
         "operationId": "post_v1_pay-in-destinations",
         "responses": {
           "200": {
@@ -1214,7 +1215,7 @@
             "$ref": "#/components/responses/ProviderError"
           }
         },
-        "description": "Create a virtual account where a customer can send fiat. Capisum resolves the provider, creates or reuses the provider's customer record, checks verification, then returns normalized bank account details you can display directly.\n\n`type: bank_account` is the only destination type on this endpoint today. Yativo covers BRL, MXN/MXNBASE, USD/USDBASE, and EUR/EURBASE. Fincra covers NGN (requires `metadata.bvn`), GHS, and KES. Crypto deposit addresses use POST /v1/transactions/pay-in/merchant-wallet or POST /v1/transactions/pay-in/customer-wallet.\n\nWhen the provider still needs the customer to finish verification, the response returns `status: verification_required`. Submit KYC with `POST /v1/customers/{id}/kyc` (primary), or use `verification_url` only when the provider exposes a hosted fallback, then retry.\n\nDestinations are reusable: repeating the same request for the same customer, provider, type, and currency returns the existing active destination rather than creating another.",
+        "description": "Create a Virtual Account where a customer can send fiat. Virtual Accounts are Capisum’s supported fiat pay-in method today. Capisum resolves the provider, creates or reuses the provider's customer record, checks verification, then returns normalized bank account details you can display directly.\n\n`type: bank_account` is the only destination type on this endpoint today. Yativo covers BRL, MXN/MXNBASE, USD/USDBASE, and EUR/EURBASE. Fincra covers NGN (requires `metadata.bvn`), GHS, and KES. Crypto deposit addresses use POST /v1/transactions/pay-in/merchant-wallet or POST /v1/transactions/pay-in/customer-wallet.\n\nWhen the provider still needs the customer to finish verification, the response returns `status: verification_required`. Submit KYC with `POST /v1/customers/{id}/kyc` (primary), or use `verification_url` only when the provider exposes a hosted fallback, then retry.\n\nDestinations are reusable: repeating the same request for the same customer, provider, type, and currency returns the existing active destination rather than creating another.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1233,9 +1234,9 @@
       },
       "get": {
         "tags": [
-          "Pay-in destinations"
+          "Virtual Accounts"
         ],
-        "summary": "List pay-in destinations",
+        "summary": "List Virtual Account destinations",
         "operationId": "get_v1_pay-in-destinations",
         "responses": {
           "200": {
@@ -1252,7 +1253,7 @@
             "$ref": "#/components/responses/Unauthorized"
           }
         },
-        "description": "List pay-in destinations, optionally filtered by customer. Results are cursor-paginated.",
+        "description": "List Virtual Account destinations, optionally filtered by customer. Results are cursor-paginated.",
         "security": [
           {
             "apiKeyAuth": []
@@ -1335,9 +1336,9 @@
     "/v1/pay-in-destinations/{id}": {
       "get": {
         "tags": [
-          "Pay-in destinations"
+          "Virtual Accounts"
         ],
-        "summary": "Get pay-in destination by ID",
+        "summary": "Get Virtual Account destination by ID",
         "operationId": "get_v1_pay-in-destinations_id",
         "responses": {
           "200": {
@@ -2350,7 +2351,7 @@
         "required": [
           "type"
         ],
-        "description": "Bank / local rail destination. Required fields depend on the resolved provider rail (see GET /v1/payouts/capabilities \u2192 providers[].rails[].required_fields).",
+        "description": "Bank / local rail destination. Required fields depend on the resolved provider rail (see GET /v1/payouts/capabilities → providers[].rails[].required_fields).",
         "properties": {
           "type": {
             "type": "string",
@@ -2752,7 +2753,7 @@
           "reference": {
             "type": "string",
             "pattern": "^[a-z0-9_-]{16,50}$",
-            "description": "Optional merchant-facing payout reference (16\u201350 chars; lowercase letters, digits, `_`, `-`). Capisum generates a provider-safe `pout_*` reference when omitted.",
+            "description": "Optional merchant-facing payout reference (16–50 chars; lowercase letters, digits, `_`, `-`). Capisum generates a provider-safe `pout_*` reference when omitted.",
             "example": "pout_a1b2c3d4e5f6789012345ab"
           },
           "description": {

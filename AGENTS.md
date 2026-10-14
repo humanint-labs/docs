@@ -21,7 +21,9 @@
 
 ## Content boundaries
 
-**Document:** authentication, providers, payouts, pay-ins, off-ramp, webhooks (outgoing), transactions, pagination, idempotency, errors, sandbox.
+**Document:** authentication, providers, payouts, Virtual Accounts (fiat pay-in) and crypto wallet pay-in, off-ramp, webhooks (outgoing), transactions, pagination, idempotency, errors, sandbox.
+
+User-facing name for fiat VA collection is **Virtual Accounts**; keep API paths, schemas, and `pay_in` domain terms as-is.
 
 **Do not document:** dashboard session APIs, API key CRUD, provider credential management, routing CRUD, billing, audit, team, stats, incoming webhooks, Capisum admin `/api/v1/internal/*`.
 
